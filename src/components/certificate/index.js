@@ -1,0 +1,1 @@
+export { WorkCertificate } from './WorkCertificate';

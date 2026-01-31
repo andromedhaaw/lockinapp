@@ -1,0 +1,31 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import TimeTracker from './pages/TimeTracker';
+import LandingPage from './pages/LandingPage';
+import PricingPage from './pages/PricingPage';
+import AdminDashboard from './pages/AdminDashboard';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import './index.css';
+
+import { AuthProvider } from './context/AuthContext';
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Register />} />
+          <Route path="/app" element={<TimeTracker />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          {/* Support legacy route or random paths redirect to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
+}
+
+export default App;

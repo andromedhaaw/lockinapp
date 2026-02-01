@@ -21,6 +21,7 @@ export const TABS = {
   ANALYTICS: 'analytics',
   INSIGHTS: 'insights',
   PODS: 'pods',
+  GARDEN: 'garden',
 };
 
 export const STATUS = {

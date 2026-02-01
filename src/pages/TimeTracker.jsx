@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, History, Calendar, Timer, CheckSquare, User, Trophy, Lock, Brain } from 'lucide-react';
+import { Clock, History, Calendar, Timer, CheckSquare, User, Trophy, Lock, Brain, Leaf } from 'lucide-react';
 import { TabNavigation } from '../components/ui';
+import { GardenTab } from '../components/garden';
 import {
   CurrentTimeDisplay,
   WorkTimerDisplay,
@@ -17,6 +18,7 @@ import {
   MonthsList,
 } from '../components/history';
 import { useCurrentTime, useWorkTimer, useWorkHistory } from '../hooks';
+import { useGarden } from '../context/GardenContext';
 import { FocusTimer } from '../components/focus';
 import { TaskList } from '../components/tasks';
 import { Profile } from '../components/profile';
@@ -37,6 +39,7 @@ const tabs = [
   { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
   { id: TABS.INSIGHTS, label: 'Insights', icon: Brain },
+  { id: TABS.GARDEN, label: 'Garden', icon: Leaf },
   { id: TABS.LEADERBOARD, label: 'Social', icon: Trophy },
   { id: TABS.HISTORY, label: 'History', icon: History },
   { id: TABS.PROFILE, label: 'Profile', icon: User },
@@ -111,6 +114,7 @@ const TimeTracker = () => {
   const [lastSessionMinutes, setLastSessionMinutes] = useState(0);
 
   // Custom hooks
+  const { addCoinsFromWork } = useGarden(); 
   const { currentDate, currentTimeString } = useCurrentTime();
   const {
     workHistory: workHistoryData,
@@ -134,6 +138,19 @@ const TimeTracker = () => {
     elapsedTime, // Added elapsedTime for AICoach
   } = useWorkTimer(saveWorkSession);
 
+  // Focus Timer Visibility in Tasks Tab
+  const [showFocusTimer, setShowFocusTimer] = useState(false);
+  const [focusedTask, setFocusedTask] = useState(null);
+  const [countdown, setCountdown] = useState(0);
+
+  // Countdown Effect
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(prev => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
   // Calculate today's total including current session
   const todayStoredHours = getHoursForDate(new Date());
   const currentSessionHours = isTracking
@@ -154,6 +171,9 @@ const TimeTracker = () => {
     if (sessionMinutes >= 1) {
       setShowEncouragement(true);
     }
+    
+    // Earn coins (10 coins per hour)
+    addCoinsFromWork(sessionMinutes / 60);
     
     // Call the original finish handler
     handleFinish();
@@ -274,8 +294,8 @@ const TimeTracker = () => {
         onTabChange={setActiveTab}
       />
 
-      <div className="p-4 sm:p-6">
-        <div className="max-w-md mx-auto">
+      <div className="p-4 sm:p-6 pb-32">
+        <div className={`${activeTab === TABS.GARDEN ? 'max-w-7xl' : 'max-w-3xl'} mx-auto transition-all duration-500`}>
           {/* Tracker Tab Content */}
           <div className={activeTab === TABS.TRACKER ? 'block' : 'hidden'}>
               {/* Header */}
@@ -396,14 +416,69 @@ const TimeTracker = () => {
           {/* Focus Timer Content */}
           <div className={activeTab === TABS.FOCUS ? 'block' : 'hidden'}>
             <div className="pt-4">
-              <FocusTimer />
+              {countdown > 0 ? (
+                <div className="flex flex-col items-center justify-center min-h-[400px] animate-in fade-in duration-300">
+                  <div className="text-sm font-bold uppercase tracking-widest mb-4 text-green-600 dark:text-green-400 opacity-80">Get Ready</div>
+                  <div className="text-9xl font-black text-green-600 dark:text-green-400 animate-pulse">
+                    {countdown}
+                  </div>
+                  <div className="mt-12 text-center px-6">
+                     <div className="text-xl font-bold mb-1 text-gray-900 dark:text-white">{focusedTask?.name}</div>
+                     <div className="text-sm text-gray-500 dark:text-gray-400">Starting in a few seconds...</div>
+                  </div>
+                  <button 
+                     onClick={() => {
+                       setCountdown(0);
+                       setFocusedTask(null);
+                     }}
+                     className="mt-20 px-6 py-2 rounded-full border border-gray-200 dark:border-slate-800 text-xs font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-50 transition-colors"
+                   >
+                     Cancel
+                   </button>
+                </div>
+              ) : (
+                <div className="animate-in fade-in duration-700">
+                  <FocusTimer 
+                    key={focusedTask ? focusedTask.id : 'default'}
+                    initialMinutes={focusedTask ? (() => {
+                      const timeStr = focusedTask.estimatedTime || '25m';
+                      const match = timeStr.match(/(\d+)\s*(m|h|min|hour)?/i);
+                      if (!match) return 25;
+                      const val = parseInt(match[1]);
+                      const unit = match[2]?.toLowerCase();
+                      if (unit === 'h' || unit === 'hour') return val * 60;
+                      return val;
+                    })() : 25} 
+                    autoStart={!!focusedTask}
+                  />
+                  
+                  {focusedTask && (
+                    <div className="mt-8 bg-green-50 dark:bg-green-900/10 rounded-2xl p-6 border border-green-100 dark:border-green-800/30 text-center space-y-3">
+                       <h3 className="text-sm font-bold text-green-600 dark:text-green-400 uppercase tracking-wide">Current Task</h3>
+                       <div className="text-xl font-bold text-gray-900 dark:text-white">
+                         {focusedTask.name}
+                       </div>
+                       <button 
+                         onClick={() => setFocusedTask(null)}
+                         className="text-xs text-gray-500 hover:text-red-500 transition-colors underline"
+                       >
+                         Clear Task
+                       </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Tasks Tab Content */}
           <div className={activeTab === TABS.TASKS ? 'block' : 'hidden'}>
             <div className="pt-4">
-              <TaskList />
+              <TaskList onFocus={(task) => {
+                setFocusedTask(task);
+                setCountdown(5);
+                setActiveTab(TABS.FOCUS);
+              }} />
             </div>
           </div>
 
@@ -475,6 +550,13 @@ const TimeTracker = () => {
                   todayHours={todayTotalHours}
                 />
               )}
+            </div>
+          </div>
+
+          {/* Garden Tab Content */}
+          <div className={activeTab === TABS.GARDEN ? 'block' : 'hidden'}>
+            <div className="pt-4">
+              <GardenTab />
             </div>
           </div>
 

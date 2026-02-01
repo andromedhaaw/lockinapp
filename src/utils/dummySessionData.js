@@ -5,6 +5,7 @@
 
 import { getDateKey } from './timeUtils';
 import { STORAGE_KEYS } from '../constants';
+import { PLANT_TYPES, GARDEN_STORAGE_KEY } from '../constants/gardenConstants';
 
 /**
  * Generate dummy sessions for a specific date
@@ -109,6 +110,52 @@ export const generateWeekOfSessions = (startDate = new Date()) => {
 };
 
 /**
+ * Generate a full year of dummy sessions
+ */
+export const generateYearOfSessions = (endDate = new Date()) => {
+  const allSessions = [];
+  const patterns = ['balanced', 'morning', 'intense', 'afternoon', 'balanced', 'light', 'nightowl'];
+  
+  for (let i = 0; i < 365; i++) {
+    const date = new Date(endDate);
+    date.setDate(endDate.getDate() - i);
+    
+    // Add data for ~80% of days
+    if (Math.random() > 0.2) {
+      const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+      const daySessions = generateDummySessions(date, pattern);
+      allSessions.push(...daySessions);
+    }
+  }
+  
+  return allSessions;
+};
+
+/**
+ * Inject a full year of dummy data
+ */
+export const injectYearOfDummyData = () => {
+  const sessions = generateYearOfSessions();
+  
+  // Set sessions
+  localStorage.setItem(STORAGE_KEYS.WORK_SESSIONS, JSON.stringify(sessions));
+  
+  // Update workHistory
+  const workHistory = {};
+  sessions.forEach(session => {
+    const hours = session.duration / (1000 * 60 * 60);
+    workHistory[session.dateKey] = (workHistory[session.dateKey] || 0) + hours;
+  });
+  
+  localStorage.setItem(STORAGE_KEYS.WORK_HISTORY, JSON.stringify(workHistory));
+  
+  window.dispatchEvent(new Event('local-data-updated'));
+  
+  console.log(`✅ Injected ${sessions.length} sessions across 365 days`);
+  return { sessions, workHistory };
+};
+
+/**
  * Inject dummy data into localStorage for testing
  * @param {string} pattern - Pattern to use for today's data
  */
@@ -133,9 +180,11 @@ export const injectDummyData = (pattern = 'balanced') => {
   existingHistory[dateKey] = totalHours;
   localStorage.setItem(STORAGE_KEYS.WORK_HISTORY, JSON.stringify(existingHistory));
   
+  // Dispatch event for same-tab updates
+  window.dispatchEvent(new Event('local-data-updated'));
+  
   console.log(`✅ Injected ${sessions.length} dummy sessions for ${dateKey} with pattern: ${pattern}`);
   console.log('Sessions:', sessions);
-  console.log('📦 Refresh the page to see the changes in the DailyBreakdown view!');
   
   return sessions;
 };
@@ -158,9 +207,11 @@ export const injectWeekOfDummyData = () => {
   
   localStorage.setItem(STORAGE_KEYS.WORK_HISTORY, JSON.stringify(workHistory));
   
+  // Dispatch event for same-tab updates
+  window.dispatchEvent(new Event('local-data-updated'));
+  
   console.log(`✅ Injected ${sessions.length} sessions across 7 days`);
   console.log('Work History:', workHistory);
-  console.log('📦 Refresh the page to see the changes!');
   
   return { sessions, workHistory };
 };
@@ -174,6 +225,41 @@ export const clearAllSessionData = () => {
   console.log('🗑️ Cleared all session data');
 };
 
+/**
+ * Inject dummy garden data (fill ~half the grid)
+ */
+export const injectGardenData = () => {
+  const plants = Object.values(PLANT_TYPES);
+  const newGrid = Array(64).fill(null);
+  
+  // Fill roughly 32 slots randomly
+  for (let i = 0; i < 32; i++) {
+    const randomSlot = Math.floor(Math.random() * 64);
+    if (!newGrid[randomSlot]) {
+      const randomPlant = plants[Math.floor(Math.random() * plants.length)];
+      newGrid[randomSlot] = {
+        ...randomPlant,
+        plantedAt: new Date().toISOString()
+      };
+    }
+  }
+  
+  localStorage.setItem(GARDEN_STORAGE_KEY, JSON.stringify(newGrid));
+  window.dispatchEvent(new Event('local-data-updated'));
+  
+  console.log('🌳 Injected dummy garden data (half full)');
+  return newGrid;
+};
+
+/**
+ * Set coins to a specific amount
+ */
+export const setCoinsBalance = (amount = 2000) => {
+  localStorage.setItem(COINS_STORAGE_KEY, amount.toString());
+  window.dispatchEvent(new Event('local-data-updated'));
+  console.log(`💰 Set Focus Coins to: ${amount}`);
+};
+
 // Export patterns for reference
 export const WORK_PATTERNS = ['morning', 'afternoon', 'balanced', 'intense', 'light', 'nightowl'];
 
@@ -182,6 +268,9 @@ if (typeof window !== 'undefined') {
   window.dummyData = {
     inject: injectDummyData,
     injectWeek: injectWeekOfDummyData,
+    injectYear: injectYearOfDummyData,
+    injectGarden: injectGardenData,
+    setCoins: setCoinsBalance,
     clear: clearAllSessionData,
     patterns: WORK_PATTERNS,
     generate: generateDummySessions,
@@ -190,6 +279,8 @@ if (typeof window !== 'undefined') {
   console.log('🎯 Dummy data utilities loaded! Use in console:');
   console.log('  window.dummyData.inject("balanced") - Inject today\'s data');
   console.log('  window.dummyData.injectWeek() - Inject a full week');
+  console.log('  window.dummyData.injectGarden() - Fill half the garden grid');
+  console.log('  window.dummyData.setCoins(2000) - Set your coins balance');
   console.log('  window.dummyData.clear() - Clear all data');
   console.log('  Available patterns:', WORK_PATTERNS.join(', '));
 }

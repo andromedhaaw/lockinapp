@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
  */
 export const TabNavigation = ({ tabs, activeTab, onTabChange }) => {
   return (
-    <div className="bg-green-50 dark:bg-slate-900 shadow-sm border-b border-green-100 dark:border-slate-800 transition-colors duration-300 sticky top-0 z-10">
+    <div className="bg-green-50 dark:bg-slate-900 shadow-sm border-b border-green-100 dark:border-slate-800 transition-colors duration-300 sticky top-0 z-50">
       <div className="w-full flex justify-center overflow-x-auto">
         {tabs.map((tab) => (
           <button

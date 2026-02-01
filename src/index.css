@@ -9,6 +9,26 @@
   --color-slate-950: #020617;
 }
 /* Force class strategy for dark mode if using updated tailwind */
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .animate-slow-spin {
+    animation: spin 15s linear infinite;
+  }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 :root {
   color-scheme: light;
 }

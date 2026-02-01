@@ -9,11 +9,13 @@ import MobileTimeTracker from './pages/MobileTimeTracker';
 import './index.css';
 
 import { AuthProvider } from './context/AuthContext';
+import { GardenProvider } from './context/GardenContext';
 
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <GardenProvider>
+        <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/pricing" element={<PricingPage />} />
@@ -26,7 +28,8 @@ function App() {
           {/* Support legacy route or random paths redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </Router>
+        </Router>
+      </GardenProvider>
     </AuthProvider>
   );
 }

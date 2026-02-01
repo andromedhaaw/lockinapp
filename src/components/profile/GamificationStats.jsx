@@ -1,8 +1,24 @@
-import { Flame, Trophy, Share2 } from 'lucide-react';
+import { Flame, Trophy, Share2, Coins } from 'lucide-react';
+import { useGarden } from '../../context/GardenContext';
 
 const GamificationStats = ({ streak, levelData, onShare }) => {
+  const { coins } = useGarden();
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Coins Card */}
+      <div className="bg-gradient-to-br from-amber-50 to-yellow-50 p-4 rounded-xl border border-amber-100 flex items-center justify-between">
+        <div>
+          <div className="text-sm text-amber-600 font-medium mb-1">Focus Coins</div>
+          <div className="text-3xl font-bold text-gray-800 flex items-baseline gap-1">
+            {coins} <span className="text-sm font-normal text-gray-500">LC</span>
+          </div>
+        </div>
+        <div className="p-3 rounded-full bg-amber-100 text-amber-500">
+          <Coins className="w-6 h-6 fill-current" />
+        </div>
+      </div>
+
       {/* Streak Card */}
       <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-4 rounded-xl border border-orange-100 flex items-center justify-between">
         <div>

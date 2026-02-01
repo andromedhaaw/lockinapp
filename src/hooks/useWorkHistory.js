@@ -21,11 +21,17 @@ export const useWorkHistory = () => {
   const [sessionHistory, setSessionHistory] = useState([]);
   const hasLoaded = useRef(false);
 
+  // Load initial data from localStorage for immediate results
+  useEffect(() => {
+    const localHistory = JSON.parse(localStorage.getItem('timeTracker_workHistory') || '{}');
+    const localSessions = JSON.parse(localStorage.getItem('timeTracker_workSessions') || '[]');
+    setWorkHistory(localHistory);
+    setSessionHistory(localSessions);
+  }, []);
+
   // Load from API on mount or user change
   useEffect(() => {
     if (!user) {
-        setWorkHistory({});
-        setSessionHistory([]);
         return;
     }
 
@@ -37,24 +43,11 @@ export const useWorkHistory = () => {
         setSessionHistory(sessions);
 
         // Aggregate sessions into workHistory { dateKey: hours }
-        const historyMap = {};
+        const historyMap = { ...workHistory }; // Start with current (possibly local) data
         sessions.forEach(session => {
-            // Check if duration is in ms (from DB) or hours? 
-            // My server saves in whatever format sent. 
-            // Previous frontend code sent hours? No, let's check saveWorkSession.
-            // Previous saveWorkSession received 'hours'.
-            // Now we will likely receive milliseconds from DB if I stored it as Number.
-            // Wait, previous 'saveWorkSession' took 'hours'. 
-            // DB schema 'duration'.
-            // I need to be careful with units.
-            // DB session.duration is likely milliseconds based on my plan (timestamp diff).
-            // Let's assume server returns milliseconds/whatever is stored.
-            // We need to convert it to "hours" for workHistory map.
-            
-            // Actually, let's normalize everything to Hours for the frontend charts.
-            
             const hours = session.duration / (1000 * 60 * 60);
             const dateKey = session.dateKey;
+            // Overwrite or append? For now, let's prioritize API data for specific dates
             historyMap[dateKey] = (historyMap[dateKey] || 0) + hours;
         });
         setWorkHistory(historyMap);
@@ -66,6 +59,32 @@ export const useWorkHistory = () => {
 
     fetchData();
   }, [user]);
+
+  // Listen for storage events (for dummy data injection from console)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      // If it's a window event (custom) or a storage event with relevant keys
+      const shouldRefresh = !e || !e.key || 
+                           e.key === 'timeTracker_workHistory' || 
+                           e.key === 'timeTracker_workSessions';
+      
+      if (shouldRefresh) {
+        const localHistory = JSON.parse(localStorage.getItem('timeTracker_workHistory') || '{}');
+        const localSessions = JSON.parse(localStorage.getItem('timeTracker_workSessions') || '[]');
+        setWorkHistory(localHistory);
+        setSessionHistory(localSessions);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Custom event for same-tab updates
+    window.addEventListener('local-data-updated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('local-data-updated', handleStorageChange);
+    };
+  }, []);
 
   const saveWorkSession = useCallback(async (hours, sessionDetails) => {
     if (!user) return; // Prevent saving if not logged in

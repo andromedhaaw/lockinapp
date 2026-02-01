@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { Clock, History, Calendar, Timer, CheckSquare, User, Trophy, Lock, Brain } from 'lucide-react';
-import { TabNavigation } from '../components/ui';
+import MobileLayout from '../components/mobile/MobileLayout';
+import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import {
   CurrentTimeDisplay,
   WorkTimerDisplay,
@@ -33,7 +34,6 @@ import { TABS, HISTORY_PERIODS } from '../constants';
 
 const tabs = [
   { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
-  { id: TABS.FOCUS, label: 'Focus', icon: Timer },
   { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
   { id: TABS.INSIGHTS, label: 'Insights', icon: Brain },
@@ -49,19 +49,19 @@ const historyPeriods = [
 ];
 
 /**
- * Main TimeTracker page component
+ * Mobile TimeTracker page component
  */
-const TimeTracker = () => {
+const MobileTimeTracker = () => {
   const [activeTab, setActiveTab] = useState(TABS.TRACKER);
   const [grindMode, setGrindMode] = useState(() => {
-    return localStorage.getItem('lockin_grindMode') === 'true';
+    return localStorage.getItem('lockin_grindMode_mobile') === 'true';
   });
 
   // Persist grindMode
   const handleGrindModeChange = (val) => {
     try {
       setGrindMode(val);
-      localStorage.setItem('lockin_grindMode', val);
+      localStorage.setItem('lockin_grindMode_mobile', val);
     } catch (e) {
       console.error("Storage error");
     }
@@ -110,6 +110,11 @@ const TimeTracker = () => {
   const [showEncouragement, setShowEncouragement] = useState(false);
   const [lastSessionMinutes, setLastSessionMinutes] = useState(0);
 
+  // Focus Timer Visibility in Tasks Tab
+  const [showFocusTimer, setShowFocusTimer] = useState(false);
+  const [focusedTask, setFocusedTask] = useState(null);
+  const [countdown, setCountdown] = useState(0);
+
   // Custom hooks
   const { currentDate, currentTimeString } = useCurrentTime();
   const {
@@ -134,6 +139,14 @@ const TimeTracker = () => {
     elapsedTime, // Added elapsedTime for AICoach
   } = useWorkTimer(saveWorkSession);
 
+  // Countdown Effect
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(prev => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
   // Calculate today's total including current session
   const todayStoredHours = getHoursForDate(new Date());
   const currentSessionHours = isTracking
@@ -141,8 +154,10 @@ const TimeTracker = () => {
     : 0;
   const todayTotalHours = todayStoredHours + currentSessionHours;
 
-  // Ensure all tabs are visible on web version
-  const visibleTabs = tabs;
+  // Filter tabs for Deep Work Mode (hides Goals, Insights, Social)
+  const visibleTabs = grindMode
+    ? tabs.filter(t => ![TABS.GOALS, TABS.INSIGHTS, TABS.LEADERBOARD].includes(t.id))
+    : tabs;
 
   // Wrapper to show encouragement modal when finishing session
   const handleFinishWithEncouragement = () => {
@@ -266,16 +281,8 @@ const TimeTracker = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
-      {/* Tab Navigation */}
-      <TabNavigation
-        tabs={visibleTabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
-
-      <div className="p-4 sm:p-6">
-        <div className="max-w-md mx-auto">
+    <MobileLayout>
+      <div className="p-4 flex-1 pb-0">
           {/* Tracker Tab Content */}
           <div className={activeTab === TABS.TRACKER ? 'block' : 'hidden'}>
               {/* Header */}
@@ -289,51 +296,46 @@ const TimeTracker = () => {
                 </div>
               </div>
 
-              {/* Tracker Displays */}
-              <div className="mb-4">
-                {/* Current Time Display */}
-                <CurrentTimeDisplay timeString={currentTimeString} />
+              {/* Current Time Display */}
+              <CurrentTimeDisplay timeString={currentTimeString} />
 
-                {/* Work Timer Display */}
-                <WorkTimerDisplay
-                  totalWorkTime={totalWorkTime}
-                  isTracking={isTracking}
-                  isPaused={isPaused}
-                />
+              {/* Work Timer Display */}
+              <WorkTimerDisplay
+                totalWorkTime={totalWorkTime}
+                isTracking={isTracking}
+                isPaused={isPaused}
+              />
 
-                {/* Today's Total */}
-                <TodayTotal hours={todayTotalHours} />
+              {/* Today's Total */}
+              <TodayTotal hours={todayTotalHours} />
 
-                {/* Session Info */}
-                <SessionInfo sessionStart={sessionStart} />
-              </div>
+              {/* Session Info */}
+              <SessionInfo sessionStart={sessionStart} />
 
               {/* Session Goal Input (Accountability) */}
               {!isTracking && (
-                 <div className="bg-white/50 p-2 rounded-xl border border-green-50 mb-4">
-                   <div className="flex flex-col sm:flex-row items-center gap-3">
-                     <label className="text-[10px] font-bold text-green-700 uppercase whitespace-nowrap">Commitment:</label>
-                     <div className="flex gap-1.5 w-full">
-                       {[30, 60, 90, 120].map(mins => (
-                         <button
-                           key={mins}
-                           onClick={() => setSessionGoal(mins)}
-                           className={`flex-1 py-1 text-xs font-bold rounded-lg transition-all ${
-                             sessionGoal === mins 
-                               ? 'bg-green-600 text-white shadow-sm' 
-                               : 'bg-white text-gray-400 hover:bg-green-50'
-                           }`}
-                         >
-                           {mins}m
-                         </button>
-                       ))}
-                     </div>
+                 <div className="bg-white/50 p-3 rounded-xl border border-green-50 mb-4">
+                   <label className="text-xs font-bold text-green-700 uppercase mb-1 block">Session Commitment</label>
+                   <div className="flex gap-2">
+                     {[30, 60, 90, 120].map(mins => (
+                       <button
+                         key={mins}
+                         onClick={() => setSessionGoal(mins)}
+                         className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                           sessionGoal === mins 
+                             ? 'bg-green-600 text-white shadow-md' 
+                             : 'bg-white text-gray-500 hover:bg-green-50'
+                         }`}
+                       >
+                         {mins}m
+                       </button>
+                     ))}
                    </div>
                  </div>
               )}
 
               {/* Control Buttons */}
-              <div className="mt-2">
+              <div className="space-y-4 mb-0">
                 <ControlButtons
                   isTracking={isTracking}
                   isPaused={isPaused}
@@ -346,13 +348,13 @@ const TimeTracker = () => {
 
           {/* History Tab Content */}
           <div className={activeTab === TABS.HISTORY ? 'block' : 'hidden'}>
-              <div className="pt-4">
+              <div className="pt-4 pb-20">
                 <h2 className="text-2xl font-bold text-green-800 mb-6 text-center">
                   Work History
                 </h2>
 
                 {/* Sub-navigation for History */}
-                <div className="flex justify-center mb-6 bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-[320px]">
+                <div className="flex justify-center mb-6 bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-[200px]">
                   <button
                     onClick={() => setHistoryView('log')}
                     className={`flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition-all ${
@@ -393,23 +395,110 @@ const TimeTracker = () => {
               </div>
           </div>
 
-          {/* Focus Timer Content */}
-          <div className={activeTab === TABS.FOCUS ? 'block' : 'hidden'}>
-            <div className="pt-4">
-              <FocusTimer />
-            </div>
-          </div>
+
 
           {/* Tasks Tab Content */}
           <div className={activeTab === TABS.TASKS ? 'block' : 'hidden'}>
-            <div className="pt-4">
-              <TaskList />
+            <div className="pt-4 pb-20">
+              <div className="flex justify-end px-4 mb-2">
+                 {/* Top toggle removed in favor of task-specific focus */}
+              </div>
+              
+              <TaskList onFocus={(task) => {
+                setFocusedTask(task);
+                setCountdown(5);
+                setShowFocusTimer(true);
+              }} />
+              
+              {showFocusTimer && (
+                <div className="fixed top-0 bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-[100] bg-white dark:bg-slate-950 animate-in fade-in duration-300 flex flex-col shadow-2xl">
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800">
+                    <h2 className="text-lg font-bold text-green-800 dark:text-green-400">Focus Mode</h2>
+                    <button 
+                      onClick={() => {
+                        setShowFocusTimer(false);
+                        setFocusedTask(null);
+                      }}
+                      className="p-2 text-gray-500 hover:text-green-600 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 overflow-y-auto p-4 pb-24 relative">
+                     {countdown > 0 ? (
+                       <div className="absolute inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col items-center justify-center animate-in fade-in duration-300">
+                         <div className="text-sm font-bold uppercase tracking-widest mb-4 text-green-600 dark:text-green-400 opacity-80">Get Ready</div>
+                         <div className="text-9xl font-black text-green-600 dark:text-green-400 animate-pulse">
+                           {countdown}
+                         </div>
+                         <div className="mt-12 text-center px-6">
+                            <div className="text-xl font-bold mb-1 text-gray-900 dark:text-white">{focusedTask?.name}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">Starting in a few seconds...</div>
+                         </div>
+                         <button 
+                            onClick={() => {
+                              setCountdown(0);
+                              setFocusedTask(null);
+                              setShowFocusTimer(false);
+                            }}
+                            className="mt-20 px-6 py-2 rounded-full border border-gray-200 dark:border-slate-800 text-xs font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-50 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                       </div>
+                     ) : (
+                       <div className="animate-in fade-in duration-700">
+                         {/* Timer Section */}
+                         <div className="mb-8">
+                            <FocusTimer 
+                              initialMinutes={focusedTask ? (() => {
+                                const timeStr = focusedTask.estimatedTime || '25m';
+                                const match = timeStr.match(/(\d+)\s*(m|h|min|hour)?/i);
+                                if (!match) return 25;
+                                const val = parseInt(match[1]);
+                                const unit = match[2]?.toLowerCase();
+                                if (unit === 'h' || unit === 'hour') return val * 60;
+                                return val;
+                              })() : 25} 
+                              autoStart={true}
+                            />
+                         </div>
+
+                         {/* Active Task Display */}
+                         {focusedTask && (
+                           <div className="bg-green-50 dark:bg-green-900/10 rounded-2xl p-6 border border-green-100 dark:border-green-800/30 text-center space-y-3">
+                              <h3 className="text-sm font-bold text-green-600 dark:text-green-400 uppercase tracking-wide">Current Task</h3>
+                              <div className="text-xl font-bold text-gray-900 dark:text-white">
+                                {focusedTask.name}
+                              </div>
+                              {focusedTask.estimatedTime && (
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-slate-800 text-sm font-medium text-gray-600 dark:text-gray-300 shadow-sm">
+                                   <Timer className="w-3.5 h-3.5" />
+                                   <span>{focusedTask.estimatedTime}</span>
+                                </div>
+                              )}
+                           </div>
+                         )}
+                         
+                         {!focusedTask && (
+                            <div className="text-center text-gray-500 italic p-4">
+                              No specific task selected.
+                            </div>
+                         )}
+                       </div>
+                     )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Profile Tab Content */}
           <div className={activeTab === TABS.PROFILE ? 'block' : 'hidden'}>
-            <div className="pt-4">
+            <div className="pt-4 pb-20">
               <Profile 
                 grindMode={grindMode} 
                 setGrindMode={handleGrindModeChange}
@@ -421,13 +510,13 @@ const TimeTracker = () => {
 
           {/* Social Tab Content - Leaderboard & Pods */}
           <div className={activeTab === TABS.LEADERBOARD ? 'block' : 'hidden'}>
-            <div className="pt-4 space-y-6">
+            <div className="pt-4 space-y-6 pb-20">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">
                 🏆 Social & Community
               </h2>
               
               {/* Sub-navigation for Social */}
-              <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-md">
+              <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-[320px]">
                 <button
                   onClick={() => setSocialView('leaderboard')}
                   className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
@@ -480,14 +569,14 @@ const TimeTracker = () => {
 
           {/* Goals Tab Content */}
           <div className={activeTab === TABS.GOALS ? 'block' : 'hidden'}>
-            <div className="pt-4">
+            <div className="pt-4 pb-20">
               <GoalsTab />
             </div>
           </div>
 
           {/* Insights Tab Content - Deep Work Score, Weekly Digest, Certificate */}
           <div className={activeTab === TABS.INSIGHTS ? 'block' : 'hidden'}>
-            <div className="pt-4 space-y-6">
+            <div className="pt-4 space-y-6 pb-20">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
                 🧠 Deep Work Insights
               </h2>
@@ -496,7 +585,7 @@ const TimeTracker = () => {
               <CommunityBanner />
               
               {/* Sub-navigation for Insights */}
-              <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-md">
+              <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto">
                 <button
                   onClick={() => setInsightsView('score')}
                   className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
@@ -561,22 +650,15 @@ const TimeTracker = () => {
 
           {/* Social Notification System */}
           {!grindMode && <SocialNotification />}
-
-          {/* AI Coach Support System */}
-          {!grindMode && <AICoach 
-            isTimerRunning={isTracking} 
-            sessionGoal={sessionGoal} 
-            progress={totalWorkTime ? parseFloat(formatTimeToHours(totalWorkTime)) * 60 : 0} 
-          />}
-
-          {/* Footer */}
-          <div className="text-center mt-8 text-green-600 text-sm">
-            Track your productivity with ease
-          </div>
-        </div>
       </div>
-    </div>
+
+      <MobileBottomNav 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        tabs={visibleTabs} 
+      />
+    </MobileLayout>
   );
 };
 
-export default TimeTracker;
+export default MobileTimeTracker;

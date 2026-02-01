@@ -6,10 +6,10 @@ import { formatDurationHours } from '../../utils/timeUtils';
  */
 export const TodayTotal = ({ hours }) => {
   return (
-    <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 mb-6 border border-green-200 dark:border-green-800">
+    <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-2 mb-5 border border-green-200 dark:border-green-800 shadow-sm">
       <div className="text-center text-green-700 dark:text-green-300">
-        <div className="text-sm font-medium mb-1">Today's Total</div>
-        <div className="text-2xl font-mono font-bold">
+        <div className="text-[9px] font-bold uppercase mb-0.5 tracking-tight">Today's Total</div>
+        <div className="text-lg font-mono font-bold">
           {formatDurationHours(hours)}
         </div>
       </div>

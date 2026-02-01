@@ -1,6 +1,6 @@
-import { Check, Trash2, Clock } from 'lucide-react';
+import { Check, Trash2, Clock, ChevronRight } from 'lucide-react';
 
-const TaskItem = ({ task, onToggle, onDelete }) => {
+const TaskItem = ({ task, onToggle, onDelete, onFocus }) => {
   return (
     <div className={`group flex items-center justify-between p-3 rounded-lg border transition-all ${
       task.completed 
@@ -36,13 +36,24 @@ const TaskItem = ({ task, onToggle, onDelete }) => {
         </div>
       </div>
 
-      <button
-        onClick={() => onDelete(task.id)}
-        className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1"
-        title="Delete task"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
+  <div className="flex items-center">
+        <button
+          onClick={() => onFocus && onFocus(task)}
+          className="flex items-center gap-1 px-2.5 py-1.5 mr-2 rounded-full bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50 transition-colors shadow-sm text-xs font-bold uppercase tracking-wide"
+          title="Start task session"
+        >
+          <span>Start</span>
+          <ChevronRight className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={() => onDelete(task.id)}
+          className="text-gray-400 hover:text-red-500 transition-all p-1"
+          title="Delete task"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 };

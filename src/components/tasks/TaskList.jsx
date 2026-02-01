@@ -1,57 +1,77 @@
 import { useState, useEffect } from 'react';
-import { Plus, CheckSquare } from 'lucide-react';
+import { Plus, CheckSquare, Timer } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import TaskItem from './TaskItem';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
-const TaskList = () => {
+const TaskList = ({ onFocus }) => {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState(() => {
+    // Initial load from localStorage for instant result
+    const stored = localStorage.getItem('lockin_tasks_offline');
+    return stored ? JSON.parse(stored) : [];
+  });
   const [newTaskName, setNewTaskName] = useState('');
   const [newTime, setNewTime] = useState('');
 
-  // Load tasks from API
+  // Sync to localStorage whenever tasks change
+  useEffect(() => {
+    localStorage.setItem('lockin_tasks_offline', JSON.stringify(tasks));
+  }, [tasks]);
+
+  // Load tasks from API but don't overwrite if failed
   useEffect(() => {
     if (!user) return;
     const fetchTasks = async () => {
       try {
         const res = await api.get('/tasks');
-        setTasks(res.data);
+        if (res.data && Array.isArray(res.data)) {
+          setTasks(res.data);
+        }
       } catch (error) {
-        console.error("Failed to load tasks", error);
+        console.warn("Backend unavailable, using local storage", error);
       }
     };
     fetchTasks();
   }, [user]);
 
   const addTask = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    
     if (!newTaskName.trim()) return;
 
+    const newTask = {
+      id: Date.now().toString(), // Temporary ID for frontend
+      name: newTaskName.trim(),
+      estimatedTime: newTime.trim(),
+      completed: false,
+      createdAt: new Date().toISOString()
+    };
+
+    // Update UI immediately (Local First)
+    setTasks(prev => [newTask, ...prev]);
+    setNewTaskName('');
+    setNewTime('');
+
+    // Try to sync with BE in background
     try {
-      const res = await api.post('/tasks', {
-        name: newTaskName.trim(),
-        estimatedTime: newTime.trim()
-      });
-      setTasks([res.data, ...tasks]);
-      setNewTaskName('');
-      setNewTime('');
+      const res = await api.post('/tasks', newTask);
+      // Update with server ID if successful
+      setTasks(prev => prev.map(t => t.id === newTask.id ? res.data : t));
     } catch (error) {
-      console.error("Failed to add task", error);
+      console.warn("Failed to sync new task to backend", error);
     }
   };
 
   const toggleTask = async (id) => {
-    // Find task to get current status
     const task = tasks.find(t => t.id === id || t._id === id); 
-    // Mongo uses _id, but let's handle both for safety if mixed
-    const taskId = task._id || task.id;
+    if (!task) return;
     
-    // Optimistic update
     const isCompleting = !task.completed;
     
-    setTasks(tasks.map(t => {
+    // Optimistic Update
+    setTasks(prev => prev.map(t => {
        if ((t._id === id) || (t.id === id)) {
          if (isCompleting) {
            confetti({
@@ -70,24 +90,21 @@ const TaskList = () => {
     }));
 
     try {
+        const taskId = task._id || task.id;
         await api.patch(`/tasks/${taskId}`, { completed: isCompleting });
     } catch (error) {
-        console.error("Failed to update task", error);
-        // Revert optimization if needed, but for now log error
+        console.warn("Failed to sync toggle to backend", error);
     }
   };
 
   const deleteTask = async (id) => {
-    const task = tasks.find(t => t.id === id || t._id === id);
-    const taskId = task._id || task.id;
-
-    // Optimistic
-    setTasks(tasks.filter(t => t._id !== taskId && t.id !== taskId));
+    // Optimistic Update
+    setTasks(prev => prev.filter(t => t._id !== id && t.id !== id));
 
     try {
-      await api.delete(`/tasks/${taskId}`);
+      await api.delete(`/tasks/${id}`);
     } catch (error) {
-      console.error("Failed to delete task", error);
+      console.warn("Failed to sync delete to backend", error);
     }
   };
 
@@ -102,7 +119,46 @@ const TaskList = () => {
         </div>
         <h2 className="text-2xl font-bold text-green-800 dark:text-green-400">Tasks</h2>
         <p className="text-green-600 dark:text-green-400 text-sm">Manage your daily goals</p>
+        <div className="text-[10px] text-gray-400 mt-1">
+          User: {user ? user.email : 'Not logged in'} | Tasks: {tasks.length}
+        </div>
       </div>
+
+      <form onSubmit={addTask} className="bg-white dark:bg-slate-900/50 p-3 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 space-y-2.5 mb-8 relative z-10">
+        <div className="relative">
+          <input
+            type="text"
+            value={newTaskName}
+            onChange={(e) => setNewTaskName(e.target.value)}
+            placeholder="Type task name here..."
+            className="w-full pl-4 pr-10 py-2.5 rounded-xl bg-gray-50/50 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-700/50 focus:border-green-500/50 focus:bg-white dark:focus:bg-slate-800 outline-none transition-all text-sm dark:text-white dark:placeholder-gray-500 font-medium"
+          />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 dark:text-gray-600 pointer-events-none">
+             <CheckSquare className="w-4 h-4" />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={newTime}
+              onChange={(e) => setNewTime(e.target.value)}
+              placeholder="Time (e.g. 5m)"
+              className="w-full pl-4 pr-10 py-2.5 rounded-xl bg-gray-50/50 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-700/50 focus:border-green-500/50 focus:bg-white dark:focus:bg-slate-800 outline-none transition-all text-sm dark:text-white dark:placeholder-gray-500 font-medium"
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 dark:text-gray-600 pointer-events-none">
+               <Timer className="w-4 h-4" />
+            </div>
+          </div>
+          <button
+            type="submit"
+            className="px-5 py-2.5 bg-green-600 dark:bg-green-500 text-white rounded-xl hover:bg-green-700 dark:hover:bg-green-600 active:scale-95 transition-all flex items-center gap-1.5 text-sm font-bold shadow-md shadow-green-500/10"
+          >
+            <Plus className="w-4 h-4" />
+            Add
+          </button>
+        </div>
+      </form>
 
       <div className="space-y-4">
         {activeTasks.length > 0 && (
@@ -115,6 +171,7 @@ const TaskList = () => {
                   task={task} 
                   onToggle={toggleTask} 
                   onDelete={deleteTask}
+                  onFocus={onFocus}
                 />
               ))}
             </div>
@@ -138,40 +195,16 @@ const TaskList = () => {
         )}
 
         {tasks.length === 0 && (
-          <div className="text-center py-8 text-gray-400 dark:text-gray-500 text-sm">
-            No tasks yet. Add one above!
+          <div className="text-center py-12 px-4 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800">
+            <div className="text-gray-300 dark:text-gray-700 mb-2 flex justify-center">
+              <Plus className="w-12 h-12" />
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 font-medium">No tasks found</p>
+            <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Try typing a task name above and clicking 'Add'</p>
           </div>
         )}
       </div>
 
-      <form onSubmit={addTask} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 space-y-3">
-        <div>
-          <input
-            type="text"
-            value={newTaskName}
-            onChange={(e) => setNewTaskName(e.target.value)}
-            placeholder="What needs to be done?"
-            className="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border-transparent focus:bg-white dark:focus:bg-gray-600 focus:border-green-500 focus:ring-0 transition-colors text-sm dark:text-white dark:placeholder-gray-400"
-          />
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newTime}
-            onChange={(e) => setNewTime(e.target.value)}
-            placeholder="Est. time (e.g. 30m)"
-            className="flex-1 px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border-transparent focus:bg-white dark:focus:bg-gray-600 focus:border-green-500 focus:ring-0 transition-colors text-sm dark:text-white dark:placeholder-gray-400"
-          />
-          <button
-            type="submit"
-            disabled={!newTaskName.trim()}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:hover:bg-green-600 transition-colors flex items-center gap-2 text-sm font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            Add
-          </button>
-        </div>
-      </form>
     </div>
   );
 };

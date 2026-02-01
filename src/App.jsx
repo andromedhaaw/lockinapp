@@ -5,6 +5,7 @@ import PricingPage from './pages/PricingPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import MobileTimeTracker from './pages/MobileTimeTracker';
 import './index.css';
 
 import { AuthProvider } from './context/AuthContext';
@@ -20,6 +21,8 @@ function App() {
           <Route path="/signup" element={<Register />} />
           <Route path="/app" element={<TimeTracker />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/mobile" element={<Navigate to="/mobile/app" replace />} />
+          <Route path="/mobile/app" element={<MobileTimeTracker />} />
           {/* Support legacy route or random paths redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

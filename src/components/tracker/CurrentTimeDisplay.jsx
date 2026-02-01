@@ -7,13 +7,13 @@ import { Card } from '../ui';
  */
 export const CurrentTimeDisplay = ({ timeString }) => {
   return (
-    <Card className="mb-6">
-      <div className="text-center">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Clock className="w-5 h-5 text-green-600 dark:text-green-400" />
-          <span className="text-green-600 dark:text-green-400 font-medium">Current Time</span>
+    <Card className="mb-5">
+      <div className="text-center p-1.5">
+        <div className="flex items-center justify-center gap-1.5 mb-1">
+          <Clock className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+          <span className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase tracking-wide">Current Time</span>
         </div>
-        <div className="text-4xl font-mono font-bold text-green-800 dark:text-white">
+        <div className="text-xl font-mono font-bold text-green-800 dark:text-white">
           {timeString}
         </div>
       </div>

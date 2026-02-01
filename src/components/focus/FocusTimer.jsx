@@ -1,13 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Timer, Settings2 } from 'lucide-react';
 
-const FocusTimer = () => {
-  const [minutes, setMinutes] = useState(25);
+const FocusTimer = ({ initialMinutes = 25, autoStart = false }) => {
+  const [minutes, setMinutes] = useState(initialMinutes);
   const [seconds, setSeconds] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [customMinutes, setCustomMinutes] = useState(25);
+  const [customMinutes, setCustomMinutes] = useState(initialMinutes);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Auto-start effect
+  useEffect(() => {
+    if (autoStart) {
+      setIsActive(true);
+      setIsPaused(false);
+    }
+  }, [autoStart]);
 
   const resetTimer = useCallback(() => {
     setIsActive(false);

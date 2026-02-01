@@ -311,8 +311,8 @@ const TimeTracker = () => {
               {/* Session Goal Input (Accountability) */}
               {!isTracking && (
                  <div className="bg-white/50 p-2 rounded-xl border border-green-50 mb-4">
-                   <div className="flex flex-col sm:flex-row items-center gap-3">
-                     <label className="text-[10px] font-bold text-green-700 uppercase whitespace-nowrap">Commitment:</label>
+                   <div className="flex flex-col sm:flex-row items-center gap-4">
+                     <label className="text-[10px] font-bold text-green-700 uppercase whitespace-nowrap">Session Commitment:</label>
                      <div className="flex gap-1.5 w-full">
                        {[30, 60, 90, 120].map(mins => (
                          <button

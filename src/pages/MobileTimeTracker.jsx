@@ -315,7 +315,7 @@ const MobileTimeTracker = () => {
               {/* Session Goal Input (Accountability) */}
               {!isTracking && (
                  <div className="bg-white/50 p-3 rounded-xl border border-green-50 mb-4">
-                   <label className="text-xs font-bold text-green-700 uppercase mb-1 block">Session Commitment</label>
+                   <label className="text-xs font-bold text-green-700 uppercase mb-3 block">Session Commitment</label>
                    <div className="flex gap-2">
                      {[30, 60, 90, 120].map(mins => (
                        <button

@@ -11,6 +11,7 @@ import {
   Mail, 
   Copy, 
   Check,
+  CheckSquare,
   Calendar,
   Clock,
   TrendingUp,
@@ -131,101 +132,98 @@ export const WeeklyDigest = ({ sessionHistory = [], workHistory = {} }) => {
       {/* Digest Card */}
       <Card 
         ref={cardRef}
-        className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-6"
+        className="relative overflow-hidden bg-white dark:bg-slate-900 border-2 border-green-100 dark:border-green-900 shadow-xl p-0"
       >
-        {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-blue-500/20 to-cyan-500/20 rounded-full blur-3xl" />
-        
-        <div className="relative z-10">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Calendar className="w-4 h-4 text-purple-400" />
-                <span className="text-sm text-purple-300">Weekly Work Receipt</span>
-              </div>
-              <h2 className="text-xl font-bold">
-                {weekData.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {weekData.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </h2>
-            </div>
-            <div className={`px-3 py-1 rounded-full text-sm font-bold bg-gradient-to-r ${weekData.gradeInfo.color}`}>
-              {weekData.gradeInfo.grade} Score
-            </div>
+        {/* Receipt Header Style */}
+        <div className="bg-green-600 dark:bg-green-700 p-4 text-white text-center">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <Award className="w-5 h-5 text-green-200" />
+            <span className="text-xs font-black uppercase tracking-[0.2em]">Weekly Work Receipt</span>
           </div>
+          <h2 className="text-2xl font-black">
+            {weekData.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — {weekData.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </h2>
+        </div>
+
+        <div className="p-6 relative">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -mr-16 -mt-16 blur-2xl" />
 
           {/* Main Stats */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-              <div className="flex items-center gap-2 text-purple-300 mb-2">
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/50 rounded-2xl p-4 text-center">
+              <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-400 mb-1">
                 <Clock className="w-4 h-4" />
-                <span className="text-sm">Total Deep Work</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Total Deep Work</span>
               </div>
-              <div className="text-3xl font-bold">{weekData.totalHours}h</div>
+              <div className="text-4xl font-black text-green-800 dark:text-green-200">{weekData.totalHours}h</div>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-              <div className="flex items-center gap-2 text-purple-300 mb-2">
+            <div className="bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/50 rounded-2xl p-4 text-center">
+              <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-400 mb-1">
                 <Zap className="w-4 h-4" />
-                <span className="text-sm">Focus Score</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Focus Score</span>
               </div>
-              <div className="text-3xl font-bold">{weekData.score}<span className="text-lg text-purple-300">/100</span></div>
+              <div className="text-4xl font-black text-green-800 dark:text-green-200">
+                {weekData.score}<span className="text-lg opacity-50">/100</span>
+              </div>
+              <div className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 dark:bg-green-800/50 text-green-700 dark:text-green-300`}>
+                Grade: {weekData.gradeInfo.grade}
+              </div>
             </div>
           </div>
 
           {/* Mini Chart */}
-          <div className="mb-6">
-            <div className="text-sm text-purple-300 mb-3">Daily Distribution</div>
-            <div className="flex items-end justify-between h-20 gap-2">
+          <div className="mb-10 p-4 bg-green-50/50 dark:bg-green-900/5 rounded-2xl border border-green-100 dark:border-green-800/30">
+            <div className="text-[10px] font-bold uppercase text-green-700 dark:text-green-400 mb-4 tracking-widest text-center">Daily Distribution</div>
+            <div className="flex items-end justify-between h-24 gap-3">
               {weekData.dailyData.map((day, index) => (
-                <div key={index} className="flex-1 flex flex-col items-center gap-1">
+                <div key={index} className="flex-1 flex flex-col items-center gap-2">
                   <div 
-                    className={`w-full rounded-t-lg transition-all ${
+                    className={`w-full rounded-t-sm transition-all shadow-sm ${
                       day.hours === weekData.peakDay.hours && day.hours > 0
-                        ? 'bg-gradient-to-t from-yellow-500 to-yellow-400'
+                        ? 'bg-yellow-400 dark:bg-yellow-500'
                         : day.hours > 0
-                          ? 'bg-gradient-to-t from-purple-500 to-pink-400'
-                          : 'bg-white/10'
+                          ? 'bg-green-500 dark:bg-green-400'
+                          : 'bg-green-200/30 dark:bg-green-800/20'
                     }`}
                     style={{ 
                       height: `${(day.hours / maxHours) * 100}%`,
                       minHeight: day.hours > 0 ? '8px' : '4px'
                     }}
                   />
-                  <span className="text-xs text-purple-300">{day.dayName[0]}</span>
+                  <span className="text-[10px] font-bold text-green-700/50 dark:text-green-400/50">{day.dayName[0]}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Additional Stats */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-3 mb-8 border-y border-green-100 dark:border-green-800/50 py-6">
             <div className="text-center">
-              <div className="text-2xl font-bold">{weekData.activeDays}</div>
-              <div className="text-xs text-purple-300">Active Days</div>
+              <div className="text-xl font-black text-green-800 dark:text-green-200">{weekData.activeDays}</div>
+              <div className="text-[9px] font-bold uppercase tracking-wider text-green-700/60 dark:text-green-400/60">Active Days</div>
+            </div>
+            <div className="text-center border-x border-green-100 dark:border-green-800/50">
+              <div className="text-xl font-black text-green-800 dark:text-green-200">{weekData.avgHours}h</div>
+              <div className="text-[9px] font-bold uppercase tracking-wider text-green-700/60 dark:text-green-400/60">Daily Avg</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">{weekData.avgHours}h</div>
-              <div className="text-xs text-purple-300">Daily Avg</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">
+              <div className="text-xl font-black text-green-800 dark:text-green-200">
                 {weekData.peakDay.date?.toLocaleDateString('en-US', { weekday: 'short' }) || '-'}
               </div>
-              <div className="text-xs text-purple-300">Peak Day</div>
+              <div className="text-[9px] font-bold uppercase tracking-wider text-green-700/60 dark:text-green-400/60">Peak Day</div>
             </div>
           </div>
 
           {/* Verification Badge */}
-          <div className="flex items-center justify-center gap-2 py-3 px-4 bg-white/5 rounded-xl mb-6">
-            <Award className="w-4 h-4 text-green-400" />
-            <span className="text-sm text-green-300">Verified by Lock In Work</span>
-            <Sparkles className="w-3 h-3 text-yellow-400" />
+          <div className="flex items-center justify-center gap-2 py-3 px-4 bg-green-50 dark:bg-green-900/20 rounded-xl mb-8 border border-green-100 dark:border-green-800/50">
+            <CheckSquare className="w-4 h-4 text-green-600 dark:text-green-400" />
+            <span className="text-xs font-bold text-green-800 dark:text-green-300 uppercase tracking-widest">Verified by Lock In Work</span>
           </div>
 
           {/* Branding */}
-          <div className="flex items-center justify-center gap-2 text-purple-300/60">
-            <span className="text-2xl">🔒</span>
-            <span className="text-sm font-medium">Lock In Work</span>
+          <div className="flex items-center justify-center gap-2 opacity-30 dark:opacity-50">
+            <span className="text-xl">🔒</span>
+            <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-900 dark:text-white">Lock In Work</span>
           </div>
         </div>
       </Card>

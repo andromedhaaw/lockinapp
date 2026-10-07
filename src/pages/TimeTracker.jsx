@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, History, Calendar, Timer, CheckSquare, User, Trophy, Lock, Brain, Leaf } from 'lucide-react';
+import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Trophy, Lock, Brain, Leaf, ChevronDown } from 'lucide-react';
 import { TabNavigation } from '../components/ui';
-import { GardenTab } from '../components/garden';
+import { WebGardenTab as GardenTab } from '../components/garden/web';
+import { TodayPlanner } from '../components/today';
 import {
   CurrentTimeDisplay,
   WorkTimerDisplay,
@@ -21,11 +22,13 @@ import { useCurrentTime, useWorkTimer, useWorkHistory } from '../hooks';
 import { useGarden } from '../context/GardenContext';
 import { FocusTimer } from '../components/focus';
 import { TaskList } from '../components/tasks';
+import { TodoPage } from '../components/todo';
+import { DeadlinePage } from '../components/deadline';
 import { Profile } from '../components/profile';
 import { Leaderboard, SocialNotification, CommunityBanner, EncouragementModal, RivalActivityFeed } from '../components/social';
 import { GoalsTab } from '../components/goals';
 import { AnalyticsTab } from '../components/analytics';
-import { AICoach } from '../components/support';
+
 import { DeepWorkScore } from '../components/insights';
 import { WeeklyDigest } from '../components/digest';
 import { AccountabilityPods } from '../components/pods';
@@ -34,14 +37,15 @@ import { formatTimeToHours, getDateKey } from '../utils/timeUtils';
 import { TABS, HISTORY_PERIODS } from '../constants';
 
 const tabs = [
+  { id: TABS.TODAY, label: 'Today', icon: CalendarDays },
   { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
   { id: TABS.FOCUS, label: 'Focus', icon: Timer },
   { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
+  { id: TABS.TODO, label: 'To Do', icon: CheckSquare },
+  { id: TABS.DEADLINE, label: 'Deadline', icon: CalendarDays },
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
-  { id: TABS.INSIGHTS, label: 'Insights', icon: Brain },
   { id: TABS.GARDEN, label: 'Garden', icon: Leaf },
   { id: TABS.LEADERBOARD, label: 'Social', icon: Trophy },
-  { id: TABS.HISTORY, label: 'History', icon: History },
   { id: TABS.PROFILE, label: 'Profile', icon: User },
 ];
 
@@ -54,11 +58,26 @@ const historyPeriods = [
 /**
  * Main TimeTracker page component
  */
-const TimeTracker = () => {
-  const [activeTab, setActiveTab] = useState(TABS.TRACKER);
+const TimeTracker = ({ initialTab }) => {
+  const [activeTab, setActiveTab] = useState(() => initialTab || TABS.TODAY);
   const [grindMode, setGrindMode] = useState(() => {
     return localStorage.getItem('lockin_grindMode') === 'true';
   });
+
+  // ADHD Mode: Simplified UI, reduced tabs, anti-overwhelm
+  const [adhdMode, setAdhdMode] = useState(() => {
+    const saved = localStorage.getItem('lockin_adhdMode');
+    return saved !== null ? saved === 'true' : true; // Default ON to prevent overwhelm
+  });
+
+  const handleAdhdModeChange = (val) => {
+    try {
+      setAdhdMode(val);
+      localStorage.setItem('lockin_adhdMode', val);
+    } catch (e) {
+      console.error("Storage error");
+    }
+  };
 
   // Persist grindMode
   const handleGrindModeChange = (val) => {
@@ -100,8 +119,10 @@ const TimeTracker = () => {
   // Accountability: Session Goal (default 60m)
   const [sessionGoal, setSessionGoal] = useState(60);
 
-  // History Tab specific state
+  // History & Insights Tab specific state
   const [historyView, setHistoryView] = useState('log'); // 'log' or 'analytics'
+  const [showTrackerHistory, setShowTrackerHistory] = useState(false);
+  const [showTrackerInsights, setShowTrackerInsights] = useState(false);
 
   // Insights Tab specific state
   const [insightsView, setInsightsView] = useState('score'); // 'score', 'digest', 'certificate'
@@ -158,8 +179,29 @@ const TimeTracker = () => {
     : 0;
   const todayTotalHours = todayStoredHours + currentSessionHours;
 
-  // Ensure all tabs are visible on web version
-  const visibleTabs = tabs;
+  // ADHD Calm tabs (essential 6 tabs: Today, Focus, Tasks, Tracker, Garden, Settings)
+  const adhdTabs = [
+    { id: TABS.TODAY, label: 'Today', icon: CalendarDays },
+    { id: TABS.FOCUS, label: 'Focus', icon: Timer },
+    { id: TABS.TODO, label: 'To Do', icon: CheckSquare },
+    { id: TABS.DEADLINE, label: 'Deadline', icon: CalendarDays },
+    { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
+    { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
+    { id: TABS.GARDEN, label: 'Garden', icon: Leaf },
+    { id: TABS.PROFILE, label: 'Settings', icon: User },
+  ];
+
+  const visibleTabs = adhdMode ? adhdTabs : tabs;
+
+  // Auto-redirect if active tab is hidden in current mode
+  useEffect(() => {
+    if (adhdMode) {
+      const isCurrentVisible = adhdTabs.some(t => t.id === activeTab);
+      if (!isCurrentVisible) {
+        setActiveTab(TABS.FOCUS);
+      }
+    }
+  }, [adhdMode, activeTab]);
 
   // Wrapper to show encouragement modal when finishing session
   const handleFinishWithEncouragement = () => {
@@ -286,7 +328,7 @@ const TimeTracker = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
+    <div className="min-h-screen dark:bg-slate-950 transition-colors duration-300" style={{ background: 'linear-gradient(160deg, #f8f9ff 0%, #f3f4f6 100%)' }}>
       {/* Tab Navigation */}
       <TabNavigation
         tabs={visibleTabs}
@@ -294,8 +336,11 @@ const TimeTracker = () => {
         onTabChange={setActiveTab}
       />
 
-      <div className="p-4 sm:p-6 pb-32">
-        <div className={`${activeTab === TABS.GARDEN ? 'max-w-7xl' : 'max-w-3xl'} mx-auto transition-all duration-500`}>
+      {activeTab === TABS.TODAY ? (
+        <TodayPlanner onStartFocus={() => setActiveTab(TABS.FOCUS)} />
+      ) : (
+        <div className="p-4 sm:p-6 pb-32">
+          <div className={`${activeTab === TABS.GARDEN ? 'max-w-7xl' : 'max-w-3xl'} mx-auto transition-all duration-500`}>
           {/* Tracker Tab Content */}
           <div className={activeTab === TABS.TRACKER ? 'block' : 'hidden'}>
               {/* Header */}
@@ -362,55 +407,156 @@ const TimeTracker = () => {
                   onFinish={handleFinishWithEncouragement}
                 />
               </div>
-          </div>
 
-          {/* History Tab Content */}
-          <div className={activeTab === TABS.HISTORY ? 'block' : 'hidden'}>
-              <div className="pt-4">
-                <h2 className="text-2xl font-bold text-green-800 mb-6 text-center">
-                  Work History
-                </h2>
+              {/* Action Buttons: Work History & Insights in Tracker Page */}
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <button
+                  onClick={() => {
+                    setShowTrackerHistory(!showTrackerHistory);
+                    if (!showTrackerHistory) setShowTrackerInsights(false);
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-xs ${
+                    showTrackerHistory
+                      ? 'bg-green-600 text-white shadow-md'
+                      : 'bg-white dark:bg-slate-800 border border-green-200 dark:border-slate-700 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <History className="w-4 h-4" />
+                  <span>{showTrackerHistory ? 'Tutup History' : 'Work History'}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showTrackerHistory ? 'rotate-180' : ''}`} />
+                </button>
 
-                {/* Sub-navigation for History */}
-                <div className="flex justify-center mb-6 bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-[320px]">
-                  <button
-                    onClick={() => setHistoryView('log')}
-                    className={`flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                      historyView === 'log'
-                        ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-300'
-                    }`}
-                  >
-                    Log
-                  </button>
-                  <button
-                    onClick={() => setHistoryView('analytics')}
-                    className={`flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                      historyView === 'analytics'
-                        ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-300'
-                    }`}
-                  >
-                    Analytics
-                  </button>
-                </div>
-
-                {historyView === 'log' ? (
-                  <>
-                    {/* Period Selector */}
-                    <PeriodSelector
-                      periods={historyPeriods}
-                      activePeriod={historyPeriod}
-                      onPeriodChange={handlePeriodChange}
-                    />
-
-                    {/* Dynamic History Content */}
-                    {getHistoryContent()}
-                  </>
-                ) : (
-                  <AnalyticsTab />
-                )}
+                <button
+                  onClick={() => {
+                    setShowTrackerInsights(!showTrackerInsights);
+                    if (!showTrackerInsights) setShowTrackerHistory(false);
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-xs ${
+                    showTrackerInsights
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'bg-white dark:bg-slate-800 border border-indigo-200 dark:border-slate-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <Brain className="w-4 h-4" />
+                  <span>{showTrackerInsights ? 'Tutup Insights' : 'Deep Work Insights'}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showTrackerInsights ? 'rotate-180' : ''}`} />
+                </button>
               </div>
+
+              {/* Collapsible Work History Content Inside Tracker Page */}
+              {showTrackerHistory && (
+                <div className="mt-8 pt-6 border-t border-green-100 dark:border-slate-800 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <h2 className="text-xl font-bold text-green-800 dark:text-green-300 mb-6 text-center">
+                    Work History
+                  </h2>
+
+                  {/* Sub-navigation for History */}
+                  <div className="flex justify-center mb-6 bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-[320px]">
+                    <button
+                      onClick={() => setHistoryView('log')}
+                      className={`flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                        historyView === 'log'
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-300'
+                      }`}
+                    >
+                      Log
+                    </button>
+                    <button
+                      onClick={() => setHistoryView('analytics')}
+                      className={`flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                        historyView === 'analytics'
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-300'
+                      }`}
+                    >
+                      Analytics
+                    </button>
+                  </div>
+
+                  {historyView === 'log' ? (
+                    <>
+                      {/* Period Selector */}
+                      <PeriodSelector
+                        periods={historyPeriods}
+                        activePeriod={historyPeriod}
+                        onPeriodChange={handlePeriodChange}
+                      />
+
+                      {/* Dynamic History Content */}
+                      {getHistoryContent()}
+                    </>
+                  ) : (
+                    <AnalyticsTab />
+                  )}
+                </div>
+              )}
+
+              {/* Collapsible Insights Content Inside Tracker Page */}
+              {showTrackerInsights && (
+                <div className="mt-8 pt-6 border-t border-indigo-100 dark:border-slate-800 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-4">
+                    🧠 Deep Work Insights
+                  </h2>
+
+                  {/* Community Banner */}
+                  <CommunityBanner />
+
+                  {/* Sub-navigation for Insights */}
+                  <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-md">
+                    <button
+                      onClick={() => setInsightsView('score')}
+                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                        insightsView === 'score'
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
+                          : 'text-gray-500 hover:text-green-600'
+                      }`}
+                    >
+                      Score
+                    </button>
+                    <button
+                      onClick={() => setInsightsView('digest')}
+                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                        insightsView === 'digest'
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
+                          : 'text-gray-500 hover:text-green-600'
+                      }`}
+                    >
+                      Weekly Report
+                    </button>
+                    <button
+                      onClick={() => setInsightsView('certificate')}
+                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                        insightsView === 'certificate'
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
+                          : 'text-gray-500 hover:text-green-600'
+                      }`}
+                    >
+                      Certificate
+                    </button>
+                  </div>
+
+                  {/* Insights Content */}
+                  {insightsView === 'score' && (
+                    <div className="space-y-4">
+                      <DeepWorkScore sessionHistory={sessionHistory} period="today" />
+                      <DeepWorkScore sessionHistory={sessionHistory} period="week" />
+                    </div>
+                  )}
+
+                  {insightsView === 'digest' && (
+                    <WeeklyDigest sessionHistory={sessionHistory} workHistory={workHistoryData} />
+                  )}
+
+                  {insightsView === 'certificate' && (
+                    <WorkCertificate 
+                      userName="Professional User"
+                      totalHours={Object.values(workHistoryData).reduce((sum, h) => sum + h, 0)}
+                      projectName="Deep Work"
+                    />
+                  )}
+                </div>
+              )}
           </div>
 
           {/* Focus Timer Content */}
@@ -474,11 +620,22 @@ const TimeTracker = () => {
           {/* Tasks Tab Content */}
           <div className={activeTab === TABS.TASKS ? 'block' : 'hidden'}>
             <div className="pt-4">
-              <TaskList onFocus={(task) => {
-                setFocusedTask(task);
-                setCountdown(5);
+              <TaskList onFocus={(task, customMinutes) => {
+                if (customMinutes) {
+                  setFocusedTask({ ...task, estimatedTime: `${customMinutes}m` });
+                } else {
+                  setFocusedTask(task);
+                }
+                setCountdown(3);
                 setActiveTab(TABS.FOCUS);
               }} />
+            </div>
+          </div>
+
+          {/* To Do Tab Content */}
+          <div className={activeTab === TABS.TODO ? 'block' : 'hidden'}>
+            <div className="-mx-4 sm:-mx-6">
+              <TodoPage />
             </div>
           </div>
 
@@ -490,6 +647,8 @@ const TimeTracker = () => {
                 setGrindMode={handleGrindModeChange}
                 darkMode={darkMode}
                 setDarkMode={handleThemeChange}
+                adhdMode={adhdMode}
+                setAdhdMode={handleAdhdModeChange}
               />
             </div>
           </div>
@@ -567,71 +726,12 @@ const TimeTracker = () => {
             </div>
           </div>
 
-          {/* Insights Tab Content - Deep Work Score, Weekly Digest, Certificate */}
-          <div className={activeTab === TABS.INSIGHTS ? 'block' : 'hidden'}>
-            <div className="pt-4 space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
-                🧠 Deep Work Insights
-              </h2>
-              
-              {/* Community Banner */}
-              <CommunityBanner />
-              
-              {/* Sub-navigation for Insights */}
-              <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-md">
-                <button
-                  onClick={() => setInsightsView('score')}
-                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                    insightsView === 'score'
-                      ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                      : 'text-gray-500 hover:text-green-600'
-                  }`}
-                >
-                  Score
-                </button>
-                <button
-                  onClick={() => setInsightsView('digest')}
-                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                    insightsView === 'digest'
-                      ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                      : 'text-gray-500 hover:text-green-600'
-                  }`}
-                >
-                  Weekly Report
-                </button>
-                <button
-                  onClick={() => setInsightsView('certificate')}
-                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                    insightsView === 'certificate'
-                      ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                      : 'text-gray-500 hover:text-green-600'
-                  }`}
-                >
-                  Certificate
-                </button>
-              </div>
-
-              {/* Insights Content */}
-              {insightsView === 'score' && (
-                <div className="space-y-4">
-                  <DeepWorkScore sessionHistory={sessionHistory} period="today" />
-                  <DeepWorkScore sessionHistory={sessionHistory} period="week" />
-                </div>
-              )}
-
-              {insightsView === 'digest' && (
-                <WeeklyDigest sessionHistory={sessionHistory} workHistory={workHistoryData} />
-              )}
-
-              {insightsView === 'certificate' && (
-                <WorkCertificate 
-                  userName="Professional User"
-                  totalHours={Object.values(workHistoryData).reduce((sum, h) => sum + h, 0)}
-                  projectName="Deep Work"
-                />
-              )}
-            </div>
+          {/* Deadline Tab Content */}
+          <div className={activeTab === TABS.DEADLINE ? 'block' : 'hidden'}>
+            <DeadlinePage tasks={[]} />
           </div>
+
+
 
           {/* Encouragement Modal - shows when session ends */}
           <EncouragementModal
@@ -644,12 +744,7 @@ const TimeTracker = () => {
           {/* Social Notification System */}
           {!grindMode && <SocialNotification />}
 
-          {/* AI Coach Support System */}
-          {!grindMode && <AICoach 
-            isTimerRunning={isTracking} 
-            sessionGoal={sessionGoal} 
-            progress={totalWorkTime ? parseFloat(formatTimeToHours(totalWorkTime)) * 60 : 0} 
-          />}
+
 
           {/* Footer */}
           <div className="text-center mt-8 text-green-600 text-sm">
@@ -657,6 +752,7 @@ const TimeTracker = () => {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };

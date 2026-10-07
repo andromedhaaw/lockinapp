@@ -11,10 +11,13 @@ export const STORAGE_KEYS = {
 };
 
 export const TABS = {
+  TODAY: 'today',
   TRACKER: 'tracker',
   HISTORY: 'history',
   FOCUS: 'focus',
   TASKS: 'tasks',
+  TODO: 'todo',
+  DEADLINE: 'deadline',
   PROFILE: 'profile',
   LEADERBOARD: 'leaderboard',
   GOALS: 'goals',

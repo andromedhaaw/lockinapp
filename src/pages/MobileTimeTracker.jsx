@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, History, Calendar, Timer, CheckSquare, User, Trophy, Lock, Brain } from 'lucide-react';
+import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Trophy, Lock, Brain, Sprout, ChevronDown } from 'lucide-react';
 import MobileLayout from '../components/mobile/MobileLayout';
 import MobileBottomNav from '../components/mobile/MobileBottomNav';
+import { TodayPlanner } from '../components/today';
 import {
   CurrentTimeDisplay,
   WorkTimerDisplay,
@@ -31,15 +32,16 @@ import { AccountabilityPods } from '../components/pods';
 import { WorkCertificate } from '../components/certificate';
 import { formatTimeToHours, getDateKey } from '../utils/timeUtils';
 import { TABS, HISTORY_PERIODS } from '../constants';
+import GardenTab from '../components/garden/mobile/GardenTab';
 
 const tabs = [
+  { id: TABS.TODAY, label: 'Today', icon: CalendarDays },
   { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
   { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
-  { id: TABS.INSIGHTS, label: 'Insights', icon: Brain },
   { id: TABS.LEADERBOARD, label: 'Social', icon: Trophy },
-  { id: TABS.HISTORY, label: 'History', icon: History },
   { id: TABS.PROFILE, label: 'Profile', icon: User },
+  { id: TABS.GARDEN, label: 'Garden', icon: Sprout },
 ];
 
 const historyPeriods = [
@@ -97,8 +99,10 @@ const MobileTimeTracker = () => {
   // Accountability: Session Goal (default 60m)
   const [sessionGoal, setSessionGoal] = useState(60);
 
-  // History Tab specific state
+  // History & Insights Tab specific state
   const [historyView, setHistoryView] = useState('log'); // 'log' or 'analytics'
+  const [showTrackerHistory, setShowTrackerHistory] = useState(false);
+  const [showTrackerInsights, setShowTrackerInsights] = useState(false);
 
   // Insights Tab specific state
   const [insightsView, setInsightsView] = useState('score'); // 'score', 'digest', 'certificate'
@@ -283,6 +287,13 @@ const MobileTimeTracker = () => {
   return (
     <MobileLayout>
       <div className="p-4 flex-1 pb-0">
+          {/* Today Tab Content */}
+          <div className={activeTab === TABS.TODAY ? 'block' : 'hidden'}>
+            <div className="-mx-4 -mt-4 pb-20">
+              <TodayPlanner onStartFocus={() => setActiveTab(TABS.TASKS)} />
+            </div>
+          </div>
+
           {/* Tracker Tab Content */}
           <div className={activeTab === TABS.TRACKER ? 'block' : 'hidden'}>
               {/* Header */}
@@ -344,55 +355,156 @@ const MobileTimeTracker = () => {
                   onFinish={handleFinishWithEncouragement}
                 />
               </div>
-          </div>
 
-          {/* History Tab Content */}
-          <div className={activeTab === TABS.HISTORY ? 'block' : 'hidden'}>
-              <div className="pt-4 pb-20">
-                <h2 className="text-2xl font-bold text-green-800 mb-6 text-center">
-                  Work History
-                </h2>
+              {/* Action Buttons: Work History & Insights in Mobile Tracker Page */}
+              <div className="mt-5 flex flex-wrap justify-center gap-2 pb-6">
+                <button
+                  onClick={() => {
+                    setShowTrackerHistory(!showTrackerHistory);
+                    if (!showTrackerHistory) setShowTrackerInsights(false);
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs ${
+                    showTrackerHistory
+                      ? 'bg-green-600 text-white shadow-md'
+                      : 'bg-white dark:bg-slate-800 border border-green-200 dark:border-slate-700 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <History className="w-3.5 h-3.5" />
+                  <span>{showTrackerHistory ? 'Tutup History' : 'Work History'}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showTrackerHistory ? 'rotate-180' : ''}`} />
+                </button>
 
-                {/* Sub-navigation for History */}
-                <div className="flex justify-center mb-6 bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-[200px]">
-                  <button
-                    onClick={() => setHistoryView('log')}
-                    className={`flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                      historyView === 'log'
-                        ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-300'
-                    }`}
-                  >
-                    Log
-                  </button>
-                  <button
-                    onClick={() => setHistoryView('analytics')}
-                    className={`flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                      historyView === 'analytics'
-                        ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-300'
-                    }`}
-                  >
-                    Analytics
-                  </button>
-                </div>
-
-                {historyView === 'log' ? (
-                  <>
-                    {/* Period Selector */}
-                    <PeriodSelector
-                      periods={historyPeriods}
-                      activePeriod={historyPeriod}
-                      onPeriodChange={handlePeriodChange}
-                    />
-
-                    {/* Dynamic History Content */}
-                    {getHistoryContent()}
-                  </>
-                ) : (
-                  <AnalyticsTab />
-                )}
+                <button
+                  onClick={() => {
+                    setShowTrackerInsights(!showTrackerInsights);
+                    if (!showTrackerInsights) setShowTrackerHistory(false);
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs ${
+                    showTrackerInsights
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'bg-white dark:bg-slate-800 border border-indigo-200 dark:border-slate-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <Brain className="w-3.5 h-3.5" />
+                  <span>{showTrackerInsights ? 'Tutup Insights' : 'Deep Work Insights'}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showTrackerInsights ? 'rotate-180' : ''}`} />
+                </button>
               </div>
+
+              {/* Collapsible Work History Content */}
+              {showTrackerHistory && (
+                <div className="mt-4 pt-4 border-t border-green-100 dark:border-slate-800 pb-20 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <h2 className="text-xl font-bold text-green-800 dark:text-green-300 mb-4 text-center">
+                    Work History
+                  </h2>
+
+                  {/* Sub-navigation for History */}
+                  <div className="flex justify-center mb-6 bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-[200px]">
+                    <button
+                      onClick={() => setHistoryView('log')}
+                      className={`flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                        historyView === 'log'
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-300'
+                      }`}
+                    >
+                      Log
+                    </button>
+                    <button
+                      onClick={() => setHistoryView('analytics')}
+                      className={`flex-1 py-1.5 px-3 rounded-lg text-sm font-medium transition-all ${
+                        historyView === 'analytics'
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-300'
+                      }`}
+                    >
+                      Analytics
+                    </button>
+                  </div>
+
+                  {historyView === 'log' ? (
+                    <>
+                      {/* Period Selector */}
+                      <PeriodSelector
+                        periods={historyPeriods}
+                        activePeriod={historyPeriod}
+                        onPeriodChange={handlePeriodChange}
+                      />
+
+                      {/* Dynamic History Content */}
+                      {getHistoryContent()}
+                    </>
+                  ) : (
+                    <AnalyticsTab />
+                  )}
+                </div>
+              )}
+
+              {/* Collapsible Insights Content */}
+              {showTrackerInsights && (
+                <div className="mt-4 pt-4 border-t border-indigo-100 dark:border-slate-800 pb-20 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-4">
+                    🧠 Deep Work Insights
+                  </h2>
+
+                  {/* Community Banner */}
+                  <CommunityBanner />
+
+                  {/* Sub-navigation for Insights */}
+                  <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto">
+                    <button
+                      onClick={() => setInsightsView('score')}
+                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                        insightsView === 'score'
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
+                          : 'text-gray-500 hover:text-green-600'
+                      }`}
+                    >
+                      Score
+                    </button>
+                    <button
+                      onClick={() => setInsightsView('digest')}
+                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                        insightsView === 'digest'
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
+                          : 'text-gray-500 hover:text-green-600'
+                      }`}
+                    >
+                      Weekly Report
+                    </button>
+                    <button
+                      onClick={() => setInsightsView('certificate')}
+                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                        insightsView === 'certificate'
+                          ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
+                          : 'text-gray-500 hover:text-green-600'
+                      }`}
+                    >
+                      Certificate
+                    </button>
+                  </div>
+
+                  {/* Insights Content */}
+                  {insightsView === 'score' && (
+                    <div className="space-y-4">
+                      <DeepWorkScore sessionHistory={sessionHistory} period="today" />
+                      <DeepWorkScore sessionHistory={sessionHistory} period="week" />
+                    </div>
+                  )}
+
+                  {insightsView === 'digest' && (
+                    <WeeklyDigest sessionHistory={sessionHistory} workHistory={workHistoryData} />
+                  )}
+
+                  {insightsView === 'certificate' && (
+                    <WorkCertificate 
+                      userName="Professional User"
+                      totalHours={Object.values(workHistoryData).reduce((sum, h) => sum + h, 0)}
+                      projectName="Deep Work"
+                    />
+                  )}
+                </div>
+              )}
           </div>
 
 
@@ -508,6 +620,13 @@ const MobileTimeTracker = () => {
             </div>
           </div>
 
+          {/* Garden Tab Content */}
+          <div className={activeTab === TABS.GARDEN ? 'block' : 'hidden'}>
+            <div className="pt-4 pb-20">
+              <GardenTab />
+            </div>
+          </div>
+
           {/* Social Tab Content - Leaderboard & Pods */}
           <div className={activeTab === TABS.LEADERBOARD ? 'block' : 'hidden'}>
             <div className="pt-4 space-y-6 pb-20">
@@ -574,71 +693,7 @@ const MobileTimeTracker = () => {
             </div>
           </div>
 
-          {/* Insights Tab Content - Deep Work Score, Weekly Digest, Certificate */}
-          <div className={activeTab === TABS.INSIGHTS ? 'block' : 'hidden'}>
-            <div className="pt-4 space-y-6 pb-20">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
-                🧠 Deep Work Insights
-              </h2>
-              
-              {/* Community Banner */}
-              <CommunityBanner />
-              
-              {/* Sub-navigation for Insights */}
-              <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto">
-                <button
-                  onClick={() => setInsightsView('score')}
-                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                    insightsView === 'score'
-                      ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                      : 'text-gray-500 hover:text-green-600'
-                  }`}
-                >
-                  Score
-                </button>
-                <button
-                  onClick={() => setInsightsView('digest')}
-                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                    insightsView === 'digest'
-                      ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                      : 'text-gray-500 hover:text-green-600'
-                  }`}
-                >
-                  Weekly Report
-                </button>
-                <button
-                  onClick={() => setInsightsView('certificate')}
-                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                    insightsView === 'certificate'
-                      ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                      : 'text-gray-500 hover:text-green-600'
-                  }`}
-                >
-                  Certificate
-                </button>
-              </div>
 
-              {/* Insights Content */}
-              {insightsView === 'score' && (
-                <div className="space-y-4">
-                  <DeepWorkScore sessionHistory={sessionHistory} period="today" />
-                  <DeepWorkScore sessionHistory={sessionHistory} period="week" />
-                </div>
-              )}
-
-              {insightsView === 'digest' && (
-                <WeeklyDigest sessionHistory={sessionHistory} workHistory={workHistoryData} />
-              )}
-
-              {insightsView === 'certificate' && (
-                <WorkCertificate 
-                  userName="Professional User"
-                  totalHours={Object.values(workHistoryData).reduce((sum, h) => sum + h, 0)}
-                  projectName="Deep Work"
-                />
-              )}
-            </div>
-          </div>
 
           {/* Encouragement Modal - shows when session ends */}
           <EncouragementModal

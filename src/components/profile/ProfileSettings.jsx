@@ -1,9 +1,38 @@
-import { Moon, Bell } from 'lucide-react';
+import { Moon, Bell, Brain } from 'lucide-react';
 
-const ProfileSettings = ({ grindMode, setGrindMode, darkMode, setDarkMode }) => {
+const ProfileSettings = ({ grindMode, setGrindMode, darkMode, setDarkMode, adhdMode, setAdhdMode }) => {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6 space-y-4">
       <h3 className="font-bold text-gray-800 dark:text-white text-lg">Detailed Settings</h3>
+
+      {/* ADHD Calm Mode */}
+      <div className="flex items-center justify-between pb-3 border-b border-gray-50 dark:border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg ${adhdMode ? 'bg-amber-500 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-400'}`}>
+            <Brain className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+              <span>Mode Ramah ADHD</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-bold uppercase">Calm View</span>
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Sederhanakan navigasi, sembunyikan rivalitas/leaderboard untuk cegah overwhelm
+            </div>
+          </div>
+        </div>
+        
+        <button 
+          onClick={() => setAdhdMode && setAdhdMode(!adhdMode)}
+          className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
+            adhdMode ? 'bg-amber-500' : 'bg-gray-200 dark:bg-slate-700'
+          }`}
+        >
+          <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${
+            adhdMode ? 'translate-x-6' : 'translate-x-0'
+          }`} />
+        </button>
+      </div>
       
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

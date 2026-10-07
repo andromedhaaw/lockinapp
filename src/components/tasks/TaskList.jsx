@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Plus, CheckSquare, Timer } from 'lucide-react';
+import { Plus, CheckSquare, Timer, Dices, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import TaskItem from './TaskItem';
+import TaskSpinnerModal from './TaskSpinnerModal';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -14,6 +15,7 @@ const TaskList = ({ onFocus }) => {
   });
   const [newTaskName, setNewTaskName] = useState('');
   const [newTime, setNewTime] = useState('');
+  const [showSpinnerModal, setShowSpinnerModal] = useState(false);
 
   // Sync to localStorage whenever tasks change
   useEffect(() => {
@@ -160,10 +162,47 @@ const TaskList = ({ onFocus }) => {
         </div>
       </form>
 
+      {/* ADHD Anti-Overwhelm: Spinner Wheel Trigger */}
+      {activeTasks.length > 0 && (
+        <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-emerald-500/10 dark:from-amber-950/20 dark:via-orange-950/20 dark:to-emerald-950/20 rounded-2xl border border-amber-200/60 dark:border-amber-800/40">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-pink-500 text-white flex items-center justify-center shadow-sm">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-gray-800 dark:text-gray-200">
+                Bingung mulai tugas yang mana?
+              </div>
+              <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                Pilih task dengan cara fun lewat Spinner Wheel! 🎡
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowSpinnerModal(true)}
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-bold shadow-md shadow-pink-500/20 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Spinner Wheel ({activeTasks.length})</span>
+          </button>
+        </div>
+      )}
+
       <div className="space-y-4">
         {activeTasks.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-xs font-semibold text-green-800 dark:text-green-400 uppercase tracking-wider pl-1">To Do</h3>
+            <div className="flex items-center justify-between pl-1">
+              <h3 className="text-xs font-semibold text-green-800 dark:text-green-400 uppercase tracking-wider">To Do</h3>
+              <button
+                type="button"
+                onClick={() => setShowSpinnerModal(true)}
+                className="text-[11px] text-pink-600 dark:text-pink-400 font-semibold hover:underline flex items-center gap-1"
+              >
+                <Sparkles className="w-3 h-3" />
+                <span>🎡 Spinner Wheel</span>
+              </button>
+            </div>
             <div className="space-y-2">
               {activeTasks.map(task => (
                 <TaskItem 
@@ -205,6 +244,17 @@ const TaskList = ({ onFocus }) => {
         )}
       </div>
 
+      {/* Task Spinner Wheel Modal */}
+      <TaskSpinnerModal
+        isOpen={showSpinnerModal}
+        onClose={() => setShowSpinnerModal(false)}
+        tasks={tasks}
+        onStartTask={(task, minutes) => {
+          if (onFocus) {
+            onFocus(task, minutes);
+          }
+        }}
+      />
     </div>
   );
 };

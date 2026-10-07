@@ -38,7 +38,10 @@
 
 @layer base {
   body {
-    @apply bg-white text-gray-900 transition-colors duration-300;
+    @apply text-gray-900 transition-colors duration-300;
+    background: linear-gradient(160deg, #f8f9ff 0%, #f3f4f6 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
   .dark body {
     @apply bg-slate-950 text-gray-100;

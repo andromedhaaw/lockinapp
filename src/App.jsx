@@ -22,6 +22,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Register />} />
           <Route path="/app" element={<TimeTracker />} />
+          <Route path="/today" element={<TimeTracker initialTab="today" />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/mobile" element={<Navigate to="/mobile/app" replace />} />
           <Route path="/mobile/app" element={<MobileTimeTracker />} />

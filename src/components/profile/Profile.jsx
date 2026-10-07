@@ -7,7 +7,7 @@ import ProfileSettings from './ProfileSettings';
 import { useWorkHistory } from '../../hooks';
 import { calculateStreak, calculateLevel } from '../../utils/gamificationUtils';
 
-const Profile = ({ grindMode, setGrindMode, darkMode, setDarkMode }) => {
+const Profile = ({ grindMode, setGrindMode, darkMode, setDarkMode, adhdMode, setAdhdMode }) => {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const { getTotalYearHours, getHoursForDate } = useWorkHistory();
   
@@ -56,6 +56,8 @@ const Profile = ({ grindMode, setGrindMode, darkMode, setDarkMode }) => {
         setGrindMode={setGrindMode}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
+        adhdMode={adhdMode}
+        setAdhdMode={setAdhdMode}
       />
 
       <ShareModal 

@@ -202,6 +202,13 @@ function TaskCard({ task, isOverdue, onToggle, zen }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
             <TagChip tag={task.tag} />
             <PriorityChip priority={task.priority} />
+            <span style={{
+              display: 'inline-flex', alignItems: 'center',
+              padding: '2px 8px', borderRadius: 99,
+              background: '#f3f4f6', color: '#6b7280', fontSize: 11, fontWeight: 700,
+            }}>
+              {Math.round((task.durationH || 1) * 60)} minutes
+            </span>
             {isOverdue && !task.done && (
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 3,

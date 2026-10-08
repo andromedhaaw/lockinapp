@@ -13,7 +13,7 @@ const DDAY_COLORS = {
   green: {
     id: 'green',
     label: 'Hijau',
-    gradient: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+    gradient: '#4dcd7d',
     border: '#bbf7d0',
     hoverBorder: '#86efac',
     textColor: '#ffffff',
@@ -85,13 +85,13 @@ function urgencyLevel(ms) {
   if (ms < MS.day)      return { label: 'Due today', color: '#f97316', bg: '#fff7ed', border: '#fed7aa' };
   if (ms < MS.day * 3)  return { label: 'Very soon', color: '#eab308', bg: '#fefce8', border: '#fef08a' };
   if (ms < MS.day * 7)  return { label: 'This week', color: '#0d9488', bg: '#f0fdfa', border: '#99f6e4' };
-  return { label: 'Upcoming',  color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' };
+  return { label: 'Upcoming',  color: '#4dcd7d', bg: '#f0fdf4', border: '#bbf7d0' };
 }
 
 const PRIORITY_CONFIG = {
   High:   { color: '#ef4444', bg: '#fef2f2', label: '🔴 High' },
   Medium: { color: '#f97316', bg: '#fff7ed', label: '🟠 Medium' },
-  Low:    { color: '#16a34a', bg: '#f0fdf4', label: '🟢 Low' },
+  Low:    { color: '#4dcd7d', bg: '#f0fdf4', label: '🟢 Low' },
 };
 
 // ─── Countdown Clock component ─────────────────────────────────────────────
@@ -288,7 +288,7 @@ function DDayCard({ item, onDelete }) {
 
       {/* Date footer */}
       <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6b7280', fontWeight: 500 }}>
-        <CalendarDays style={{ width: 13, height: 13, color: '#16a34a' }} />
+        <CalendarDays style={{ width: 13, height: 13, color: '#4dcd7d' }} />
         {dateFmt}
         {item.notes && (
           <span style={{ marginLeft: 8, color: '#9ca3af' }}>· {item.notes}</span>
@@ -360,7 +360,7 @@ function AddDeadlineForm({ onAdd, onClose }) {
           <button type="button" onClick={onClose} style={{ padding: '9px 18px', borderRadius: 10, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#6b7280' }}>
             Cancel
           </button>
-          <button type="submit" style={{ padding: '9px 22px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 10px rgba(34,197,94,0.3)' }}>
+          <button type="submit" style={{ padding: '9px 22px', borderRadius: 10, border: 'none', background: '#4dcd7d', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 10px rgba(77,205,125,0.3)' }}>
             Add Task
           </button>
         </div>
@@ -464,7 +464,7 @@ function AddDDayForm({ onAdd, onClose }) {
           <button type="button" onClick={onClose} style={{ padding: '9px 18px', borderRadius: 10, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#6b7280' }}>
             Cancel
           </button>
-          <button type="submit" style={{ padding: '9px 22px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 10px rgba(34,197,94,0.3)' }}>
+          <button type="submit" style={{ padding: '9px 22px', borderRadius: 10, border: 'none', background: '#4dcd7d', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 10px rgba(77,205,125,0.3)' }}>
             Save Event
           </button>
         </div>
@@ -548,7 +548,7 @@ export default function DeadlinePage({ tasks = [] }) {
             style={{
               display: 'flex', alignItems: 'center', gap: 7,
               padding: '10px 20px', borderRadius: 99,
-              background: 'linear-gradient(135deg, #16a34a, #22c55e)',
+              background: '#4dcd7d',
               border: 'none', color: '#fff', fontSize: 13, fontWeight: 700,
               cursor: 'pointer', transition: 'all .15s',
               boxShadow: '0 2px 10px rgba(34,197,94,0.25)',
@@ -577,7 +577,7 @@ export default function DeadlinePage({ tasks = [] }) {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 7,
                   padding: '8px 18px', borderRadius: 9, border: 'none',
-                  background: active ? 'linear-gradient(135deg, #16a34a, #22c55e)' : 'transparent',
+                  background: active ? '#4dcd7d' : 'transparent',
                   color: active ? '#fff' : '#6b7280',
                   fontSize: 13, fontWeight: 700, cursor: 'pointer',
                   transition: 'all .18s ease',

@@ -112,9 +112,9 @@ const TaskSpinnerModal = ({ isOpen, onClose, tasks = [], onStartTask }) => {
       ctx.fillStyle = SLICE_COLORS[i % SLICE_COLORS.length];
       ctx.fill();
 
-      // Border between slices
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = '#FFFFFF';
+      // Bold neo-brutalist separators keep every slice crisp and tactile.
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#1F2937';
       ctx.stroke();
 
       // Text label inside slice (High contrast on pastel background)
@@ -133,24 +133,24 @@ const TaskSpinnerModal = ({ isOpen, onClose, tasks = [], onStartTask }) => {
       ctx.restore();
     }
 
-    // Outer wheel ring (Clean white border for pastel wheel)
+    // Strong outer ring for the neo-brutalist silhouette.
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#1F2937';
     ctx.stroke();
 
-    // Center hub button circle (Playful pastel center)
+    // Center hub button circle.
     ctx.beginPath();
     ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = '#4DCD7D';
     ctx.fill();
-    ctx.lineWidth = 3.5;
-    ctx.strokeStyle = '#F472B6';
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#1F2937';
     ctx.stroke();
 
     // Center icon/text
-    ctx.fillStyle = '#DB2777';
+    ctx.fillStyle = '#10251A';
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -277,7 +277,7 @@ const TaskSpinnerModal = ({ isOpen, onClose, tasks = [], onStartTask }) => {
             </div>
 
             {/* Canvas Wheel */}
-            <div className="relative p-1.5 rounded-full shadow-inner bg-gradient-to-br from-pink-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/80">
+            <div className="relative rounded-full border-4 border-slate-900 bg-[#f8fbf9] p-2 shadow-[7px_7px_0_#1f2937] dark:border-slate-100 dark:bg-slate-800 dark:shadow-[7px_7px_0_#94a3b8]">
               <canvas
                 ref={canvasRef}
                 width={280}
@@ -292,7 +292,7 @@ const TaskSpinnerModal = ({ isOpen, onClose, tasks = [], onStartTask }) => {
               <button
                 onClick={handleSpin}
                 disabled={isSpinning}
-                className="mt-5 w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-600 hover:via-rose-600 hover:to-amber-600 text-white font-bold text-sm shadow-lg shadow-pink-500/25 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-5 w-full rounded-xl border-4 border-slate-900 bg-[#4dcd7d] px-6 py-3.5 text-sm font-black text-slate-950 shadow-[5px_5px_0_#1f2937] transition-all active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isSpinning ? (
                   <>

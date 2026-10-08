@@ -75,6 +75,22 @@ export const GardenProvider = ({ children }) => {
     return 0;
   };
 
+  // Offline-first reward loop: every completed focus session grows the garden.
+  const rewardFocusSession = (minutes) => {
+    const duration = Math.max(1, Number(minutes) || 1);
+    const earnedCoins = Math.max(5, Math.round(duration * 2));
+    const rewardPlantId = duration <= 2 ? 'clover' : duration <= 10 ? 'cactus' : duration <= 25 ? 'apple' : 'sunflower';
+
+    setCoins(prev => prev + earnedCoins);
+    setInventory(prev => ({
+      ...prev,
+      [rewardPlantId]: (prev[rewardPlantId] || 0) + 1,
+    }));
+
+    window.dispatchEvent(new Event('local-data-updated'));
+    return { earnedCoins, rewardPlantId };
+  };
+
   // Buy and immediately plant (used by mobile + drag-drop on web grid)
   const buyPlant = (plantId, slotIndex) => {
     const plant = Object.values(PLANT_TYPES).find(p => p.id === plantId);
@@ -144,6 +160,7 @@ export const GardenProvider = ({ children }) => {
       grid,
       inventory,
       addCoinsFromWork,
+      rewardFocusSession,
       buyPlant,
       buyToInventory,
       plantFromInventory,

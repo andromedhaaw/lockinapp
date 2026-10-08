@@ -1,8 +1,25 @@
 import { Flame, Trophy, Share2, Coins } from 'lucide-react';
 import { useGarden } from '../../context/GardenContext';
 
+const getLocalDateKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const GamificationStats = ({ streak, levelData, onShare }) => {
   const { coins } = useGarden();
+  const workHistory = JSON.parse(localStorage.getItem('timeTracker_workHistory') || '{}');
+  const streakDays = Array.from({ length: 5 }, (_, index) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (4 - index));
+    return {
+      label: date.toLocaleDateString('en-US', { weekday: 'narrow' }),
+      active: (workHistory[getLocalDateKey(date)] || 0) > 0,
+    };
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -20,15 +37,20 @@ const GamificationStats = ({ streak, levelData, onShare }) => {
       </div>
 
       {/* Streak Card */}
-      <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-4 rounded-xl border border-orange-100 flex items-center justify-between">
-        <div>
-          <div className="text-sm text-orange-600 font-medium mb-1">Current Streak</div>
-          <div className="text-3xl font-bold text-gray-800 flex items-baseline gap-1">
-            {streak} <span className="text-sm font-normal text-gray-500">days</span>
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-orange-100 dark:border-slate-800 text-gray-800 dark:text-white flex items-center gap-3 shadow-sm">
+        <Flame className="w-10 h-10 shrink-0 fill-orange-400 text-orange-500" />
+        <div className="min-w-0">
+          <div className="text-lg font-extrabold leading-tight">{streak} Day Streak</div>
+          <div className="mt-1 flex items-end gap-1.5">
+            {streakDays.map((day, index) => (
+              <div key={`${day.label}-${index}`} className="flex flex-col items-center gap-1">
+                <span className="text-[10px] font-bold text-gray-400">{day.label}</span>
+                <span className={`flex h-6 w-6 items-center justify-center rounded-md text-sm font-black ${day.active ? 'bg-[#4dcd7d] text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-400'}`}>
+                  {day.active ? '✓' : '·'}
+                </span>
+              </div>
+            ))}
           </div>
-        </div>
-        <div className={`p-3 rounded-full ${streak > 0 ? 'bg-orange-100 text-orange-500' : 'bg-gray-100 text-gray-400'}`}>
-          <Flame className="w-6 h-6 fill-current" />
         </div>
       </div>
 

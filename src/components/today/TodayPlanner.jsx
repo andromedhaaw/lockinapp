@@ -310,6 +310,8 @@ export const TodayPlanner = ({ onStartFocus }) => {
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [activeCardId, setActiveCardId] = useState('bd-1');
+  const [draggedTaskId, setDraggedTaskId] = useState(null);
+  const [draggedDayTask, setDraggedDayTask] = useState(null);
 
   // Modal / Inline Add Task State
   const [addingTarget, setAddingTarget] = useState(null); // 'brain-dump' or day id or 'timebox'
@@ -317,6 +319,41 @@ export const TodayPlanner = ({ onStartFocus }) => {
   const [newTaskTag, setNewTaskTag] = useState('Deep Work');
   const [newTaskMinutes, setNewTaskMinutes] = useState(30);
   const [newTaskTime, setNewTaskTime] = useState('');
+
+  const reorderBrainDump = (targetId) => {
+    if (!draggedTaskId || draggedTaskId === targetId) return;
+    setBrainDump((current) => {
+      const fromIndex = current.findIndex((task) => task.id === draggedTaskId);
+      const toIndex = current.findIndex((task) => task.id === targetId);
+      if (fromIndex < 0 || toIndex < 0) return current;
+      const next = [...current];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+    setDraggedTaskId(null);
+  };
+
+  const moveDayTask = (targetDayId, targetTaskId = null) => {
+    if (!draggedDayTask) return;
+    setDays((current) => {
+      const sourceDay = current.find((day) => day.id === draggedDayTask.dayId);
+      if (!sourceDay) return current;
+      const movedTask = sourceDay.tasks.find((task) => task.id === draggedDayTask.taskId);
+      if (!movedTask) return current;
+      const withoutTask = current.map((day) => day.id === draggedDayTask.dayId
+        ? { ...day, tasks: day.tasks.filter((task) => task.id !== draggedDayTask.taskId) }
+        : day);
+      return withoutTask.map((day) => {
+        if (day.id !== targetDayId) return day;
+        const nextTasks = [...day.tasks];
+        const targetIndex = targetTaskId ? nextTasks.findIndex((task) => task.id === targetTaskId) : nextTasks.length;
+        nextTasks.splice(targetIndex < 0 ? nextTasks.length : targetIndex, 0, movedTask);
+        return { ...day, tasks: nextTasks };
+      });
+    });
+    setDraggedDayTask(null);
+  };
 
   // Persist whenever state changes
   useEffect(() => {
@@ -738,8 +775,19 @@ export const TodayPlanner = ({ onStartFocus }) => {
                 return (
                   <div
                     key={task.id}
+                    draggable
+                    onDragStart={(event) => {
+                      setDraggedTaskId(task.id);
+                      event.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      reorderBrainDump(task.id);
+                    }}
+                    onDragEnd={() => setDraggedTaskId(null)}
                     onClick={() => setActiveCardId(task.id)}
-                    className={`bg-white dark:bg-slate-800 rounded-xl p-3 border transition-all relative group cursor-pointer ${
+                    className={`bg-white dark:bg-slate-800 rounded-xl p-3 border transition-all relative group cursor-grab active:cursor-grabbing ${draggedTaskId === task.id ? 'opacity-50' : ''} ${
                       task.completed
                         ? 'opacity-50 border-slate-200 dark:border-slate-700'
                         : isSelected
@@ -826,7 +874,42 @@ export const TodayPlanner = ({ onStartFocus }) => {
         {/* ========================================================== */}
         {/* COLUMN 2: MULTI-DAY PLANNER / KANBAN (Middle Column)       */}
         {/* ========================================================== */}
-        <main className="flex-1 overflow-x-auto p-4 sm:p-5 flex gap-4 lg:gap-5 h-[calc(100vh-3.5rem)]">
+        {activeTabMode === 'calendar' && (
+          <section className="flex-1 overflow-auto p-4 sm:p-5 h-[calc(100vh-3.5rem)] bg-slate-50/60 dark:bg-slate-950/30">
+            <div className="min-w-[760px] rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="grid grid-cols-[72px_repeat(5,minmax(150px,1fr))] border-b border-slate-100 dark:border-slate-800">
+                <div className="p-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Time</div>
+                {days.slice(0, 5).map((day) => (
+                  <div key={day.id} className={`border-l border-slate-100 p-3 dark:border-slate-800 ${day.isToday ? 'bg-indigo-50/60 dark:bg-indigo-950/20' : ''}`}>
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-100">{day.dayName}</div>
+                    <div className="text-[10px] text-slate-400">{day.dateLabel}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-[72px_repeat(5,minmax(150px,1fr))]">
+                <div className="text-[10px] text-slate-400">
+                  {['08:00','10:00','12:00','14:00','16:00','18:00'].map((time) => <div key={time} className="h-20 border-b border-slate-100 px-2 pt-2 dark:border-slate-800">{time}</div>)}
+                </div>
+                {days.slice(0, 5).map((day) => (
+                  <div key={day.id} className="border-l border-slate-100 dark:border-slate-800">
+                    {['08:00','10:00','12:00','14:00','16:00','18:00'].map((time) => <div key={time} className="h-20 border-b border-slate-100 dark:border-slate-800" />)}
+                    <div className="-mt-[480px] space-y-2 p-2">
+                      {day.tasks.filter(matchesFilter).map((task) => (
+                        <button key={task.id} onClick={() => setActiveCardId(task.id)} className="block w-full rounded-lg border-l-4 border-indigo-400 bg-indigo-50 p-2 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-md dark:bg-indigo-950/40">
+                          <div className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300">{task.time || 'Flexible'}</div>
+                          <div className="text-xs font-semibold text-slate-800 dark:text-slate-100">{task.title}</div>
+                          <div className="text-[10px] text-slate-500">{task.duration}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        <main className={`${activeTabMode === 'calendar' ? 'hidden' : 'flex'} flex-1 overflow-x-auto p-4 sm:p-5 gap-4 lg:gap-5 h-[calc(100vh-3.5rem)]`}>
           {days.map((day) => {
             const dayTotal = getDayTotal(day.tasks);
             const isAdding = addingTarget === day.id;
@@ -837,6 +920,11 @@ export const TodayPlanner = ({ onStartFocus }) => {
             return (
               <div
                 key={day.id}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  moveDayTask(day.id);
+                }}
                 className="w-72 sm:w-80 shrink-0 flex flex-col h-full bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm overflow-hidden"
               >
                 {/* Column Header */}
@@ -938,8 +1026,20 @@ export const TodayPlanner = ({ onStartFocus }) => {
                     return (
                       <div
                         key={task.id}
+                        draggable
+                        onDragStart={(event) => {
+                          setDraggedDayTask({ dayId: day.id, taskId: task.id });
+                          event.dataTransfer.effectAllowed = 'move';
+                        }}
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          moveDayTask(day.id, task.id);
+                        }}
+                        onDragEnd={() => setDraggedDayTask(null)}
                         style={{ opacity: task.completed ? 0.55 : 1 }}
-                        className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-150 overflow-hidden group"
+                        className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-150 overflow-hidden group cursor-grab active:cursor-grabbing ${draggedDayTask?.taskId === task.id ? 'opacity-40' : ''}`}
                       >
                         <div className="flex">
                           <div style={{ width: 3, background: task.completed ? '#cbd5e1' : accentLBar, flexShrink: 0 }} />
@@ -999,7 +1099,7 @@ export const TodayPlanner = ({ onStartFocus }) => {
         {/* ========================================================== */}
         {/* COLUMN 3: CALENDAR TIMELINE (Right Column)                 */}
         {/* ========================================================== */}
-        {showTimebox && (
+        {showTimebox && activeTabMode !== 'calendar' && (
           <aside className="w-60 lg:w-68 shrink-0 border-l border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
             {/* Header */}
             <div className="h-14 border-b border-slate-100 dark:border-slate-800 px-3 flex items-center justify-between shrink-0">

@@ -1,9 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Trophy, Lock, Brain, Sprout, ChevronDown } from 'lucide-react';
+import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Sprout, ChevronDown, Sparkles, Moon } from 'lucide-react';
 import MobileLayout from '../components/mobile/MobileLayout';
 import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import { TodayPlanner } from '../components/today';
+import { ForYou } from '../components/foryou';
+import DailyShutdown from '../components/shutdown/DailyShutdown';
+import GrowthHub from '../components/growth/GrowthHub';
 import {
   CurrentTimeDisplay,
   WorkTimerDisplay,
@@ -25,6 +28,7 @@ import { Profile } from '../components/profile';
 import { Leaderboard, SocialNotification, CommunityBanner, EncouragementModal, RivalActivityFeed } from '../components/social';
 import { GoalsTab } from '../components/goals';
 import { AnalyticsTab } from '../components/analytics';
+import TagAnalytics from '../components/analytics/TagAnalytics';
 import { AICoach } from '../components/support';
 import { DeepWorkScore } from '../components/insights';
 import { WeeklyDigest } from '../components/digest';
@@ -35,12 +39,14 @@ import { TABS, HISTORY_PERIODS } from '../constants';
 import GardenTab from '../components/garden/mobile/GardenTab';
 
 const tabs = [
+  { id: TABS.FOR_YOU, label: 'For You', icon: Sparkles },
   { id: TABS.TODAY, label: 'Today', icon: CalendarDays },
   { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
   { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
   { id: TABS.LEADERBOARD, label: 'Social', icon: Trophy },
   { id: TABS.PROFILE, label: 'Profile', icon: User },
+  { id: TABS.DAILY_SHUTDOWN, label: 'Shutdown', icon: Moon },
   { id: TABS.GARDEN, label: 'Garden', icon: Sprout },
 ];
 
@@ -54,7 +60,13 @@ const historyPeriods = [
  * Mobile TimeTracker page component
  */
 const MobileTimeTracker = () => {
-  const [activeTab, setActiveTab] = useState(TABS.TRACKER);
+  const [activeTab, setActiveTab] = useState(TABS.FOR_YOU);
+  const [showTagAnalytics, setShowTagAnalytics] = useState(false);
+  useEffect(() => {
+    const openAnalytics = () => setActiveTab(TABS.TAG_ANALYTICS);
+    window.addEventListener('open-tag-analytics', openAnalytics);
+    return () => window.removeEventListener('open-tag-analytics', openAnalytics);
+  }, []);
   const [grindMode, setGrindMode] = useState(() => {
     return localStorage.getItem('lockin_grindMode_mobile') === 'true';
   });
@@ -287,6 +299,19 @@ const MobileTimeTracker = () => {
   return (
     <MobileLayout>
       <div className="p-4 flex-1 pb-0">
+          <div className={activeTab === TABS.FOR_YOU ? 'block -mx-4 -mt-4' : 'hidden'}>
+            <ForYou onStartFocus={(minutes) => { if (!minutes) setActiveTab(TABS.TASKS); }} />
+          </div>
+
+          <div className={activeTab === TABS.DAILY_SHUTDOWN ? 'block -mx-4 -mt-4' : 'hidden'}>
+            <DailyShutdown />
+          </div>
+
+          <div className={activeTab === TABS.TAG_ANALYTICS ? 'block -mx-4 -mt-4' : 'hidden'}>
+            <TagAnalytics onBack={() => setActiveTab(TABS.FOCUS)} />
+          </div>
+
+
           {/* Today Tab Content */}
           <div className={activeTab === TABS.TODAY ? 'block' : 'hidden'}>
             <div className="-mx-4 -mt-4 pb-20">
@@ -318,7 +343,7 @@ const MobileTimeTracker = () => {
               />
 
               {/* Today's Total */}
-              <TodayTotal hours={todayTotalHours} />
+              <TodayTotal hours={todayTotalHours} currentSessionTime={totalWorkTime} isTracking={isTracking} />
 
               {/* Session Info */}
               <SessionInfo sessionStart={sessionStart} />
@@ -446,9 +471,6 @@ const MobileTimeTracker = () => {
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-4">
                     🧠 Deep Work Insights
                   </h2>
-
-                  {/* Community Banner */}
-                  <CommunityBanner />
 
                   {/* Sub-navigation for Insights */}
                   <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto">
@@ -634,6 +656,8 @@ const MobileTimeTracker = () => {
                 🏆 Social & Community
               </h2>
               
+              <CommunityBanner />
+
               {/* Sub-navigation for Social */}
               <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-[320px]">
                 <button
@@ -666,6 +690,12 @@ const MobileTimeTracker = () => {
                 >
                   My Pod
                 </button>
+                <button
+                  onClick={() => setSocialView('growth')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${socialView === 'growth' ? 'bg-[#eaf8ee] text-[#249653] shadow-sm' : 'text-gray-500 hover:text-[#249653]'}`}
+                >
+                  Growth
+                </button>
               </div>
 
               {/* Social Content */}
@@ -683,6 +713,8 @@ const MobileTimeTracker = () => {
                   todayHours={todayTotalHours}
                 />
               )}
+
+              {socialView === 'growth' && <GrowthHub />}
             </div>
           </div>
 

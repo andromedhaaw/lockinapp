@@ -23,7 +23,7 @@ const WebPlantTray = () => {
         </div>
       )}
 
-      <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="grid grid-cols-4 gap-2.5 pb-1 sm:grid-cols-6 md:grid-cols-8">
         {Object.values(plantTypes).map(plant => {
           const canAfford = coins >= plant.cost;
           
@@ -33,7 +33,7 @@ const WebPlantTray = () => {
               onClick={() => handleBuy(plant)}
               disabled={!canAfford}
               className={`
-                flex-shrink-0 flex flex-col items-center gap-1 p-2.5 rounded-xl w-[80px] transition-all duration-300
+                flex min-w-0 flex-col items-center gap-1 rounded-xl p-2.5 transition-all duration-300
                 ${canAfford 
                   ? 'bg-gray-50/80 dark:bg-slate-800/60 border border-gray-100/80 dark:border-slate-700/40 hover:bg-white hover:shadow-md hover:-translate-y-1 cursor-pointer active:scale-95' 
                   : 'bg-gray-50/30 border border-gray-50 dark:border-slate-800/30 opacity-35 cursor-not-allowed'}

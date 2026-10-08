@@ -54,7 +54,7 @@ const WebGardenTab = () => {
       </div>
 
       {/* Seed Shop Strip — Horizontal, always visible */}
-      <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-gray-100/80 dark:border-slate-800/60 p-4 shadow-sm">
+      <div className="hidden bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-gray-100/80 dark:border-slate-800/60 p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
@@ -84,6 +84,19 @@ const WebGardenTab = () => {
             <MyPlants />
           </div>
         </div>
+      </div>
+
+      <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-gray-100/80 dark:border-slate-800/60 p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+              <Sprout className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h3 className="text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Seed Shop</h3>
+          </div>
+          <span className="text-[10px] text-gray-400 font-medium">Drag seeds into the garden below</span>
+        </div>
+        <PlantTray />
       </div>
     </div>
   );

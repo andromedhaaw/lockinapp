@@ -1,288 +1,75 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Check, Zap, Shield, Trophy, Users, Clock, TrendingUp } from 'lucide-react';
+import { ArrowRight, Check, Clock3, Leaf, Play, Sparkles, Timer, Trophy } from 'lucide-react';
 
 const LandingPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-green-100 selection:text-green-900">
-      {/* Navbar */}
-      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-            <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white">
-              <Zap className="w-5 h-5 fill-current" />
-            </div>
-            LockIn.
-          </div>
-          <div className="flex items-center gap-8">
-            <button onClick={() => navigate('/pricing')} className="text-sm font-medium hover:text-green-600 transition-colors">Pricing</button>
-            <button onClick={() => navigate('/login')} className="text-sm font-medium hover:text-green-600 transition-colors">Login</button>
-            <button 
-              onClick={() => navigate('/signup')}
-              className="bg-green-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-green-700 transition-all hover:scale-105 active:scale-95"
-            >
-              Start Free Trial
-            </button>
+    <div className="min-h-screen overflow-hidden bg-[#fbfcfb] text-slate-900 selection:bg-[#4dcd7d]/25">
+      <nav className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-[#fbfcfb]/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-lg font-black tracking-tight">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#4dcd7d] text-white shadow-[3px_3px_0_#193c28]"><Sparkles className="h-4 w-4" /></span>
+            Lock In Work
+          </button>
+          <div className="flex items-center gap-3 sm:gap-7">
+            <button onClick={() => navigate('/pricing')} className="hidden text-sm font-semibold text-slate-500 hover:text-slate-900 sm:block">Pricing</button>
+            <button onClick={() => navigate('/login')} className="text-sm font-semibold text-slate-500 hover:text-slate-900">Login</button>
+            <button onClick={() => navigate('/signup')} className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5">Start free</button>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section - Ogilvy Style: Lead with the benefit */}
-      <section className="pt-32 pb-16 px-6 max-w-6xl mx-auto">
-        <div className="flex flex-col items-center text-center">
-          {/* Specific claim - Ogilvy believed in specificity */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 text-green-700 text-sm font-medium mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <Users className="w-4 h-4" />
-            2,847 professionals tracked 14,392 hours last week
-          </div>
-          
-          {/* Headline - Promise a benefit */}
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-[1.1] animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
-            How To Do 4 Hours of Deep Work<br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-500">Every Single Day</span>
-          </h1>
-          
-          {/* Subheadline - Expand on the promise */}
-          <p className="text-xl text-gray-600 max-w-2xl mb-8 leading-relaxed animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
-            The average knowledge worker manages only 2.5 hours of real work per day. 
-            Our users average 4.2 hours. The secret? <strong>Social accountability</strong> and 
-            <strong> friendly competition</strong>.
-          </p>
-
-          {/* CTA - Clear, action-oriented */}
-          <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-7 duration-700 delay-300">
-            <button 
-              onClick={() => navigate('/signup')}
-              className="px-8 py-4 bg-green-600 text-white rounded-xl font-bold text-lg shadow-xl shadow-green-200 hover:bg-green-700 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
-            >
-              Try Free for 14 Days <ArrowRight className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={() => navigate('/app')}
-              className="px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold text-lg hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
-            >
-              See Live Demo
-            </button>
-          </div>
-
-          {/* Social Proof - Ogilvy: Use testimonials */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center gap-4 text-sm text-gray-500 animate-in fade-in duration-1000 delay-500">
-             <div className="flex -space-x-3">
-               {[1,2,3,4,5].map(i => (
-                 <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-xs font-bold text-white shadow-md">
-                   {['ML', 'PL', 'NB', 'IH', 'SK'][i-1]}
-                 </div>
-               ))}
-             </div>
-             <div className="text-left">
-               <div className="font-semibold text-gray-800">"I shipped my SaaS in 6 weeks instead of 6 months."</div>
-               <div className="text-gray-500">— Marc L., Indie Hacker</div>
-             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Feature Screenshots Section */}
-      <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Everything You Need to Stay Focused</h2>
-            <p className="text-gray-600 max-w-xl mx-auto">
-              Five powerful features that turn procrastinators into top performers.
-            </p>
-          </div>
-
-          {/* First Row - 3 Features */}
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
-            {/* Timer Feature */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-shadow group">
-              <div className="aspect-square bg-gray-900 flex items-center justify-center overflow-hidden">
-                <img 
-                  src="/images/timer.png" 
-                  alt="Deep Work Timer" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-2 text-green-600 font-semibold text-sm mb-2">
-                  <Clock className="w-4 h-4" />
-                  DEEP WORK TIMER
-                </div>
-                <h3 className="text-xl font-bold mb-2">Track Every Minute</h3>
-                <p className="text-gray-600 text-sm">
-                  One-click start. See your hours stack up. Know exactly where your time goes.
-                </p>
-              </div>
+      <main>
+        <section className="mx-auto grid max-w-6xl items-center gap-14 px-5 pb-20 pt-32 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8 lg:pb-28 lg:pt-40">
+          <div>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#4dcd7d]/30 bg-[#4dcd7d]/10 px-3 py-1.5 text-xs font-bold text-[#218e4c]"><span className="h-2 w-2 animate-pulse rounded-full bg-[#4dcd7d]" /> Make deep work feel good</div>
+            <h1 className="max-w-xl text-5xl font-black leading-[0.98] tracking-[-0.06em] text-slate-950 sm:text-7xl">Do your best work.<br /><span className="text-[#4dcd7d]">Enjoy getting there.</span></h1>
+            <p className="mt-7 max-w-lg text-lg leading-relaxed text-slate-500 sm:text-xl">Lock In Work turns your next 4–8 hours into clear, satisfying deep work. Start a session, build momentum, and watch real progress take shape.</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <button onClick={() => navigate('/signup')} className="flex items-center justify-center gap-2 rounded-2xl bg-[#4dcd7d] px-6 py-4 text-base font-black text-slate-950 shadow-[5px_5px_0_#193c28] transition hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none">Get more done today <ArrowRight className="h-5 w-5" /></button>
+              <button onClick={() => navigate('/app')} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-4 text-base font-bold text-slate-700 shadow-sm hover:border-[#4dcd7d]">See how it works</button>
             </div>
+            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-slate-400"><span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-[#4dcd7d]" /> Deep work sessions</span><span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-[#4dcd7d]" /> Focus analytics</span><span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-[#4dcd7d]" /> Progress you can feel</span></div>
+          </div>
 
-            {/* Leaderboard Feature */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-shadow group">
-              <div className="aspect-square bg-gray-900 flex items-center justify-center overflow-hidden">
-                <img 
-                  src="/images/leaderboard.png" 
-                  alt="Competitive Leaderboard" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-2 text-amber-600 font-semibold text-sm mb-2">
-                  <Trophy className="w-4 h-4" />
-                  LEADERBOARD
-                </div>
-                <h3 className="text-xl font-bold mb-2">Compete With Peers</h3>
-                <p className="text-gray-600 text-sm">
-                  Nothing motivates like seeing your rival outwork you. Climb the ranks weekly.
-                </p>
-              </div>
+          <div className="relative mx-auto w-full max-w-[560px]">
+            <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-[#4dcd7d]/20 blur-3xl" />
+            <div className="relative rotate-1 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[14px_14px_0_#dcefe3] sm:p-6">
+              <div className="mb-4 flex items-center justify-between"><div><div className="text-xs font-bold text-[#249653]">FOR YOU</div><div className="mt-1 text-2xl font-black">Good morning</div></div><div className="rounded-full bg-[#4dcd7d]/10 px-3 py-1 text-xs font-bold text-[#249653]">3 sessions today</div></div>
+              <div className="rounded-2xl border border-slate-100 bg-[#f8fbf9] p-4"><div className="text-xs font-bold text-slate-400">WHAT ARE YOU STARTING?</div><div className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-400">Write a task...</div><div className="mt-3 grid grid-cols-3 gap-2">{[2,10,25].map((m) => <div key={m} className="rounded-xl bg-[#4dcd7d] py-2.5 text-center text-xs font-black text-slate-950">Start {m}m</div>)}</div></div>
+              <div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-slate-950 p-4 text-white"><div className="flex items-center gap-2 text-xs text-slate-400"><Timer className="h-3.5 w-3.5" /> Focus now</div><div className="mt-2 text-3xl font-black">24:18</div><div className="mt-1 text-xs text-[#4dcd7d]">Deep work · Work</div></div><div className="rounded-2xl bg-[#eaf8ee] p-4"><div className="flex items-center gap-2 text-xs font-bold text-[#249653]"><Leaf className="h-3.5 w-3.5" /> Garden reward</div><div className="mt-3 text-4xl">🌱 🌿</div><div className="mt-2 text-xs font-semibold text-slate-500">Your focus is growing.</div></div></div>
             </div>
-
-            {/* Live Feed Feature */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-shadow group">
-              <div className="aspect-square bg-gray-900 flex items-center justify-center overflow-hidden">
-                <img 
-                  src="/images/livefeed.png" 
-                  alt="Live Activity Feed" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-2 text-blue-600 font-semibold text-sm mb-2">
-                  <TrendingUp className="w-4 h-4" />
-                  LIVE FEED
-                </div>
-                <h3 className="text-xl font-bold mb-2">Social Accountability</h3>
-                <p className="text-gray-600 text-sm">
-                  See when others are working. Get encouraged. Never feel alone in the grind.
-                </p>
-              </div>
-            </div>
+            <div className="absolute -bottom-8 -left-8 hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-lg sm:block"><div className="flex items-center gap-2 text-xs font-bold text-slate-500"><Clock3 className="h-4 w-4 text-[#4dcd7d]" /> I showed up today.</div><div className="mt-2 text-sm font-black">25 min locked in</div></div>
           </div>
+        </section>
 
-          {/* Second Row - 2 Larger Features */}
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Productivity Graph - HIGHLIGHTED */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-xl border-2 border-green-200 overflow-hidden hover:shadow-2xl transition-shadow group relative">
-              <div className="absolute top-4 right-4 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                ⭐ MOST LOVED
-              </div>
-              <div className="aspect-video bg-gray-900 flex items-center justify-center overflow-hidden">
-                <img 
-                  src="/images/graph.png" 
-                  alt="Productivity Analytics Graph" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-2 text-green-600 font-semibold text-sm mb-2">
-                  <TrendingUp className="w-4 h-4" />
-                  ANALYTICS DASHBOARD
-                </div>
-                <h3 className="text-xl font-bold mb-2">Beautiful Productivity Graphs</h3>
-                <p className="text-gray-600 text-sm">
-                  See your weekly progress at a glance. Watch those green bars grow. Average 4.2h daily hours, 85% focus score—know your numbers.
-                </p>
-              </div>
-            </div>
+        <section className="border-y border-slate-200 bg-white py-20"><div className="mx-auto max-w-6xl px-5 sm:px-8"><div className="max-w-xl"><p className="text-xs font-black uppercase tracking-[0.2em] text-[#249653]">A better way to work</p><h2 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">Clarity in.<br />Great work out.</h2><p className="mt-5 text-lg leading-relaxed text-slate-500">Turn an open-ended day into a sequence of satisfying wins. Lock In Work keeps the next step obvious, makes focus rewarding, and shows you exactly where your hours went.</p></div><div className="mt-12 grid gap-4 md:grid-cols-3"><Feature icon={<Play />} number="01" title="Start without friction" text="Choose 2, 10, or 25 minutes and begin before the day gets noisy." /><Feature icon={<Leaf />} number="02" title="Make progress tangible" text="Every finished session grows your garden and gives your effort a visible reward." /><Feature icon={<Trophy />} number="03" title="Know what works" text="Use tags, trends, streaks, and session analytics to improve your best working hours." /></div></div></section>
 
-            {/* History Tracker */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-shadow group">
-              <div className="aspect-video bg-gray-900 flex items-center justify-center overflow-hidden">
-                <img 
-                  src="/images/history.png" 
-                  alt="Work History Log" 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-2 text-purple-600 font-semibold text-sm mb-2">
-                  <Clock className="w-4 h-4" />
-                  WORK HISTORY
-                </div>
-                <h3 className="text-xl font-bold mb-2">Every Session Logged</h3>
-                <p className="text-gray-600 text-sm">
-                  Browse your work history by day, week, or month. See session counts, total hours, and build your streak.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8"><div className="grid items-center gap-12 lg:grid-cols-2"><div className="order-2 grid grid-cols-2 gap-3 lg:order-1"><MiniCard image="/images/timer.png" title="Focus timer" /><MiniCard image="/images/graph.png" title="Your progress" /><MiniCard image="/images/history.png" title="Session history" /><MiniCard image="/images/leaderboard.png" title="Friendly accountability" /></div><div className="order-1 lg:order-2"><p className="text-xs font-black uppercase tracking-[0.2em] text-[#249653]">Beautiful by default</p><h2 className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">A workspace you’ll want to return to.</h2><p className="mt-5 text-lg leading-relaxed text-slate-500">Quiet surfaces, clear choices, and playful rewards. No shame loops. No cluttered command center. Just enough structure to help you take the next step.</p><button onClick={() => navigate('/signup')} className="mt-7 flex items-center gap-2 font-black text-[#249653] hover:gap-3">Build your focus garden <ArrowRight className="h-4 w-4" /></button></div></div></section>
 
-      {/* Why It Works Section - Ogilvy: Explain the mechanism */}
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">The Psychology Behind LockIn</h2>
-            <p className="text-gray-600">
-              We don't just track time. We engineer an environment where deep work is inevitable.
-            </p>
-          </div>
+        <section className="bg-slate-950 px-5 py-20 text-center text-white sm:px-8"><div className="mx-auto max-w-2xl"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#4dcd7d] text-slate-950"><Sparkles className="h-6 w-6" /></div><h2 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl">Your next great workday starts here.</h2><p className="mx-auto mt-5 max-w-lg text-lg leading-relaxed text-slate-400">Stop collecting plans. Start collecting finished work, growing plants, and hours you’re proud of.</p><button onClick={() => navigate('/signup')} className="mt-8 rounded-2xl bg-[#4dcd7d] px-7 py-4 font-black text-slate-950 shadow-[5px_5px_0_#d8f5e3] transition hover:-translate-y-1">Start your deep work habit <ArrowRight className="ml-2 inline h-4 w-4" /></button></div></section>
+      </main>
 
-          <div className="space-y-6">
-            {[
-              {
-                number: "01",
-                title: "Public Commitment Effect",
-                description: "When you set a goal that others can see, you're 65% more likely to complete it. That's not motivation—that's social psychology."
-              },
-              {
-                number: "02", 
-                title: "Friendly Competition",
-                description: "The leaderboard triggers your competitive instinct. Suddenly, 'one more hour' becomes 'I need to beat Sarah's streak.'"
-              },
-              {
-                number: "03",
-                title: "Positive Reinforcement",
-                description: "Every session ends with encouragement. We celebrate what you did, not shame what you didn't. Progress begets progress."
-              }
-            ].map((item) => (
-              <div key={item.number} className="flex gap-6 p-6 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
-                <div className="text-4xl font-bold text-green-200">{item.number}</div>
-                <div>
-                  <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                  <p className="text-gray-600">{item.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA - Ogilvy: Repeat the offer */}
-      <section className="py-20 bg-green-600">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Double Your Deep Work Hours?
-          </h2>
-          <p className="text-green-100 text-lg mb-8 max-w-xl mx-auto">
-            Join 2,847 professionals who've stopped "trying to be productive" and started actually being productive.
-          </p>
-          <button 
-            onClick={() => navigate('/signup')}
-            className="px-10 py-4 bg-white text-green-700 rounded-xl font-bold text-lg shadow-xl hover:bg-gray-100 transition-all hover:scale-105 active:scale-95"
-          >
-            Start Your Free 14-Day Trial
-          </button>
-          <p className="mt-4 text-green-200 text-sm">
-            No credit card required. Cancel anytime.
-          </p>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-12 px-6 border-t border-gray-100">
-        <div className="max-w-6xl mx-auto flex justify-between items-center text-sm text-gray-500">
-          <p>© 2026 LockIn Inc. — Built for focused professionals.</p>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-gray-900">Twitter</a>
-            <a href="#" className="hover:text-gray-900">Manifesto</a>
-            <button onClick={() => navigate('/login')} className="hover:text-gray-900">Login</button>
-          </div>
-        </div>
-      </footer>
+      <footer className="border-t border-slate-200 bg-[#fbfcfb] px-5 py-8 sm:px-8"><div className="mx-auto flex max-w-6xl flex-col gap-3 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between"><span className="font-bold text-slate-600">Lock In Work</span><span>Focus gently. Grow steadily.</span><button onClick={() => navigate('/login')} className="text-left hover:text-slate-900 sm:text-right">Login</button></div></footer>
     </div>
   );
+};
+
+const Feature = ({ icon, number, title, text }) => <div className="rounded-3xl border border-slate-200 bg-[#fbfcfb] p-6 transition hover:-translate-y-1 hover:shadow-lg"><div className="flex items-center justify-between"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4dcd7d]/15 text-[#249653]">{icon}</div><span className="text-xs font-black text-slate-300">{number}</span></div><h3 className="mt-8 text-xl font-black">{title}</h3><p className="mt-2 text-sm leading-relaxed text-slate-500">{text}</p></div>;
+
+const MiniCard = ({ title }) => {
+  const variants = {
+    'Focus timer': { eyebrow: 'FOCUS NOW', title: '24:18', detail: 'Deep work · Work', accent: 'bg-slate-950 text-white', icon: '◷' },
+    'Your progress': { eyebrow: 'TODAY’S PROGRESS', title: '3 sessions', detail: 'Small starts count.', accent: 'bg-white', icon: '↗' },
+    'Session history': { eyebrow: 'GARDEN REWARD', title: '🌱  🌿  🪴', detail: 'Your focus is growing.', accent: 'bg-[#eaf8ee]', icon: '✦' },
+    'Friendly accountability': { eyebrow: 'LOCK IN WORK', title: 'I showed up today.', detail: '25 min locked in', accent: 'bg-[#f8fbf9]', icon: '♡' },
+  };
+  const card = variants[title] || variants['Focus timer'];
+  return <div className={`flex min-h-40 flex-col justify-between rounded-2xl border border-slate-200 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${card.accent}`}>
+    <div className="flex items-center justify-between text-[10px] font-black tracking-[0.14em] opacity-65"><span>{card.eyebrow}</span><span className="text-base tracking-normal">{card.icon}</span></div>
+    <div><div className="text-2xl font-black tracking-tight">{card.title}</div><div className="mt-1 text-xs font-semibold opacity-65">{card.detail}</div></div>
+  </div>;
 };
 
 export default LandingPage;

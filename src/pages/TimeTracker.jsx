@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Trophy, Lock, Brain, Leaf, ChevronDown } from 'lucide-react';
+import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Leaf, ChevronDown, Sparkles, Moon } from 'lucide-react';
 import { TabNavigation } from '../components/ui';
 import { WebGardenTab as GardenTab } from '../components/garden/web';
 import { TodayPlanner } from '../components/today';
@@ -27,7 +27,10 @@ import { DeadlinePage } from '../components/deadline';
 import { Profile } from '../components/profile';
 import { Leaderboard, SocialNotification, CommunityBanner, EncouragementModal, RivalActivityFeed } from '../components/social';
 import { GoalsTab } from '../components/goals';
-import { AnalyticsTab } from '../components/analytics';
+import { AnalyticsTab, TagAnalytics } from '../components/analytics';
+import { ForYou } from '../components/foryou';
+import DailyShutdown from '../components/shutdown/DailyShutdown';
+import GrowthHub from '../components/growth/GrowthHub';
 
 import { DeepWorkScore } from '../components/insights';
 import { WeeklyDigest } from '../components/digest';
@@ -37,6 +40,7 @@ import { formatTimeToHours, getDateKey } from '../utils/timeUtils';
 import { TABS, HISTORY_PERIODS } from '../constants';
 
 const tabs = [
+  { id: TABS.FOR_YOU, label: 'For You', icon: Sparkles },
   { id: TABS.TODAY, label: 'Today', icon: CalendarDays },
   { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
   { id: TABS.FOCUS, label: 'Focus', icon: Timer },
@@ -46,6 +50,7 @@ const tabs = [
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
   { id: TABS.GARDEN, label: 'Garden', icon: Leaf },
   { id: TABS.LEADERBOARD, label: 'Social', icon: Trophy },
+  { id: TABS.DAILY_SHUTDOWN, label: 'Shutdown', icon: Moon },
   { id: TABS.PROFILE, label: 'Profile', icon: User },
 ];
 
@@ -55,11 +60,37 @@ const historyPeriods = [
   { id: HISTORY_PERIODS.YEAR, label: 'Year' },
 ];
 
+const FocusTagSummary = () => {
+  let sessions = [];
+  try { sessions = JSON.parse(localStorage.getItem('lockin_focus_sessions') || '[]'); } catch {}
+  const totals = sessions.reduce((acc, session) => {
+    const tag = session.tag || 'Work';
+    acc[tag] = (acc[tag] || 0) + Number(session.durationMinutes || 0);
+    return acc;
+  }, {});
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(...entries.map(([, minutes]) => minutes), 1);
+  return (
+    <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="mb-3 flex items-center justify-between"><span className="text-sm font-extrabold text-slate-800 dark:text-white">Focus by tag</span><span className="text-[10px] text-slate-400">offline sessions</span></div>
+      {entries.length === 0 ? <p className="text-xs text-slate-400">Pilih tag saat sesi fokus berikutnya untuk mulai melihat breakdown.</p> : <div className="space-y-3">{entries.map(([tag, minutes]) => <div key={tag}><div className="mb-1 flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300"><span>{tag}</span><span>{(minutes / 60).toFixed(1)}h</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-[#4dcd7d]" style={{ width: `${(minutes / max) * 100}%` }} /></div></div>)}</div>}
+    </div>
+  );
+};
+
 /**
  * Main TimeTracker page component
  */
 const TimeTracker = ({ initialTab }) => {
-  const [activeTab, setActiveTab] = useState(() => initialTab || TABS.TODAY);
+  const [activeTab, setActiveTab] = useState(() => initialTab || TABS.FOR_YOU);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarHidden, setSidebarHidden] = useState(false);
+  const [showTagAnalytics, setShowTagAnalytics] = useState(false);
+  useEffect(() => {
+    const openAnalytics = () => setActiveTab(TABS.TAG_ANALYTICS);
+    window.addEventListener('open-tag-analytics', openAnalytics);
+    return () => window.removeEventListener('open-tag-analytics', openAnalytics);
+  }, []);
   const [grindMode, setGrindMode] = useState(() => {
     return localStorage.getItem('lockin_grindMode') === 'true';
   });
@@ -181,14 +212,16 @@ const TimeTracker = ({ initialTab }) => {
 
   // ADHD Calm tabs (essential 6 tabs: Today, Focus, Tasks, Tracker, Garden, Settings)
   const adhdTabs = [
+    { id: TABS.FOR_YOU, label: 'For You', icon: Sparkles },
     { id: TABS.TODAY, label: 'Today', icon: CalendarDays },
+    { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
     { id: TABS.FOCUS, label: 'Focus', icon: Timer },
+    { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
     { id: TABS.TODO, label: 'To Do', icon: CheckSquare },
     { id: TABS.DEADLINE, label: 'Deadline', icon: CalendarDays },
-    { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
-    { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
+    { id: TABS.DAILY_SHUTDOWN, label: 'Shutdown', icon: Moon },
     { id: TABS.GARDEN, label: 'Garden', icon: Leaf },
-    { id: TABS.PROFILE, label: 'Settings', icon: User },
+    { id: TABS.PROFILE, label: 'Profile', icon: User },
   ];
 
   const visibleTabs = adhdMode ? adhdTabs : tabs;
@@ -196,7 +229,7 @@ const TimeTracker = ({ initialTab }) => {
   // Auto-redirect if active tab is hidden in current mode
   useEffect(() => {
     if (adhdMode) {
-      const isCurrentVisible = adhdTabs.some(t => t.id === activeTab);
+      const isCurrentVisible = activeTab === TABS.TAG_ANALYTICS || adhdTabs.some(t => t.id === activeTab);
       if (!isCurrentVisible) {
         setActiveTab(TABS.FOCUS);
       }
@@ -334,9 +367,21 @@ const TimeTracker = ({ initialTab }) => {
         tabs={visibleTabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        collapsed={sidebarCollapsed}
+        hidden={sidebarHidden}
+        onToggleCollapse={() => setSidebarCollapsed((collapsed) => !collapsed)}
+        onHide={() => setSidebarHidden(true)}
+        onShow={() => setSidebarHidden(false)}
       />
 
-      {activeTab === TABS.TODAY ? (
+      <div className={sidebarHidden ? '' : sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}>
+      {activeTab === TABS.TAG_ANALYTICS ? (
+        <TagAnalytics onBack={() => setActiveTab(TABS.FOCUS)} />
+      ) : activeTab === TABS.DAILY_SHUTDOWN ? (
+        <DailyShutdown />
+      ) : activeTab === TABS.FOR_YOU ? (
+        <ForYou onStartFocus={(minutes) => { if (!minutes) setActiveTab(TABS.FOCUS); }} />
+      ) : activeTab === TABS.TODAY ? (
         <TodayPlanner onStartFocus={() => setActiveTab(TABS.FOCUS)} />
       ) : (
         <div className="p-4 sm:p-6 pb-32">
@@ -367,10 +412,11 @@ const TimeTracker = ({ initialTab }) => {
                 />
 
                 {/* Today's Total */}
-                <TodayTotal hours={todayTotalHours} />
+                <TodayTotal hours={todayTotalHours} currentSessionTime={totalWorkTime} isTracking={isTracking} />
 
                 {/* Session Info */}
                 <SessionInfo sessionStart={sessionStart} />
+                <FocusTagSummary />
               </div>
 
               {/* Session Goal Input (Accountability) */}
@@ -498,9 +544,6 @@ const TimeTracker = ({ initialTab }) => {
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-4">
                     🧠 Deep Work Insights
                   </h2>
-
-                  {/* Community Banner */}
-                  <CommunityBanner />
 
                   {/* Sub-navigation for Insights */}
                   <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-md">
@@ -660,6 +703,8 @@ const TimeTracker = ({ initialTab }) => {
                 🏆 Social & Community
               </h2>
               
+              <CommunityBanner />
+
               {/* Sub-navigation for Social */}
               <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-md">
                 <button
@@ -692,6 +737,12 @@ const TimeTracker = ({ initialTab }) => {
                 >
                   My Pod
                 </button>
+                <button
+                  onClick={() => setSocialView('growth')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${socialView === 'growth' ? 'bg-[#eaf8ee] text-[#249653] shadow-sm' : 'text-gray-500 hover:text-[#249653]'}`}
+                >
+                  Growth
+                </button>
               </div>
 
               {/* Social Content */}
@@ -709,6 +760,8 @@ const TimeTracker = ({ initialTab }) => {
                   todayHours={todayTotalHours}
                 />
               )}
+
+              {socialView === 'growth' && <GrowthHub />}
             </div>
           </div>
 
@@ -753,6 +806,7 @@ const TimeTracker = ({ initialTab }) => {
         </div>
       </div>
       )}
+      </div>
     </div>
   );
 };

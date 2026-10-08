@@ -11,6 +11,8 @@ export const STORAGE_KEYS = {
 };
 
 export const TABS = {
+  FOR_YOU: 'for-you',
+  TAG_ANALYTICS: 'tag-analytics',
   TODAY: 'today',
   TRACKER: 'tracker',
   HISTORY: 'history',
@@ -25,6 +27,8 @@ export const TABS = {
   INSIGHTS: 'insights',
   PODS: 'pods',
   GARDEN: 'garden',
+  DAILY_SHUTDOWN: 'daily-shutdown',
+  GROWTH: 'growth',
 };
 
 export const STATUS = {

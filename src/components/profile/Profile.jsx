@@ -4,6 +4,7 @@ import ContributionGraph from './ContributionGraph';
 import GamificationStats from './GamificationStats';
 import ShareModal from './ShareModal';
 import ProfileSettings from './ProfileSettings';
+import BadgeCollection from './BadgeCollection';
 import { useWorkHistory } from '../../hooks';
 import { calculateStreak, calculateLevel } from '../../utils/gamificationUtils';
 
@@ -17,6 +18,29 @@ const Profile = ({ grindMode, setGrindMode, darkMode, setDarkMode, adhdMode, set
   const totalHours = getTotalYearHours();
   const levelData = calculateLevel(totalHours);
   const todayHours = getHoursForDate(new Date());
+  const focusSessions = JSON.parse(localStorage.getItem('lockin_focus_sessions') || '[]');
+  const sessionHistory = JSON.parse(localStorage.getItem('timeTracker_workSessions') || '[]');
+  const allSessions = [...focusSessions, ...sessionHistory];
+  const weekStart = new Date();
+  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setDate(weekStart.getDate() - 6);
+  const weekHours = Object.entries(workHistory).reduce((sum, [dateKey, hours]) => {
+    const date = new Date(`${dateKey}T00:00:00`);
+    return date >= weekStart ? sum + Number(hours || 0) : sum;
+  }, 0);
+  const xp = Math.round(totalHours * 100 + allSessions.length * 25);
+  const storedTasks = JSON.parse(localStorage.getItem('lockin_tasks_offline') || '[]');
+  const completedTasks = storedTasks.filter((task) => task.completed || task.done).length;
+  const trees = JSON.parse(localStorage.getItem('lockin_garden_data_v2') || '[]').filter(Boolean).length;
+  const recentDates = new Set(allSessions.filter((session) => session.completedAt || session.startTime).map((session) => (session.completedAt || session.startTime).slice(0, 10)));
+  const activeDays = [...recentDates].filter((date) => {
+    const day = new Date(`${date}T00:00:00`);
+    return day >= weekStart;
+  }).length;
+  const earlySession = allSessions.some((session) => new Date(session.completedAt || session.startTime || 0).getHours() < 9);
+  const longSession = allSessions.some((session) => Number(session.durationMinutes || 0) >= 90 || Number(session.duration || 0) >= 90 * 60 * 1000);
+  const weeklyRank = Number(localStorage.getItem('lockin_weekly_rank') || 0);
+  const monthlyRank = Number(localStorage.getItem('lockin_monthly_rank') || 0);
 
   const shareStats = {
     sessionHours: todayHours.toFixed(1),
@@ -34,6 +58,7 @@ const Profile = ({ grindMode, setGrindMode, darkMode, setDarkMode, adhdMode, set
         <div>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Productivity Master</h2>
           <p className="text-gray-500 dark:text-gray-400 text-sm">Keep locking in!</p>
+          <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#4dcd7d]/10 px-3 py-1 text-xs font-bold text-[#249653]">Level {levelData.level.title} · {xp.toLocaleString()} XP</div>
         </div>
       </div>
 
@@ -49,6 +74,20 @@ const Profile = ({ grindMode, setGrindMode, darkMode, setDarkMode, adhdMode, set
         <h3 className="text-lg font-semibold text-green-800 dark:text-green-400 mb-3 px-1">Your Productivity Graph</h3>
         <ContributionGraph />
       </div>
+
+      <BadgeCollection
+        totalHours={totalHours}
+        weekHours={weekHours}
+        streak={streak}
+        sessions={allSessions.length}
+        tasks={completedTasks}
+        trees={trees}
+        weeklyRank={weeklyRank}
+        monthlyRank={monthlyRank}
+        activeDays={activeDays}
+        earlySession={earlySession}
+        longSession={longSession}
+      />
 
       {/* Settings */}
       <ProfileSettings 

@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Play, Pause, RotateCcw, Timer, Clock, Settings2, Zap, Brain, Plus, CheckCircle2, Coffee, Sparkles, Tag, Check } from 'lucide-react';
+import { Play, Pause, RotateCcw, Timer, Clock, Settings2, Zap, Coffee, Sparkles, Tag, Check, Square, BarChart3 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import VisualTimeTimer from './VisualTimeTimer';
+import { useGarden } from '../../context/GardenContext';
+import FocusShareModal from './FocusShareModal';
 
 // Preset tags for pomodoro focus sessions
 const PRESET_TAGS = [
@@ -50,6 +52,7 @@ const playCompletionFanfare = () => {
 };
 
 const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = null }) => {
+  const { rewardFocusSession } = useGarden();
   const [minutes, setMinutes] = useState(initialMinutes);
   const [seconds, setSeconds] = useState(0);
   const [isActive, setIsActive] = useState(false);
@@ -112,10 +115,20 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
 
   // Completion modal / prompt state
   const [completedSessionType, setCompletedSessionType] = useState(null); // 'warmup' or 'regular'
-
-  // Brain Dump / Distraction Parking Lot state
-  const [parkedThought, setParkedThought] = useState('');
-  const [parkedSuccessMsg, setParkedSuccessMsg] = useState('');
+  const [lastReward, setLastReward] = useState(null);
+  const [recentSessions, setRecentSessions] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('lockin_focus_sessions') || '[]').slice(0, 3);
+    } catch {
+      return [];
+    }
+  });
+  const [showShareCard, setShowShareCard] = useState(false);
+  const [showTagAnalytics, setShowTagAnalytics] = useState(false);
+  const [zenMode, setZenMode] = useState(false);
+  const [showBrainDump, setShowBrainDump] = useState(false);
+  const [brainDump, setBrainDump] = useState('');
+  const [sessionEndAt, setSessionEndAt] = useState(null);
 
   // Auto-start effect
   useEffect(() => {
@@ -124,6 +137,26 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
       setIsPaused(false);
     }
   }, [autoStart]);
+
+  // Keep For You and Focus on the same running session.
+  useEffect(() => {
+    const syncSharedFocus = () => {
+      try {
+        const session = JSON.parse(localStorage.getItem('lockin_active_focus') || 'null');
+        if (!session) return;
+        const remaining = Math.max(0, Math.ceil((session.endAt - Date.now()) / 1000));
+        setMinutes(Math.floor(remaining / 60));
+        setSeconds(remaining % 60);
+        setCustomMinutes(session.minutes);
+        setSessionEndAt(session.endAt);
+        setIsActive(remaining > 0);
+        setIsPaused(false);
+      } catch {}
+    };
+    window.addEventListener('lockin-focus-start', syncSharedFocus);
+    syncSharedFocus();
+    return () => window.removeEventListener('lockin-focus-start', syncSharedFocus);
+  }, []);
 
   // Sync if initialMinutes changes (e.g. from task selection)
   useEffect(() => {
@@ -142,6 +175,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
     setMinutes(customMinutes);
     setSeconds(0);
     setCompletedSessionType(null);
+    setSessionEndAt(null);
   }, [customMinutes]);
 
   const handleStartPreset = (m) => {
@@ -151,6 +185,10 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
     setIsActive(true);
     setIsPaused(false);
     setCompletedSessionType(null);
+    const session = { minutes: m, task: focusedTaskName || 'Focus session', startedAt: Date.now(), endAt: Date.now() + m * 60 * 1000 };
+    setSessionEndAt(session.endAt);
+    localStorage.setItem('lockin_active_focus', JSON.stringify(session));
+    window.dispatchEvent(new Event('lockin-focus-sync'));
     playTone(660, 0.1);
   };
 
@@ -158,9 +196,13 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
     let interval = null;
     if (isActive && !isPaused) {
       interval = setInterval(() => {
-        if (seconds > 0) {
+        const sharedRemaining = sessionEndAt ? Math.max(0, Math.ceil((sessionEndAt - Date.now()) / 1000)) : null;
+        if (sharedRemaining !== null && sharedRemaining > 0) {
+          setMinutes(Math.floor(sharedRemaining / 60));
+          setSeconds(sharedRemaining % 60);
+        } else if (sharedRemaining === null && seconds > 0) {
           setSeconds((prevSeconds) => prevSeconds - 1);
-        } else if (minutes > 0) {
+        } else if (sharedRemaining === null && minutes > 0) {
           setMinutes((prevMinutes) => prevMinutes - 1);
           setSeconds(59);
         } else {
@@ -179,16 +221,35 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
           } else {
             setCompletedSessionType('regular');
           }
+
+          const reward = rewardFocusSession(customMinutes);
+          const session = {
+            id: Date.now().toString(),
+            durationMinutes: customMinutes,
+            completedAt: new Date().toISOString(),
+            taskName: focusedTaskName || 'Focus session',
+            tag: selectedTag,
+            ...reward,
+          };
+          const existing = JSON.parse(localStorage.getItem('lockin_focus_sessions') || '[]');
+          localStorage.setItem('lockin_focus_sessions', JSON.stringify([session, ...existing].slice(0, 100)));
+          window.dispatchEvent(new Event('local-data-updated'));
+          setLastReward(session);
+          setRecentSessions([session, ...existing].slice(0, 3));
+          setShowShareCard(true);
         }
       }, 1000);
     } else {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isActive, isPaused, minutes, seconds, customMinutes]);
+  }, [isActive, isPaused, minutes, seconds, customMinutes, sessionEndAt]);
 
   const toggleTimer = () => {
     if (!isActive) {
+      const newEndAt = Date.now() + (minutes * 60 + seconds) * 1000;
+      setSessionEndAt(newEndAt);
+      localStorage.setItem('lockin_active_focus', JSON.stringify({ minutes: customMinutes, task: focusedTaskName || 'Focus session', startedAt: Date.now(), endAt: newEndAt }));
       setIsActive(true);
       setIsPaused(false);
       playTone(587, 0.12);
@@ -196,6 +257,20 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
       setIsPaused(!isPaused);
       playTone(440, 0.1);
     }
+  };
+
+  const finishSessionNow = () => {
+    if (!isActive) return;
+    setMinutes(0);
+    setSeconds(0);
+    setSessionEndAt(null);
+    localStorage.removeItem('lockin_active_focus');
+    setIsPaused(false);
+  };
+
+  const handleRescueMe = () => {
+    handleStartPreset(2);
+    setLastReward(null);
   };
 
   const handleCustomMinutesChange = (e) => {
@@ -209,38 +284,6 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
     }
   };
 
-  // Brain Dump / Parkir Pikiran handler
-  const handleParkThought = (e) => {
-    e.preventDefault();
-    if (!parkedThought.trim()) return;
-
-    try {
-      const stored = localStorage.getItem('lockin_tasks_offline');
-      const currentTasks = stored ? JSON.parse(stored) : [];
-      const newTask = {
-        id: Date.now().toString(),
-        name: `💭 ${parkedThought.trim()}`,
-        estimatedTime: '5m',
-        completed: false,
-        createdAt: new Date().toISOString(),
-      };
-
-      const updated = [newTask, ...currentTasks];
-      localStorage.setItem('lockin_tasks_offline', JSON.stringify(updated));
-      window.dispatchEvent(new Event('storage'));
-
-      setParkedSuccessMsg('Tersimpan di To-Do! Otak tenang, lanjut fokus yuk 🧘');
-      setParkedThought('');
-      playTone(784, 0.15);
-
-      setTimeout(() => {
-        setParkedSuccessMsg('');
-      }, 3500);
-    } catch (err) {
-      console.warn('Failed to park thought', err);
-    }
-  };
-
   const formatTime = (m, s) => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
@@ -250,7 +293,17 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
   const progress = ((totalDurationSecs - remainingSecs) / totalDurationSecs) * 100;
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 sm:p-6 space-y-7 max-w-lg mx-auto">
+    <div className="relative flex flex-col items-center justify-center p-4 sm:p-6 space-y-7 max-w-lg mx-auto">
+      <div className="fixed right-4 top-20 z-40 flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:right-6">
+        <span className="text-xs font-semibold text-gray-700 dark:text-white">Zen Mode</span>
+        <button
+          onClick={() => setZenMode((enabled) => !enabled)}
+          aria-label="Toggle Zen Mode"
+          className={`relative h-6 w-12 rounded-full transition-colors duration-300 ${zenMode ? 'bg-green-500' : 'bg-gray-200 dark:bg-slate-700'}`}
+        >
+          <div className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${zenMode ? 'translate-x-6' : 'translate-x-0'}`} />
+        </button>
+      </div>
       {/* Header */}
       <div className="text-center space-y-1">
         <h2 className="text-2xl font-bold text-green-800 dark:text-green-400">
@@ -373,8 +426,8 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
               <defs>
                 {/* Smooth vibrant gradients for active progress */}
                 <linearGradient id="focusProgressGreen" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#22c55e" />
-                  <stop offset="100%" stopColor="#16a34a" />
+                  <stop offset="0%" stopColor="#4dcd7d" />
+                  <stop offset="100%" stopColor="#4dcd7d" />
                 </linearGradient>
                 <linearGradient id="focusProgressAmber" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#fbbf24" />
@@ -477,6 +530,16 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
               )}
             </button>
 
+            {isActive && (
+              <button
+                onClick={finishSessionNow}
+                className="flex h-16 w-16 items-center justify-center rounded-3xl bg-red-500 text-sm font-extrabold text-white shadow-lg shadow-red-500/25 transition-colors hover:bg-red-600"
+                title="Hentikan sesi sekarang"
+              >
+                <Square className="h-6 w-6 fill-current" />
+              </button>
+            )}
+
             <button
               onClick={resetTimer}
               className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800 text-gray-500 hover:text-red-500 transition-colors"
@@ -547,45 +610,129 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
         </>
       )}
 
-      {/* ADHD Brain Dump / Distraction Catcher ("Parkir Pikiran") */}
-      <div className="w-full bg-amber-50/60 dark:bg-slate-900/60 rounded-2xl p-4 border border-amber-200/50 dark:border-amber-900/30 space-y-2 mt-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400">
-            <Brain className="w-4 h-4" />
-            <span>Parkir Pikiran (Brain Dump)</span>
-          </div>
-          <span className="text-[10px] text-gray-400">Anti-Distraksi</span>
+      {lastReward && (
+        <div className="w-full rounded-2xl bg-[#4dcd7d]/10 border border-[#4dcd7d]/30 px-4 py-3 text-center text-xs text-gray-700 dark:text-gray-200">
+          <span className="font-bold">Sesi selesai!</span> +{lastReward.earnedCoins} coins · seed {lastReward.rewardPlantId} masuk koleksi 🌱
         </div>
+      )}
 
-        <p className="text-[11px] text-gray-500 dark:text-gray-400">
-          Tiba-tiba teringat ide atau hal acak saat fokus? Tulis di sini agar otak tenang, nanti bisa dikerjakan setelah sesi.
-        </p>
+      {showShareCard && lastReward && (
+        <FocusShareModal
+          session={lastReward}
+          sessionCount={JSON.parse(localStorage.getItem('lockin_focus_sessions') || '[]').filter((session) => session.completedAt?.slice(0, 10) === new Date().toISOString().slice(0, 10)).length}
+          onClose={() => setShowShareCard(false)}
+        />
+      )}
 
-        <form onSubmit={handleParkThought} className="flex gap-2 pt-1">
-          <input
-            type="text"
-            value={parkedThought}
-            onChange={(e) => setParkedThought(e.target.value)}
-            placeholder="Cth: Cek tagihan internet, ide belanja..."
-            className="flex-1 px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-amber-200 dark:border-slate-700 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400/50"
-          />
-          <button
-            type="submit"
-            disabled={!parkedThought.trim()}
-            className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Parkir</span>
-          </button>
-        </form>
-
-        {parkedSuccessMsg && (
-          <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 pt-1 animate-in fade-in">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>{parkedSuccessMsg}</span>
+      {!completedSessionType && (
+        <div className="w-full rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200">Session tag</span>
+            <button onClick={() => window.dispatchEvent(new Event('open-tag-analytics'))} className="flex items-center gap-1 text-[10px] font-bold text-[#249653] hover:underline"><BarChart3 className="h-3 w-3" /> Analytics</button>
           </div>
-        )}
-      </div>
+          {!isCustomTag ? (
+            <div className="flex flex-wrap gap-2">
+              {PRESET_TAGS.map((tag) => (
+                <button key={tag.id} onClick={() => handleSelectTag(tag.name)} className={`rounded-xl px-3 py-2 text-xs font-bold transition ${selectedTag === tag.name ? 'bg-[#4dcd7d] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-[#4dcd7d]/15 dark:bg-slate-800 dark:text-slate-300'}`}>
+                  {tag.icon} {tag.name}
+                </button>
+              ))}
+              <button onClick={() => setIsCustomTag(true)} className="rounded-xl border border-dashed border-slate-300 px-3 py-2 text-xs font-bold text-slate-500 hover:border-[#4dcd7d] hover:text-[#249653]">+ Custom</button>
+            </div>
+          ) : (
+            <form onSubmit={handleCustomTagSubmit} className="flex gap-2">
+              <input autoFocus value={customTagInput} onChange={(event) => setCustomTagInput(event.target.value)} placeholder="Marketing, Research..." className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none focus:border-[#4dcd7d] dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+              <button type="submit" className="rounded-xl bg-[#4dcd7d] px-3 py-2 text-xs font-bold text-white">Save</button>
+              <button type="button" onClick={() => setIsCustomTag(false)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-500">Cancel</button>
+            </form>
+          )}
+
+          {showTagAnalytics && (() => {
+            let sessions = [];
+            try { sessions = JSON.parse(localStorage.getItem('lockin_focus_sessions') || '[]'); } catch {}
+            const tagTotals = sessions.reduce((acc, session) => {
+              const tag = session.tag || 'Work';
+              const minutes = Number(session.durationMinutes || 0);
+              acc[tag] = { minutes: (acc[tag]?.minutes || 0) + minutes, sessions: (acc[tag]?.sessions || 0) + 1 };
+              return acc;
+            }, {});
+            const rows = Object.entries(tagTotals).sort((a, b) => b[1].minutes - a[1].minutes);
+            return (
+              <div className="mt-4 space-y-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/70">
+                <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Tag analytics</div>
+                {rows.length === 0 ? <div className="text-xs text-slate-400">Selesaikan sesi pertama untuk mulai melihat analytics.</div> : rows.map(([tag, data]) => (
+                  <div key={tag} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-xs dark:bg-slate-900">
+                    <span className="font-bold text-slate-700 dark:text-slate-200">{tag}</span>
+                    <span className="text-slate-500">{(data.minutes / 60).toFixed(1)}h · {data.sessions} sesi · avg {Math.round(data.minutes / data.sessions)}m</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {recentSessions.length > 0 && (
+        <div className="w-full rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-extrabold text-gray-700 dark:text-gray-200">Sesi terakhir</span>
+            <span className="text-[10px] text-gray-400">tersimpan offline</span>
+          </div>
+          <div className="space-y-2">
+            {recentSessions.map((session) => (
+              <div key={session.id} className="flex items-center justify-between text-xs">
+                <span className="truncate text-gray-600 dark:text-gray-300">{session.taskName}</span>
+                <span className="ml-3 shrink-0 font-bold text-[#4dcd7d]">{session.durationMinutes}m · +{session.earnedCoins}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {zenMode && isActive && (
+        <div className="fixed inset-0 z-50 flex min-h-screen flex-col items-center justify-center bg-white px-6 text-slate-900 dark:bg-slate-950 dark:text-white">
+          <div className="absolute right-5 top-5 flex items-center gap-3">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#249653]">Zen focus</span>
+            <button onClick={() => setZenMode(false)} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Exit</button>
+          </div>
+          <div className="w-full max-w-md text-center">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#8bb99a]">Now focusing</p>
+            <h2 className="mb-10 truncate text-2xl font-black sm:text-3xl">{focusedTaskName || 'Focus session'}</h2>
+            <div className="font-mono text-7xl font-bold tracking-tight text-[#baf3ca] sm:text-8xl">{formatTime(minutes, seconds)}</div>
+            <div className="mx-auto mt-8 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div className="h-full rounded-full bg-[#4dcd7d] transition-all duration-1000" style={{ width: `${progress}%` }} />
+            </div>
+            <div className="mt-10 flex items-center justify-center gap-4">
+              <button onClick={toggleTimer} className="flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-500 text-white shadow-lg shadow-amber-500/20 hover:bg-amber-600" title="Pause">
+                {isPaused ? <Play className="h-7 w-7 fill-current" /> : <Pause className="h-7 w-7 fill-current" />}
+              </button>
+              <button onClick={finishSessionNow} className="flex h-16 w-16 items-center justify-center rounded-3xl bg-red-500 text-white shadow-lg shadow-red-500/20 hover:bg-red-600" title="Stop">
+                <Square className="h-6 w-6 fill-current" />
+              </button>
+            </div>
+            <button onClick={() => setShowBrainDump((visible) => !visible)} className="mt-8 text-xs font-bold text-[#249653] hover:text-[#1d7a42]">
+              I’m distracted · brain dump
+            </button>
+            {showBrainDump && (
+              <textarea value={brainDump} onChange={(event) => setBrainDump(event.target.value)} autoFocus rows={3} placeholder="Tulis dulu, lanjut fokus..." className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#4dcd7d] dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            )}
+          </div>
+        </div>
+      )}
+
+      {!isActive && !completedSessionType && (
+        <div className="w-full rounded-2xl border border-[#4dcd7d]/30 bg-[#4dcd7d]/10 p-4 text-center space-y-3">
+          <p className="text-sm font-bold text-gray-800 dark:text-gray-100">Sulit mulai?</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Tidak perlu menyelesaikan semuanya. Cukup mulai 2 menit.</p>
+          <button
+            onClick={handleRescueMe}
+            className="w-full rounded-xl bg-[#4dcd7d] px-4 py-3 text-sm font-extrabold text-white shadow-md shadow-[#4dcd7d]/25 transition-transform active:scale-95"
+          >
+            Rescue Me · Mulai 2 Menit
+          </button>
+        </div>
+      )}
+
     </div>
   );
 };

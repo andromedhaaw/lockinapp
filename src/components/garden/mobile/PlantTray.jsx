@@ -34,7 +34,7 @@ const MobilePlantTray = () => {
         </div>
       )}
 
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+      <div className="grid grid-cols-4 gap-2 pb-1 -mx-1 px-1">
         {Object.values(plantTypes).map(plant => {
           const canAfford = coins >= plant.cost;
           return (
@@ -45,7 +45,7 @@ const MobilePlantTray = () => {
               onClick={() => handleTapPlant(plant)}
               disabled={!canAfford}
               className={`
-                flex-shrink-0 flex flex-col items-center gap-0.5 p-1.5 rounded-xl w-[60px] transition-all duration-200
+                flex min-w-0 flex-col items-center gap-0.5 rounded-xl p-1.5 transition-all duration-200
                 ${canAfford 
                   ? 'bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 active:scale-90 active:bg-green-50 cursor-pointer' 
                   : 'bg-gray-50/50 dark:bg-slate-800/50 border border-gray-50 dark:border-slate-800 opacity-35 cursor-not-allowed'}

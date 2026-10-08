@@ -168,21 +168,6 @@ export const VisualTimeTimer = ({
             );
           })}
 
-          {/* Llama Life style playful decorative accents (from reference screenshot) */}
-          {/* Pastel purple triangle near 50 */}
-          <polygon
-            points="198,135 204,142 195,145"
-            className="fill-purple-400/60 pointer-events-none"
-          />
-          {/* Pastel yellow dots near 15 */}
-          <circle cx="106" cy="188" r="2.5" className="fill-amber-300/80 pointer-events-none" />
-          <circle cx="126" cy="186" r="2.5" className="fill-amber-300/80 pointer-events-none" />
-          {/* Pastel pink accent near 35 */}
-          <polygon
-            points="260,268 268,280 272,266"
-            className="fill-pink-300/50 pointer-events-none"
-          />
-
           {/* Center Hub: Black circular button with Play / Pause icon */}
           <g
             onClick={(e) => {

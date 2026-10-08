@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Play, Pause, RotateCcw, Timer, Clock, Settings2, Zap, Coffee, Sparkles, Tag, Check, Square, BarChart3 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Timer, Clock, Settings2, Zap, Coffee, Sparkles, Tag, Check, Square, BarChart3, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import VisualTimeTimer from './VisualTimeTimer';
 import { useGarden } from '../../context/GardenContext';
@@ -136,6 +136,13 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
     const timeout = setTimeout(() => setShowRewardToast(false), 3000);
     return () => clearTimeout(timeout);
   }, [showRewardToast]);
+
+  // Keep the share card celebratory, not obstructive.
+  useEffect(() => {
+    if (!showShareCard) return undefined;
+    const timeout = setTimeout(() => setShowShareCard(false), 5000);
+    return () => clearTimeout(timeout);
+  }, [showShareCard]);
 
   // Auto-start effect
   useEffect(() => {
@@ -367,7 +374,8 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
 
       {/* Completion Modal / Celebration Alert */}
       {completedSessionType && (
-        <div className="w-full p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 dark:from-emerald-950/40 dark:to-green-950/40 border border-emerald-300 dark:border-emerald-800 text-center space-y-3 animate-in zoom-in-95 duration-200">
+        <div className="relative w-full p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 dark:from-emerald-950/40 dark:to-green-950/40 border border-emerald-300 dark:border-emerald-800 text-center space-y-3 animate-in zoom-in-95 duration-200">
+          <button type="button" onClick={() => setCompletedSessionType(null)} aria-label="Tutup pesan" title="Tutup" className="absolute right-3 top-3 rounded-lg p-1 text-slate-400 transition hover:bg-white/70 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"><X className="h-4 w-4" /></button>
           <div className="inline-flex p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300">
             <Sparkles className="w-5 h-5" />
           </div>

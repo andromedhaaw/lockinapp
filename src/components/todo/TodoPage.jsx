@@ -577,7 +577,7 @@ export default function TodoPage() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
           <div>
             <h1 style={{ fontSize: 30, fontWeight: 800, color: '#111827', margin: 0, letterSpacing: '-0.5px' }}>
-              Tasks
+              To Do List
             </h1>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>
               {subtitles[activeFilter]}

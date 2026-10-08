@@ -23,6 +23,7 @@ export const TABS = {
   PROFILE: 'profile',
   LEADERBOARD: 'leaderboard',
   GOALS: 'goals',
+  PROJECTS: 'projects',
   HABITS: 'habits',
   ANALYTICS: 'analytics',
   INSIGHTS: 'insights',

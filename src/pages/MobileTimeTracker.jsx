@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Sprout, ChevronDown, Sparkles, Moon, Repeat } from 'lucide-react';
+import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Sprout, ChevronDown, Sparkles, Moon, Repeat, Flag } from 'lucide-react';
 import MobileLayout from '../components/mobile/MobileLayout';
 import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import { TodayPlanner } from '../components/today';
@@ -8,6 +8,7 @@ import { ForYou } from '../components/foryou';
 import DailyShutdown from '../components/shutdown/DailyShutdown';
 import GrowthHub from '../components/growth/GrowthHub';
 import HabitPage from '../components/habits/HabitPage';
+import ProjectsPage from '../components/projects/ProjectsPage';
 import {
   CurrentTimeDisplay,
   WorkTimerDisplay,
@@ -45,6 +46,7 @@ const tabs = [
   { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
   { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
+  { id: TABS.PROJECTS, label: 'Projects', icon: Flag },
   { id: TABS.HABITS, label: 'Habits', icon: Repeat },
   { id: TABS.LEADERBOARD, label: 'Social', icon: Trophy },
   { id: TABS.PROFILE, label: 'Profile', icon: User },
@@ -729,6 +731,10 @@ const MobileTimeTracker = () => {
             <div className="pt-4 pb-20">
               <GoalsTab />
             </div>
+          </div>
+
+          <div className={activeTab === TABS.PROJECTS ? 'block' : 'hidden'}>
+            <ProjectsPage />
           </div>
 
 

@@ -603,7 +603,7 @@ const MobileTimeTracker = () => {
                                 if (unit === 'h' || unit === 'hour') return val * 60;
                                 return val;
                               })() : 25} 
-                              autoStart={true}
+                              autoStart={false}
                             />
                          </div>
 

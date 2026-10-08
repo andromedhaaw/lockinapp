@@ -4,10 +4,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 /**
  * Tab navigation component
  */
-export const TabNavigation = ({ tabs, activeTab, onTabChange, collapsed = false, hidden = false, onToggleCollapse, onHide, onShow }) => {
+export const TabNavigation = ({ tabs, activeTab, onTabChange, collapsed = false, hidden = false, onToggleCollapse, onHide, onShow, pinLast = true, collapseBottom = false }) => {
   if (hidden) return <button onClick={onShow} className="fixed bottom-4 left-4 z-[60] hidden h-10 w-10 items-center justify-center rounded-xl border border-green-200 bg-green-50 text-green-700 shadow-md hover:bg-green-100 dark:border-slate-700 dark:bg-slate-900 dark:text-green-300 lg:flex" title="Show navigation"><ChevronRight className="h-5 w-5" /></button>;
   return (
-    <aside className={`bg-green-50 dark:bg-slate-900 shadow-sm border-b border-green-100 dark:border-slate-800 transition-all duration-300 sticky top-0 z-50 lg:fixed lg:inset-y-0 lg:left-0 lg:border-b-0 lg:border-r ${collapsed ? 'lg:w-20' : 'lg:w-64'}`}>
+    <aside className={`bg-green-50 dark:bg-slate-900 shadow-sm border-b border-green-100 dark:border-slate-800 transition-all duration-300 sticky top-0 z-50 lg:fixed lg:inset-y-0 lg:left-0 lg:border-b-0 lg:border-r lg:[&>div>div:last-child]:mt-auto ${collapsed ? 'lg:w-20' : 'lg:w-64'}`}>
       <div className="flex w-full justify-center overflow-x-auto lg:h-full lg:flex-col lg:items-stretch lg:justify-start lg:overflow-y-auto lg:px-3 lg:py-5">
         <div className={`hidden items-center gap-2 pb-6 text-lg font-black text-slate-900 dark:text-white lg:flex ${collapsed ? 'justify-center' : 'px-4'}`}>
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#4dcd7d] text-sm text-slate-950">L</span>
@@ -18,7 +18,7 @@ export const TabNavigation = ({ tabs, activeTab, onTabChange, collapsed = false,
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             title={collapsed ? tab.label : undefined}
-            className={`px-6 py-4 text-center font-medium transition-colors whitespace-nowrap lg:flex lg:items-center lg:gap-3 lg:rounded-xl lg:px-4 lg:py-3 lg:text-left ${collapsed ? 'lg:justify-center' : ''} ${index === tabs.length - 1 ? 'lg:mt-auto' : ''} ${
+            className={`px-6 py-4 text-center font-medium transition-colors whitespace-nowrap lg:flex lg:items-center lg:gap-3 lg:rounded-xl lg:px-4 lg:py-3 lg:text-left ${collapsed ? 'lg:justify-center' : ''} ${pinLast && index === tabs.length - 1 ? 'lg:mt-auto' : ''} ${
               activeTab === tab.id
                 ? 'text-green-600 border-b-2 border-green-600'
                 : 'text-gray-500 hover:text-green-600'
@@ -48,5 +48,7 @@ TabNavigation.propTypes = {
   hidden: PropTypes.bool,
   onToggleCollapse: PropTypes.func,
   onHide: PropTypes.func,
+  collapseBottom: PropTypes.bool,
   onShow: PropTypes.func,
+  pinLast: PropTypes.bool,
 };

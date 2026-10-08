@@ -212,7 +212,7 @@ const TimeTracker = ({ initialTab }) => {
     : 0;
   const todayTotalHours = todayStoredHours + currentSessionHours;
 
-  // ADHD Calm tabs (essential 6 tabs: Today, Focus, Tasks, Tracker, Garden, Settings)
+  // ADHD Mode keeps only the core action loop visible.
   const adhdTabs = [
     { id: TABS.FOR_YOU, label: 'For You', icon: Sparkles },
     { id: TABS.TODAY, label: 'Today', icon: CalendarDays },
@@ -221,9 +221,6 @@ const TimeTracker = ({ initialTab }) => {
     { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
     { id: TABS.TODO, label: 'To Do', icon: CheckSquare },
     { id: TABS.DEADLINE, label: 'Deadline', icon: CalendarDays },
-    { id: TABS.DAILY_SHUTDOWN, label: 'Shutdown', icon: Moon },
-    { id: TABS.HABITS, label: 'Habits', icon: Repeat },
-    { id: TABS.GARDEN, label: 'Garden', icon: Leaf },
     { id: TABS.PROFILE, label: 'Profile', icon: User },
   ];
 
@@ -374,7 +371,9 @@ const TimeTracker = ({ initialTab }) => {
         hidden={sidebarHidden}
         onToggleCollapse={() => setSidebarCollapsed((collapsed) => !collapsed)}
         onHide={() => setSidebarHidden(true)}
-        onShow={() => setSidebarHidden(false)}
+          onShow={() => setSidebarHidden(false)}
+          pinLast={false}
+          collapseBottom={adhdMode}
       />
 
       <div className={sidebarHidden ? '' : sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}>
@@ -394,7 +393,7 @@ const TimeTracker = ({ initialTab }) => {
           {/* Tracker Tab Content */}
           <div className={activeTab === TABS.TRACKER ? 'block' : 'hidden'}>
               {/* Header */}
-              <div className="text-center mb-4 pt-2">
+              <div className="text-center mb-8 pt-6">
                 <h1 className="text-2xl font-bold text-green-800 mb-2">
                   Work Hours Tracker
                 </h1>
@@ -405,7 +404,7 @@ const TimeTracker = ({ initialTab }) => {
               </div>
 
               {/* Tracker Displays */}
-              <div className="mb-4">
+              <div className="mb-8">
                 {/* Current Time Display */}
                 <CurrentTimeDisplay timeString={currentTimeString} />
 
@@ -421,12 +420,11 @@ const TimeTracker = ({ initialTab }) => {
 
                 {/* Session Info */}
                 <SessionInfo sessionStart={sessionStart} />
-                <FocusTagSummary />
               </div>
 
               {/* Session Goal Input (Accountability) */}
               {!isTracking && (
-                 <div className="bg-white/50 p-2 rounded-xl border border-green-50 mb-4">
+                 <div className="mt-8 bg-white/50 p-2 rounded-xl border border-green-50 mb-6">
                    <div className="flex flex-col sm:flex-row items-center gap-4">
                      <label className="text-[10px] font-bold text-green-700 uppercase whitespace-nowrap">Session Commitment:</label>
                      <div className="flex gap-1.5 w-full">
@@ -449,7 +447,7 @@ const TimeTracker = ({ initialTab }) => {
               )}
 
               {/* Control Buttons */}
-              <div className="mt-2">
+              <div className="mt-12">
                 <ControlButtons
                   isTracking={isTracking}
                   isPaused={isPaused}
@@ -460,7 +458,7 @@ const TimeTracker = ({ initialTab }) => {
               </div>
 
               {/* Action Buttons: Work History & Insights in Tracker Page */}
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <div className="mt-16 flex flex-wrap items-center justify-center gap-3">
                 <button
                   onClick={() => {
                     setShowTrackerHistory(!showTrackerHistory);
@@ -605,6 +603,9 @@ const TimeTracker = ({ initialTab }) => {
                   )}
                 </div>
               )}
+              <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800">
+                <FocusTagSummary />
+              </div>
           </div>
 
           {/* Focus Timer Content */}
@@ -643,7 +644,7 @@ const TimeTracker = ({ initialTab }) => {
                       if (unit === 'h' || unit === 'hour') return val * 60;
                       return val;
                     })() : 25} 
-                    autoStart={!!focusedTask}
+                    autoStart={false}
                   />
                   
                   {focusedTask && (
@@ -765,7 +766,6 @@ const TimeTracker = ({ initialTab }) => {
                   todayHours={todayTotalHours}
                 />
               )}
-
               {socialView === 'growth' && <GrowthHub />}
             </div>
           </div>

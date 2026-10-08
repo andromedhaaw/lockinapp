@@ -16,6 +16,8 @@
   .animate-slow-spin {
     animation: spin 15s linear infinite;
   }
+  .animate-soft-pop { animation: soft-pop .24s cubic-bezier(.34,1.56,.64,1); }
+  .animate-success { animation: success-flash .42s ease-out; }
 }
 
 @keyframes float {
@@ -28,6 +30,9 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+@keyframes soft-pop { from { transform: scale(.96); opacity: .65; } to { transform: scale(1); opacity: 1; } }
+@keyframes success-flash { 0% { box-shadow: 0 0 0 0 rgba(77,205,125,.35); } 100% { box-shadow: 0 0 0 10px rgba(77,205,125,0); } }
 
 :root {
   color-scheme: light;

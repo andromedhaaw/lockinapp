@@ -232,7 +232,7 @@ function TaskCard({ task, isOverdue, onToggle, zen }) {
 const CAL_HOURS = Array.from({ length: 12 }, (_, i) => i + 7); // 7am–6pm
 const CELL_H = 64; // px per hour
 
-function CalendarPanel({ tasks, activeFilter }) {
+function CalendarPanel({ tasks, activeFilter, onReschedule, onResize }) {
   const now = new Date();
   const currentHour = now.getHours() + now.getMinutes() / 60;
   const [offset, setOffset] = useState(0);
@@ -249,6 +249,22 @@ function CalendarPanel({ tasks, activeFilter }) {
     return d.getTime() === displayDate.getTime() && !t.done;
   });
 
+  const overlaps = (task) => dayTasks.some(other => {
+    if (other.id === task.id) return false;
+    const a = Number(task.startHour || 8);
+    const b = a + Number(task.durationH || 1);
+    const c = Number(other.startHour || 8);
+    const d = c + Number(other.durationH || 1);
+    return a < d && c < b;
+  });
+
+  const dropAtHour = (event, hour) => {
+    event.preventDefault();
+    const id = Number(event.dataTransfer.getData('text/plain'));
+    if (!id || !onReschedule) return;
+    onReschedule(id, Math.max(7, Math.min(18, hour)));
+  };
+
   const dayName = displayDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
   const dayNum  = displayDate.getDate();
   const isToday = displayDate.getTime() === todayDate().getTime();
@@ -257,12 +273,12 @@ function CalendarPanel({ tasks, activeFilter }) {
     <div style={{
       flex: 1, minWidth: 0, background: '#ffffff',
       borderRadius: 20, boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
-      overflow: 'hidden', display: 'flex', flexDirection: 'column',
+      overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)', minHeight: 0,
     }}>
       {/* Cal header */}
-      <div style={{ padding: '20px 20px 12px', borderBottom: '1px solid #f3f4f6' }}>
+      <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid #f3f4f6' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Calendar</span>
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1px' }}>Calendar</span>
           <div style={{ display: 'flex', gap: 4 }}>
             <button onClick={() => setOffset(o => o - 1)} style={calNavBtn}>
               <ChevronLeft style={{ width: 14, height: 14 }} />
@@ -278,18 +294,19 @@ function CalendarPanel({ tasks, activeFilter }) {
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', letterSpacing: '1px' }}>{dayName}</span>
           <span style={{
-            fontSize: 36, fontWeight: 800, lineHeight: 1, letterSpacing: '-2px',
+            fontSize: 28, fontWeight: 800, lineHeight: 1, letterSpacing: '-1px',
             color: isToday ? '#ed8936' : '#111827',
           }}>{dayNum}</span>
         </div>
       </div>
 
       {/* Timeline */}
-      <div style={{ flex: 1, overflowY: 'auto', position: 'relative', padding: '0 0 12px' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', position: 'relative', padding: '0 0 12px' }}>
         {CAL_HOURS.map(h => {
-          const eventsAtHour = dayTasks.filter(t => t.startHour === h);
+          const eventsAtHour = dayTasks.filter(t => Number(t.startHour || 0) >= h && Number(t.startHour || 0) < h + 1);
           return (
-            <div key={h} style={{ display: 'flex', minHeight: CELL_H, position: 'relative' }}>
+            <div key={h} style={{ display: 'flex', minHeight: CELL_H, position: 'relative' }}
+              onDragOver={e => e.preventDefault()} onDrop={e => dropAtHour(e, h)}>
               {/* Hour label */}
               <div style={{
                 width: 52, flexShrink: 0, paddingTop: 8, paddingLeft: 16,
@@ -302,21 +319,35 @@ function CalendarPanel({ tasks, activeFilter }) {
               <div style={{ flex: 1, borderTop: '1px solid #f3f4f6', position: 'relative', marginRight: 12 }}>
                 {eventsAtHour.map(t => {
                   const tagC = TAG_COLORS[t.tag] || { bg: '#e5e7eb', text: '#374151' };
+                  const hasConflict = overlaps(t);
                   return (
                     <div key={t.id} style={{
-                      position: 'absolute', top: 4, left: 4,
+                      position: 'absolute', top: 4 + ((Number(t.startHour || h) - h) * CELL_H), left: 4,
                       right: 4,
                       height: (t.durationH || 1) * CELL_H - 8,
                       background: tagC.bg, color: tagC.text,
                       borderRadius: 10, padding: '6px 10px',
                       fontSize: 11, fontWeight: 700, lineHeight: 1.3,
                       boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                      overflow: 'hidden',
-                    }}>
+                      overflow: 'hidden', cursor: 'grab', outline: hasConflict ? '2px solid #ef4444' : 'none',
+                    }} draggable onDragStart={e => e.dataTransfer.setData('text/plain', String(t.id))}
+                      title={hasConflict ? 'Conflict: overlaps another task' : 'Drag to move this task'}>
                       <div style={{ fontWeight: 700, marginBottom: 2 }}>{t.title}</div>
                       <div style={{ fontWeight: 500, opacity: 0.75 }}>
-                        {h} – {h + (t.durationH || 1)}
+                        {fmt12(Math.floor(Number(t.startHour || h)))} – {fmt12(Math.floor(Number(t.startHour || h) + (t.durationH || 1)))}
                       </div>
+                      {hasConflict && <div style={{ color: '#b91c1c', fontSize: 9, fontWeight: 800, marginTop: 2 }}>CONFLICT</div>}
+                      <div onPointerDown={e => {
+                        e.stopPropagation();
+                        const startY = e.clientY;
+                        const startDuration = Number(t.durationH || 1);
+                        const move = ev => {
+                          const next = Math.max(0.25, Math.min(6, Math.round((startDuration + (ev.clientY - startY) / CELL_H) * 4) / 4));
+                          onResize?.(t.id, next);
+                        };
+                        const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+                        window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+                      }} style={{ position: 'absolute', bottom: 0, left: 10, right: 10, height: 6, cursor: 'ns-resize', borderTop: '2px solid rgba(255,255,255,.65)' }} />
                     </div>
                   );
                 })}
@@ -324,6 +355,12 @@ function CalendarPanel({ tasks, activeFilter }) {
             </div>
           );
         })}
+
+        {dayTasks.length === 0 && (
+          <div style={{ position: 'absolute', top: 120, left: 62, right: 18, padding: 12, border: '1px dashed #d1d5db', borderRadius: 10, color: '#9ca3af', fontSize: 11, textAlign: 'center' }}>
+            No scheduled tasks — drop a task here to time-block it.
+          </div>
+        )}
 
         {/* Current time indicator */}
         {isToday && currentHour >= 7 && currentHour <= 19 && (
@@ -414,6 +451,14 @@ export default function TodoPage() {
   const filterColor  = FILTER_COLOR[activeFilter];
 
   const toggleDone = (id) => setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+
+  const rescheduleTask = (id, startHour) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, startHour } : t));
+  };
+
+  const resizeTask = (id, durationH) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, durationH } : t));
+  };
 
   const addTask = (e) => {
     e.preventDefault();
@@ -723,8 +768,8 @@ export default function TodoPage() {
 
           {/* Calendar column (split mode only) */}
           {isSplit && (
-            <div style={{ width: 320, flexShrink: 0, position: 'sticky', top: 20, maxHeight: 'calc(100vh - 120px)' }} className="td-fadein">
-              <CalendarPanel tasks={tasks} activeFilter={activeFilter} />
+            <div style={{ width: 320, flexShrink: 0, position: 'sticky', top: 0, marginTop: -72, maxHeight: 'calc(100vh - 120px)' }} className="td-fadein">
+              <CalendarPanel tasks={tasks} activeFilter={activeFilter} onReschedule={rescheduleTask} onResize={resizeTask} />
             </div>
           )}
         </div>

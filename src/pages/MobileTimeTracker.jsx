@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Sprout, ChevronDown, Sparkles, Moon } from 'lucide-react';
+import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Sprout, ChevronDown, Sparkles, Moon, Repeat } from 'lucide-react';
 import MobileLayout from '../components/mobile/MobileLayout';
 import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import { TodayPlanner } from '../components/today';
 import { ForYou } from '../components/foryou';
 import DailyShutdown from '../components/shutdown/DailyShutdown';
 import GrowthHub from '../components/growth/GrowthHub';
+import HabitPage from '../components/habits/HabitPage';
 import {
   CurrentTimeDisplay,
   WorkTimerDisplay,
@@ -44,6 +45,7 @@ const tabs = [
   { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
   { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
+  { id: TABS.HABITS, label: 'Habits', icon: Repeat },
   { id: TABS.LEADERBOARD, label: 'Social', icon: Trophy },
   { id: TABS.PROFILE, label: 'Profile', icon: User },
   { id: TABS.DAILY_SHUTDOWN, label: 'Shutdown', icon: Moon },
@@ -309,6 +311,10 @@ const MobileTimeTracker = () => {
 
           <div className={activeTab === TABS.TAG_ANALYTICS ? 'block -mx-4 -mt-4' : 'hidden'}>
             <TagAnalytics onBack={() => setActiveTab(TABS.FOCUS)} />
+          </div>
+
+          <div className={activeTab === TABS.HABITS ? 'block -mx-4 -mt-4' : 'hidden'}>
+            <HabitPage />
           </div>
 
 

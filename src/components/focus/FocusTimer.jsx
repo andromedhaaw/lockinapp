@@ -116,6 +116,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
   // Completion modal / prompt state
   const [completedSessionType, setCompletedSessionType] = useState(null); // 'warmup' or 'regular'
   const [lastReward, setLastReward] = useState(null);
+  const [showRewardToast, setShowRewardToast] = useState(false);
   const [recentSessions, setRecentSessions] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('lockin_focus_sessions') || '[]').slice(0, 3);
@@ -129,6 +130,12 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
   const [showBrainDump, setShowBrainDump] = useState(false);
   const [brainDump, setBrainDump] = useState('');
   const [sessionEndAt, setSessionEndAt] = useState(null);
+
+  useEffect(() => {
+    if (!showRewardToast) return undefined;
+    const timeout = setTimeout(() => setShowRewardToast(false), 3000);
+    return () => clearTimeout(timeout);
+  }, [showRewardToast]);
 
   // Auto-start effect
   useEffect(() => {
@@ -185,6 +192,9 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
     setIsActive(true);
     setIsPaused(false);
     setCompletedSessionType(null);
+    setLastReward(null);
+    setShowRewardToast(false);
+    setShowShareCard(false);
     const session = { minutes: m, task: focusedTaskName || 'Focus session', startedAt: Date.now(), endAt: Date.now() + m * 60 * 1000 };
     setSessionEndAt(session.endAt);
     localStorage.setItem('lockin_active_focus', JSON.stringify(session));
@@ -235,6 +245,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
           localStorage.setItem('lockin_focus_sessions', JSON.stringify([session, ...existing].slice(0, 100)));
           window.dispatchEvent(new Event('local-data-updated'));
           setLastReward(session);
+          setShowRewardToast(true);
           setRecentSessions([session, ...existing].slice(0, 3));
           setShowShareCard(true);
         }
@@ -258,6 +269,16 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
       playTone(440, 0.1);
     }
   };
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+      if (event.code === 'Space') { event.preventDefault(); toggleTimer(); }
+      if (event.key === 'Escape' && zenMode) setZenMode(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isActive, isPaused, minutes, seconds, zenMode]);
 
   const finishSessionNow = () => {
     if (!isActive) return;
@@ -294,7 +315,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
 
   return (
     <div className="relative flex flex-col items-center justify-center p-4 sm:p-6 space-y-7 max-w-lg mx-auto">
-      <div className="fixed right-4 top-20 z-40 flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:right-6">
+      <div className="fixed right-4 top-5 z-40 flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:right-6">
         <span className="text-xs font-semibold text-gray-700 dark:text-white">Zen Mode</span>
         <button
           onClick={() => setZenMode((enabled) => !enabled)}
@@ -319,7 +340,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
       </div>
 
       {/* Timer Mode Switcher (Digital Pomodoro vs Visual Time Timer) */}
-      <div className="flex items-center justify-center p-1 bg-gray-100 dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xs mb-1">
+      <div className="flex items-center justify-center p-1 bg-gray-100 dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xs mb-8">
         <button
           onClick={() => handleTimerModeChange('digital')}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
@@ -414,6 +435,8 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
           isActive={isActive}
           isPaused={isPaused}
           onToggle={toggleTimer}
+          onFinish={finishSessionNow}
+          onCustomMinutesChange={handleCustomMinutesChange}
           onReset={resetTimer}
           onSelectMinutes={(mins) => handleStartPreset(mins)}
           formatTime={formatTime}
@@ -610,8 +633,8 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
         </>
       )}
 
-      {lastReward && (
-        <div className="w-full rounded-2xl bg-[#4dcd7d]/10 border border-[#4dcd7d]/30 px-4 py-3 text-center text-xs text-gray-700 dark:text-gray-200">
+      {showRewardToast && lastReward && (
+        <div className="fixed right-4 top-24 z-50 w-[min(360px,calc(100vw-2rem))] rounded-2xl bg-[#eaf8ee] border border-[#4dcd7d]/40 px-4 py-3 text-xs text-[#245b36] shadow-lg">
           <span className="font-bold">Sesi selesai!</span> +{lastReward.earnedCoins} coins · seed {lastReward.rewardPlantId} masuk koleksi 🌱
         </div>
       )}
@@ -624,7 +647,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
         />
       )}
 
-      {!completedSessionType && (
+      {!isActive && !sessionEndAt && !completedSessionType && (
         <div className="w-full rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200">Session tag</span>
@@ -672,7 +695,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
         </div>
       )}
 
-      {recentSessions.length > 0 && (
+      {false && !isActive && recentSessions.length > 0 && (
         <div className="w-full rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-xs font-extrabold text-gray-700 dark:text-gray-200">Sesi terakhir</span>
@@ -730,6 +753,13 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
           >
             Rescue Me · Mulai 2 Menit
           </button>
+        </div>
+      )}
+
+      {!isActive && recentSessions.length > 0 && (
+        <div className="w-full rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-2 flex items-center justify-between"><span className="text-xs font-extrabold text-gray-700 dark:text-gray-200">Sesi terakhir</span><span className="text-[10px] text-gray-400">tersimpan offline</span></div>
+          <div className="space-y-2">{recentSessions.map((session) => <div key={session.id} className="flex items-center justify-between text-xs"><span className="truncate text-gray-600 dark:text-gray-300">{session.taskName}</span><span className="ml-3 shrink-0 font-bold text-[#4dcd7d]">{session.durationMinutes}m · +{session.earnedCoins}</span></div>)}</div>
         </div>
       )}
 

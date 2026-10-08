@@ -1,15 +1,15 @@
 import { Check, Trash2, Clock, ChevronRight } from 'lucide-react';
 
-const TaskItem = ({ task, onToggle, onDelete, onFocus }) => {
+const TaskItem = ({ task, onToggle, onDelete, onFocus, onOpen }) => {
   return (
     <div className={`group flex items-center justify-between p-3 rounded-lg border transition-all ${
       task.completed 
         ? 'bg-green-50 border-green-100 dark:bg-green-900/20 dark:border-green-800' 
         : 'bg-white border-gray-100 dark:bg-slate-900 dark:border-slate-800 hover:border-green-200 dark:hover:border-green-600 hover:shadow-sm'
-    }`}>
+    }`} onClick={() => onOpen?.(task)}>
       <div className="flex items-center gap-3 flex-1">
         <button
-          onClick={() => onToggle(task.id)}
+          onClick={(event) => { event.stopPropagation(); onToggle(task.id); }}
           className={`flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors ${
             task.completed
               ? 'bg-green-600 border-green-600 text-white'
@@ -37,8 +37,9 @@ const TaskItem = ({ task, onToggle, onDelete, onFocus }) => {
       </div>
 
   <div className="flex items-center">
+        <span className="mr-2 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">{task.energy || 'Medium'}</span>
         <button
-          onClick={() => onFocus && onFocus(task)}
+          onClick={(event) => { event.stopPropagation(); onFocus && onFocus(task); }}
           className="flex items-center gap-1 px-2.5 py-1.5 mr-2 rounded-full bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50 transition-colors shadow-sm text-xs font-bold uppercase tracking-wide"
           title="Start task session"
         >
@@ -47,7 +48,7 @@ const TaskItem = ({ task, onToggle, onDelete, onFocus }) => {
         </button>
 
         <button
-          onClick={() => onDelete(task.id)}
+          onClick={(event) => { event.stopPropagation(); onDelete(task.id); }}
           className="text-gray-400 hover:text-red-500 transition-all p-1"
           title="Delete task"
         >

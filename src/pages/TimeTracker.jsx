@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Leaf, ChevronDown, Sparkles, Moon } from 'lucide-react';
+import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Leaf, ChevronDown, Sparkles, Moon, Repeat } from 'lucide-react';
 import { TabNavigation } from '../components/ui';
 import { WebGardenTab as GardenTab } from '../components/garden/web';
 import { TodayPlanner } from '../components/today';
@@ -31,6 +31,7 @@ import { AnalyticsTab, TagAnalytics } from '../components/analytics';
 import { ForYou } from '../components/foryou';
 import DailyShutdown from '../components/shutdown/DailyShutdown';
 import GrowthHub from '../components/growth/GrowthHub';
+import HabitPage from '../components/habits/HabitPage';
 
 import { DeepWorkScore } from '../components/insights';
 import { WeeklyDigest } from '../components/digest';
@@ -48,6 +49,7 @@ const tabs = [
   { id: TABS.TODO, label: 'To Do', icon: CheckSquare },
   { id: TABS.DEADLINE, label: 'Deadline', icon: CalendarDays },
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
+  { id: TABS.HABITS, label: 'Habits', icon: Repeat },
   { id: TABS.GARDEN, label: 'Garden', icon: Leaf },
   { id: TABS.LEADERBOARD, label: 'Social', icon: Trophy },
   { id: TABS.DAILY_SHUTDOWN, label: 'Shutdown', icon: Moon },
@@ -220,6 +222,7 @@ const TimeTracker = ({ initialTab }) => {
     { id: TABS.TODO, label: 'To Do', icon: CheckSquare },
     { id: TABS.DEADLINE, label: 'Deadline', icon: CalendarDays },
     { id: TABS.DAILY_SHUTDOWN, label: 'Shutdown', icon: Moon },
+    { id: TABS.HABITS, label: 'Habits', icon: Repeat },
     { id: TABS.GARDEN, label: 'Garden', icon: Leaf },
     { id: TABS.PROFILE, label: 'Profile', icon: User },
   ];
@@ -375,7 +378,9 @@ const TimeTracker = ({ initialTab }) => {
       />
 
       <div className={sidebarHidden ? '' : sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}>
-      {activeTab === TABS.TAG_ANALYTICS ? (
+      {activeTab === TABS.HABITS ? (
+        <HabitPage />
+      ) : activeTab === TABS.TAG_ANALYTICS ? (
         <TagAnalytics onBack={() => setActiveTab(TABS.FOCUS)} />
       ) : activeTab === TABS.DAILY_SHUTDOWN ? (
         <DailyShutdown />
@@ -799,10 +804,6 @@ const TimeTracker = ({ initialTab }) => {
 
 
 
-          {/* Footer */}
-          <div className="text-center mt-8 text-green-600 text-sm">
-            Track your productivity with ease
-          </div>
         </div>
       </div>
       )}

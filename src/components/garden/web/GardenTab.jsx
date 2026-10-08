@@ -1,5 +1,5 @@
-import React from 'react';
-import { Coins, PlusCircle, Sprout, TrendingUp, Star } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Coins, Sprout, TrendingUp, Share2, Check } from 'lucide-react';
 import GardenGrid from './GardenGrid';
 import PlantTray from './PlantTray';
 import MyPlants from './MyPlants';
@@ -7,9 +7,31 @@ import { useGarden } from '../../../context/GardenContext';
 import { GRID_SIZE } from '../../../constants/gardenConstants';
 
 const WebGardenTab = () => {
-  const { coins, addCoinsFromWork, grid } = useGarden();
+  const { coins, grid } = useGarden();
   const plantedCount = grid.filter(p => p !== null).length;
   const growthPercent = Math.round((plantedCount / GRID_SIZE) * 100);
+  const [shared, setShared] = useState(false);
+  const weeklyStats = useMemo(() => {
+    let sessions = [];
+    try { sessions = JSON.parse(localStorage.getItem('lockin_focus_sessions') || '[]'); } catch {}
+    const now = new Date();
+    const weekStart = new Date(now); weekStart.setHours(0, 0, 0, 0); weekStart.setDate(now.getDate() - 6);
+    const recent = sessions.filter((s) => new Date(s.completedAt) >= weekStart);
+    const dates = new Set(recent.map((s) => new Date(s.completedAt).toDateString()));
+    let streak = 0;
+    for (let i = 0; i < 7; i += 1) { const day = new Date(now); day.setHours(0, 0, 0, 0); day.setDate(now.getDate() - i); if (!dates.has(day.toDateString())) break; streak += 1; }
+    return { blocks: recent.length, minutes: recent.reduce((sum, s) => sum + Number(s.durationMinutes || 0), 0), streak };
+  }, []);
+  const shareProgress = async () => {
+    const text = weeklyStats.streak >= 3
+      ? `${weeklyStats.streak}-day deep work streak 🌱 I grew my Lock In garden with ${weeklyStats.blocks} focus blocks this week.`
+      : `I completed ${weeklyStats.blocks} focus blocks and grew my garden ${growthPercent}% this week. 🌱`;
+    try {
+      if (navigator.share) await navigator.share({ title: 'My focus garden', text });
+      else await navigator.clipboard.writeText(text);
+      setShared(true); setTimeout(() => setShared(false), 2200);
+    } catch {}
+  };
 
   return (
     <div className="space-y-5 animate-in fade-in duration-700">
@@ -41,14 +63,10 @@ const WebGardenTab = () => {
                 <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{growthPercent}%</span>
               </div>
             </div>
-            <button 
-              onClick={() => addCoinsFromWork(1000)}
-              className="group flex items-center gap-2.5 px-5 py-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 rounded-xl shadow-[0_8px_32px_-4px_rgba(245,158,11,0.4)] hover:shadow-[0_12px_40px_-4px_rgba(245,158,11,0.5)] hover:-translate-y-0.5 transition-all duration-300"
-            >
+            <div className="flex items-center gap-2.5 px-5 py-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 rounded-xl shadow-[0_8px_32px_-4px_rgba(245,158,11,0.4)]">
               <Coins className="w-5 h-5 text-white fill-amber-200 group-hover:rotate-12 transition-transform" />
               <span className="font-black text-white text-lg">{coins.toLocaleString()}</span>
-              <PlusCircle className="w-3.5 h-3.5 text-white/40" />
-            </button>
+            </div>
           </div>
         </div>
       </div>
@@ -83,6 +101,25 @@ const WebGardenTab = () => {
           <div className="flex-1 overflow-y-auto p-3 scrollbar-hide">
             <MyPlants />
           </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-emerald-900/40 dark:bg-slate-900">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-600">Your week in focus</p>
+            <h3 className="mt-1 text-xl font-black tracking-tight text-slate-900 dark:text-white">Real work. Visible growth.</h3>
+            <p className="mt-1 text-xs text-slate-500">{weeklyStats.minutes} minutes focused · {weeklyStats.blocks} blocks · {growthPercent}% of your garden growing</p>
+          </div>
+          <button onClick={shareProgress} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-emerald-600 active:scale-95">
+            {shared ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+            {shared ? 'Copied' : 'Share progress'}
+          </button>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="rounded-xl bg-emerald-50 p-3 dark:bg-emerald-950/30"><div className="text-lg font-black text-emerald-700 dark:text-emerald-300">{weeklyStats.blocks}</div><div className="text-[10px] font-bold text-slate-500">Focus blocks</div></div>
+          <div className="rounded-xl bg-emerald-50 p-3 dark:bg-emerald-950/30"><div className="text-lg font-black text-emerald-700 dark:text-emerald-300">{weeklyStats.minutes}m</div><div className="text-[10px] font-bold text-slate-500">Deep work</div></div>
+          <div className="rounded-xl bg-emerald-50 p-3 dark:bg-emerald-950/30"><div className="text-lg font-black text-emerald-700 dark:text-emerald-300">{weeklyStats.streak}d</div><div className="text-[10px] font-bold text-slate-500">Streak</div></div>
         </div>
       </div>
 

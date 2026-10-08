@@ -10,6 +10,7 @@ import {
   Clock, 
   Flame, 
   TrendingUp,
+  X,
   Globe,
   Zap,
   Award,
@@ -34,6 +35,7 @@ const getGlobalStats = () => ({
 export const CommunityBanner = () => {
   const [stats, setStats] = useState(getGlobalStats);
   const [activeNow, setActiveNow] = useState(stats.activeNow);
+  const [visible, setVisible] = useState(true);
 
   // Simulate real-time updates
   useEffect(() => {
@@ -43,12 +45,15 @@ export const CommunityBanner = () => {
     return () => clearInterval(interval);
   }, []);
 
+  if (!visible) return null;
+
   return (
-    <div className="relative overflow-hidden bg-gradient-to-r from-green-600 via-emerald-600 to-teal-500 rounded-2xl p-4">
+    <div className="relative overflow-hidden rounded-2xl bg-orange-500 p-4">
       {/* Background animation */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC41IiBvcGFjaXR5PSIwLjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30" />
       
-      <div className="relative flex items-center justify-between">
+      <button onClick={() => setVisible(false)} className="absolute right-3 top-3 z-10 rounded-lg p-1 text-white/80 transition hover:bg-white/15 hover:text-white" aria-label="Close community banner"><X className="h-4 w-4" /></button>
+      <div className="relative flex items-center justify-between pr-8">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="relative">

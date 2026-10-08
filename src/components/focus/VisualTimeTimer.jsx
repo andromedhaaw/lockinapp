@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, RotateCcw, Volume2, VolumeX, Sparkles, Coffee, Zap } from 'lucide-react';
+import { Play, Pause, RotateCcw, Square, Settings2 } from 'lucide-react';
 
 /**
  * Visual Analog Pomodoro Timer
@@ -18,9 +18,12 @@ export const VisualTimeTimer = ({
   isPaused,
   onToggle,
   onReset,
+  onFinish,
+  onCustomMinutesChange,
   onSelectMinutes,
   formatTime,
 }) => {
+  const [showSettings, setShowSettings] = React.useState(false);
   const cx = 160;
   const cy = 160;
   const radius = 116;
@@ -210,14 +213,25 @@ export const VisualTimeTimer = ({
       </div>
 
       {/* Digital Readout & Status */}
-      <div className="text-center mt-3 space-y-1">
+      <div className="text-center -mt-1 space-y-1">
         <div className="text-3xl sm:text-4xl font-mono font-black tracking-tight text-slate-800 dark:text-slate-100">
           {formatTime(minutes, seconds)}
         </div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <div className="hidden text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
           {isActive ? (isPaused ? '⏸️ Dijeda' : '🔥 Sedang Berjalan') : `${customMinutes}m Visual Timer`}
         </div>
       </div>
+
+      <div className="mt-4 flex items-center justify-center gap-4">
+        <button onClick={() => setShowSettings((visible) => !visible)} className={`flex h-12 w-12 items-center justify-center rounded-2xl border shadow-sm ${showSettings ? 'border-green-300 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-500'}`} title="Pengaturan durasi"><Settings2 className="h-5 w-5" /></button>
+        <button onClick={onToggle} className={`flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-md transition-all ${isActive && !isPaused ? 'bg-amber-500 hover:bg-amber-600' : 'bg-rose-500 hover:bg-rose-600'}`} title={isActive && !isPaused ? 'Pause' : 'Start'}>
+          {isActive && !isPaused ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
+        </button>
+        {isActive && <button onClick={onFinish} className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500 text-white shadow-md hover:bg-red-600" title="Selesai"><Square className="h-5 w-5 fill-current" /></button>}
+        <button onClick={onReset} className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm hover:text-red-500" title="Reset"><RotateCcw className="h-5 w-5" /></button>
+      </div>
+
+      {showSettings && <div className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"><div className="mb-2 flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300"><span>Atur Durasi Kustom</span><span className="text-green-600">{customMinutes} Menit</span></div><input type="range" min="1" max="120" value={customMinutes} onChange={onCustomMinutesChange} className="h-2 w-full cursor-pointer accent-green-600" /><div className="mt-1 flex justify-between text-[10px] text-slate-400"><span>1m</span><span>25m</span><span>60m</span><span>120m</span></div></div>}
 
       {/* Quick Preset Buttons (Time Timer / Llama Life style) */}
       <div className="mt-5 w-full flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
@@ -240,7 +254,7 @@ export const VisualTimeTimer = ({
       </div>
 
       {/* Bottom Action Controls */}
-      <div className="mt-5 flex items-center justify-center gap-4">
+      <div className="hidden mt-5 flex items-center justify-center gap-4">
         <button
           onClick={onReset}
           className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 shadow-xs transition-colors"
@@ -265,10 +279,10 @@ export const VisualTimeTimer = ({
           ) : (
             <>
               <Play className="w-4 h-4 fill-current" />
-              <span>Mulai Fokus</span>
             </>
           )}
         </button>
+        {isActive && <button onClick={onFinish} className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-500 text-white shadow-md shadow-red-500/20 hover:bg-red-600" title="Selesai"><Square className="h-5 w-5 fill-current" /></button>}
       </div>
     </div>
   );

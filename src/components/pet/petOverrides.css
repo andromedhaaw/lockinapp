@@ -1,0 +1,71 @@
+.pet-penguin .pet-eye{width:19px!important;height:24px!important;animation:penguin-blink 5s infinite}
+.pet-penguin .pet-mouth{display:block!important;z-index:5;left:83px!important;top:138px!important;width:26px!important;height:10px!important;border-bottom:4px solid #27345d!important;border-radius:50%}
+.pet-penguin .pet-cheek{display:block!important;z-index:5;top:125px!important;width:22px!important;height:12px!important;background:#f39aa5!important;filter:blur(2px)!important}
+.pet-penguin .pet-cheek-left{left:48px!important}.pet-penguin .pet-cheek-right{right:48px!important}
+@keyframes penguin-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.15)}}
+.pet-penguin .pet-head{left:44px!important;top:34px!important;width:162px!important;height:164px!important;border-radius:48% 48% 44% 44%!important}
+.pet-penguin .pet-head:after{left:16px!important;top:29px!important;width:122px!important;height:132px!important}
+.pet-penguin .pet-body{left:49px!important;top:162px!important;width:152px!important;height:148px!important;border-radius:45% 45% 32% 32%!important}
+.pet-penguin .pet-belly{left:19px!important;top:7px!important;width:106px!important;height:134px!important}
+.pet-penguin .pet-arm{width:48px!important;height:98px!important}
+.pet-penguin .pet-arm-left{left:-40px!important}.pet-penguin .pet-arm-right{right:-40px!important}
+.pet-penguin .pet-eye{top:79px!important;width:17px!important;height:22px!important}
+.pet-penguin .pet-eye-left{left:62px!important}.pet-penguin .pet-eye-right{right:62px!important}
+.pet-penguin .pet-cheek{top:122px!important;width:18px!important;height:9px!important}.pet-penguin .pet-cheek-left{left:48px!important}.pet-penguin .pet-cheek-right{right:48px!important}
+.pet-penguin .pet-nose{left:70px!important;top:106px!important;width:34px!important;height:22px!important}
+.pet-penguin .pet-mouth{left:77px!important;top:131px!important;width:22px!important}
+.pet-penguin .pet-leg{top:115px!important;width:36px!important;height:23px!important}.pet-penguin .pet-leg-left{left:18px!important}.pet-penguin .pet-leg-right{right:18px!important}
+
+/* Pudgy penguin redraw: one soft, balanced silhouette */
+.pet-penguin .pet-head{left:40px!important;top:34px!important;width:170px!important;height:155px!important;border:0!important;border-radius:52% 52% 45% 45%!important;background:linear-gradient(145deg,#8dbbff 0%,#4d86dc 62%,#2f68b8 100%)!important;box-shadow:inset 9px 8px 0 rgba(190,220,255,.3),inset -10px -12px 15px rgba(28,62,125,.2)!important}
+.pet-penguin .pet-head:after{left:19px!important;top:30px!important;width:132px!important;height:128px!important;border-radius:48% 48% 52% 52%!important;background:#fff9df!important;clip-path:polygon(0 0,38% 0,50% 16%,62% 0,100% 0,100% 73%,83% 91%,50% 100%,17% 91%,0 73%)!important}
+.pet-penguin .pet-body{left:40px!important;top:142px!important;width:170px!important;height:165px!important;border:0!important;border-radius:43% 43% 32% 32%!important;background:linear-gradient(145deg,#568fe5,#3471c4)!important;box-shadow:inset 10px 0 0 rgba(177,214,255,.22),inset -12px -12px 16px rgba(24,55,115,.2)!important}
+.pet-penguin .pet-belly{left:25px!important;top:13px!important;width:120px!important;height:145px!important;border-radius:48% 48% 42% 42%!important;background:#fff9df!important}
+.pet-penguin .pet-arm{top:14px!important;width:55px!important;height:112px!important;border:0!important;background:linear-gradient(145deg,#5d98ed,#326fc2)!important;box-shadow:inset -7px -8px 10px rgba(25,60,120,.2)!important}
+.pet-penguin .pet-arm-left{left:-45px!important;transform:rotate(24deg)!important;border-radius:70% 35% 70% 40%!important}.pet-penguin .pet-arm-right{right:-45px!important;transform:rotate(-24deg)!important;border-radius:35% 70% 40% 70%!important}
+.pet-penguin .pet-eye{top:75px!important;width:17px!important;height:24px!important;background:#2d3264!important;box-shadow:4px 4px 0 #fff!important}.pet-penguin .pet-eye-left{left:64px!important}.pet-penguin .pet-eye-right{right:64px!important}
+.pet-penguin .pet-cheek{top:117px!important;width:18px!important;height:9px!important;background:#f39aa5!important}.pet-penguin .pet-cheek-left{left:48px!important}.pet-penguin .pet-cheek-right{right:48px!important}
+.pet-penguin .pet-nose{left:70px!important;top:103px!important;width:35px!important;height:23px!important;border:4px solid #28315f!important;border-radius:50%!important;background:#f6c442!important}.pet-penguin .pet-nose:after{top:8px!important;border-top:3px solid #28315f!important}.pet-penguin .pet-mouth{left:77px!important;top:126px!important;width:22px!important;height:9px!important;border-bottom:3px solid #28315f!important}
+.pet-penguin .pet-leg{top:137px!important;width:39px!important;height:25px!important;border:3px solid #9b6e27!important;background:#e6b64d!important}.pet-penguin .pet-leg-left{left:26px!important}.pet-penguin .pet-leg-right{right:26px!important}
+
+/* Blue penguin reference silhouette */
+.pet-penguin .pet-head{left:43px!important;top:27px!important;width:164px!important;height:178px!important;border:4px solid #182342!important;border-bottom:0!important;border-radius:52% 52% 36% 36%!important;background:#4f86e8!important;box-shadow:none!important}
+.pet-penguin .pet-head:before{content:'';position:absolute;z-index:3;left:66px;top:-18px;width:34px;height:33px;border:4px solid #182342;border-bottom:0;border-radius:60% 30% 0 0;transform:rotate(-8deg);background:#4f86e8;clip-path:polygon(0 100%,20% 0,48% 58%,74% 0,100% 100%)}
+.pet-penguin .pet-head:after{left:13px!important;top:33px!important;width:130px!important;height:145px!important;border:0!important;border-radius:48% 48% 50% 50%!important;background:#fff!important;clip-path:polygon(0 0,35% 0,50% 14%,65% 0,100% 0,100% 76%,82% 94%,50% 100%,18% 94%,0 76%)!important}
+.pet-penguin .pet-body{left:43px!important;top:151px!important;width:164px!important;height:166px!important;border:4px solid #182342!important;border-top:0!important;border-radius:34% 34% 42% 42%!important;background:#4f86e8!important;box-shadow:none!important}
+.pet-penguin .pet-belly{left:19px!important;top:4px!important;width:118px!important;height:153px!important;border-radius:44% 44% 48% 48%!important;background:#fff!important}
+.pet-penguin .pet-arm{top:14px!important;width:54px!important;height:132px!important;border:4px solid #182342!important;background:#4f86e8!important;box-shadow:none!important}
+.pet-penguin .pet-arm-left{left:-55px!important;transform:rotate(28deg)!important;border-radius:70% 40% 70% 40%!important}.pet-penguin .pet-arm-right{right:-55px!important;transform:rotate(-28deg)!important;border-radius:40% 70% 40% 70%!important}
+.pet-penguin .pet-eye{top:88px!important;width:18px!important;height:25px!important;background:#0c1020!important;box-shadow:4px 4px 0 #fff!important}.pet-penguin .pet-eye-left{left:61px!important}.pet-penguin .pet-eye-right{right:61px!important}
+.pet-penguin .pet-cheek{display:none!important}.pet-penguin .pet-nose{left:72px!important;top:121px!important;width:34px!important;height:20px!important;border:3px solid #182342!important;background:#f6bd31!important}.pet-penguin .pet-nose:after{top:7px!important;border-top:2px solid #182342!important}.pet-penguin .pet-mouth{display:none!important}
+.pet-penguin .pet-leg{top:143px!important;width:58px!important;height:30px!important;border:4px solid #8b5d18!important;border-radius:50%!important;background:#f6bd31!important}.pet-penguin .pet-leg-left{left:8px!important}.pet-penguin .pet-leg-right{right:8px!important}
+
+/* Final Pip redraw: single pear-shaped body, compact face, playful proportions */
+.pet-penguin{filter:drop-shadow(0 14px 12px rgba(41,78,141,.18))}
+.pet-penguin .pet-body{left:35px!important;top:42px!important;width:180px!important;height:258px!important;border:4px solid #26365f!important;border-radius:48% 48% 43% 43%!important;background:linear-gradient(145deg,#76a9f4 0%,#4f86df 58%,#3970c4 100%)!important;box-shadow:inset 10px 8px 0 rgba(198,222,255,.25),inset -10px -8px 12px rgba(35,70,135,.16)!important}
+.pet-penguin .pet-head{left:35px!important;top:42px!important;width:180px!important;height:164px!important;border:0!important;border-radius:48% 48% 40% 40%!important;background:transparent!important;box-shadow:none!important;z-index:5!important}
+.pet-penguin .pet-head:before{left:70px!important;top:-15px!important;width:40px!important;height:32px!important;border:0!important;background:#5f95e8!important;clip-path:polygon(0 100%,10% 15%,42% 62%,52% 0,72% 58%,100% 28%,88% 100%)!important;transform:rotate(-5deg)!important}
+.pet-penguin .pet-head:after{left:18px!important;top:31px!important;width:144px!important;height:137px!important;border:0!important;border-radius:48% 48% 50% 50%!important;background:#fffaf0!important;clip-path:polygon(0 0,37% 0,50% 15%,63% 0,100% 0,100% 74%,84% 93%,50% 100%,16% 93%,0 74%)!important}
+.pet-penguin .pet-belly{left:27px!important;top:104px!important;width:118px!important;height:140px!important;border-radius:45% 45% 46% 46%!important;background:#fffaf0!important;box-shadow:inset 0 9px 0 rgba(220,226,234,.45)!important}
+.pet-penguin .pet-arm{top:91px!important;width:50px!important;height:128px!important;border:4px solid #26365f!important;background:#4f86df!important;box-shadow:inset -7px -8px 9px rgba(34,68,130,.15)!important;z-index:1!important}
+.pet-penguin .pet-arm-left{left:-43px!important;transform:rotate(18deg)!important;border-radius:70% 35% 72% 38%!important}.pet-penguin .pet-arm-right{right:-43px!important;transform:rotate(-18deg)!important;border-radius:35% 70% 38% 72%!important}
+.pet-penguin .pet-eye{top:82px!important;width:18px!important;height:25px!important;border-radius:55% 55% 48% 48%!important;background:#222946!important;box-shadow:4px 3px 0 #fff!important}.pet-penguin .pet-eye-left{left:61px!important}.pet-penguin .pet-eye-right{right:61px!important}
+.pet-penguin .pet-nose{left:71px!important;top:112px!important;width:38px!important;height:23px!important;border:3px solid #26365f!important;border-radius:55% 55% 60% 60%!important;background:#ffc43d!important}.pet-penguin .pet-nose:after{top:8px!important;border-top:2px solid #26365f!important}
+.pet-penguin .pet-mouth{display:none!important}.pet-penguin .pet-cheek{display:block!important;top:122px!important;width:18px!important;height:9px!important;background:#f3a3ad!important;opacity:.7}.pet-penguin .pet-cheek-left{left:44px!important}.pet-penguin .pet-cheek-right{right:44px!important}
+.pet-penguin .pet-leg{top:233px!important;width:56px!important;height:29px!important;border:4px solid #94651c!important;border-radius:52%!important;background:#ffc43d!important;z-index:6!important}.pet-penguin .pet-leg-left{left:18px!important;transform:rotate(-4deg)!important}.pet-penguin .pet-leg-right{right:18px!important;transform:rotate(4deg)!important}
+
+/* Slim, cheerful Pip */
+.pet-penguin .pet-body{left:46px!important;width:158px!important;height:250px!important;border-radius:47% 47% 40% 40%!important}
+.pet-penguin .pet-head{left:46px!important;width:158px!important;height:158px!important}
+.pet-penguin .pet-head:before{left:60px!important}
+.pet-penguin .pet-head:after{left:15px!important;width:128px!important;height:132px!important}
+.pet-penguin .pet-belly{left:24px!important;top:101px!important;width:102px!important;height:137px!important}
+.pet-penguin .pet-arm{top:88px!important;width:44px!important;height:115px!important}
+.pet-penguin .pet-arm-left{left:-36px!important}.pet-penguin .pet-arm-right{right:-36px!important}
+.pet-penguin .pet-eye{top:79px!important;width:17px!important;height:22px!important}.pet-penguin .pet-eye-left{left:54px!important}.pet-penguin .pet-eye-right{right:54px!important}
+.pet-penguin .pet-nose{left:62px!important;top:106px!important;width:34px!important;height:21px!important}
+.pet-penguin .pet-mouth{display:none!important}
+.pet-penguin .pet-nose{border-radius:55% 55% 65% 65%!important;box-shadow:inset 0 -4px 0 rgba(224,143,29,.2)!important}
+.pet-penguin .pet-nose:after{content:''!important;position:absolute!important;left:5px!important;right:5px!important;top:5px!important;height:8px!important;border:0!important;border-bottom:2px solid #26365f!important;border-radius:50%!important}
+.pet-penguin .pet-cheek{display:block!important;top:116px!important;width:17px!important;height:9px!important;opacity:.72!important}.pet-penguin .pet-cheek-left{left:38px!important}.pet-penguin .pet-cheek-right{right:38px!important}
+.pet-penguin .pet-leg{top:226px!important;width:49px!important;height:26px!important}.pet-penguin .pet-leg-left{left:15px!important}.pet-penguin .pet-leg-right{right:15px!important}

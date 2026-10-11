@@ -18,6 +18,7 @@ const GoalsTab = () => {
   });
 
   const [showAddGoal, setShowAddGoal] = useState(false);
+  const [periodFilter, setPeriodFilter] = useState('all');
   const [newGoal, setNewGoal] = useState({ title: '', target: '', type: 'weekly', unit: 'hours' });
 
   const { getTotalYearHours, getHoursForDate, getWeekDataByOffset } = useWorkHistory();
@@ -35,6 +36,10 @@ const GoalsTab = () => {
       } else if (goal.type === 'weekly') {
         const weekData = getWeekDataByOffset(0);
         return weekData.totalHours;
+      } else if (goal.type === 'monthly') {
+        return getTotalYearHours() / 12;
+      } else if (goal.type === 'quarterly') {
+        return getTotalYearHours() / 4;
       }
     }
     
@@ -53,6 +58,8 @@ const GoalsTab = () => {
             return tasks.filter(t => t.completed && t.completedAt && new Date(t.completedAt) > weekAgo).length;
         }
         
+        if (goal.type === 'monthly') return tasks.filter(t => t.completed && new Date(t.completedAt || 0).getMonth() === new Date().getMonth()).length;
+        if (goal.type === 'quarterly') return tasks.filter(t => t.completed && Math.floor(new Date(t.completedAt || 0).getMonth() / 3) === Math.floor(new Date().getMonth() / 3)).length;
         return tasks.filter(t => t.completed).length; 
     }
 
@@ -174,7 +181,7 @@ const GoalsTab = () => {
       {/* Goals List */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-gray-800 dark:text-white">Your Goals</h3>
+          <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-slate-800">{[['all', 'All'], ['daily', 'Daily'], ['weekly', 'Weekly'], ['monthly', 'Monthly'], ['quarterly', 'Quarterly']].map(([value, label]) => <button key={value} onClick={() => setPeriodFilter(value)} className={`rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${periodFilter === value ? 'bg-white text-green-700 shadow-sm dark:bg-slate-700 dark:text-green-300' : 'text-gray-500'}`}>{label}</button>)}</div>
           <button
             onClick={() => setShowAddGoal(true)}
             className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
@@ -183,7 +190,7 @@ const GoalsTab = () => {
           </button>
         </div>
 
-        {goals.map(goal => {
+        {goals.filter((goal) => periodFilter === 'all' || goal.type === periodFilter).map(goal => {
           const progress = getProgress(goal);
           const percentage = Math.min(100, (progress / goal.target) * 100);
           const isComplete = progress >= goal.target;
@@ -275,6 +282,8 @@ const GoalsTab = () => {
             >
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
             </select>
             <select
               value={newGoal.unit}

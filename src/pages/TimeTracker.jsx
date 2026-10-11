@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Leaf, ChevronDown, Sparkles, Moon, Repeat, Flag } from 'lucide-react';
+import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Leaf, ChevronDown, Sparkles, Moon, Repeat, Flag, Gamepad2, Wheat } from 'lucide-react';
 import { TabNavigation } from '../components/ui';
 import { WebGardenTab as GardenTab } from '../components/garden/web';
 import { TodayPlanner } from '../components/today';
@@ -33,6 +33,11 @@ import DailyShutdown from '../components/shutdown/DailyShutdown';
 import GrowthHub from '../components/growth/GrowthHub';
 import HabitPage from '../components/habits/HabitPage';
 import ProjectsPage from '../components/projects/ProjectsPage';
+import GamePage from '../components/game/GamePage';
+import MoodTracker from '../components/mood/MoodTracker';
+import PetPage from '../components/pet/PetPage';
+import FarmPage from '../components/farm/FarmPage';
+import { Heart } from 'lucide-react';
 
 import { DeepWorkScore } from '../components/insights';
 import { WeeklyDigest } from '../components/digest';
@@ -51,8 +56,12 @@ const tabs = [
   { id: TABS.DEADLINE, label: 'Deadline', icon: CalendarDays },
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
   { id: TABS.PROJECTS, label: 'Projects', icon: Flag },
+  { id: TABS.GAME, label: 'Game', icon: Gamepad2 },
+  { id: TABS.MOOD, label: 'Mood', icon: Heart },
+  { id: TABS.PET, label: 'Pet', icon: Heart },
   { id: TABS.HABITS, label: 'Habits', icon: Repeat },
   { id: TABS.GARDEN, label: 'Garden', icon: Leaf },
+  { id: TABS.FARM, label: 'Farm', icon: Wheat },
   { id: TABS.LEADERBOARD, label: 'Social', icon: Trophy },
   { id: TABS.DAILY_SHUTDOWN, label: 'Shutdown', icon: Moon },
   { id: TABS.PROFILE, label: 'Profile', icon: User },
@@ -379,7 +388,13 @@ const TimeTracker = ({ initialTab }) => {
       />
 
       <div className={sidebarHidden ? '' : sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}>
-      {activeTab === TABS.PROJECTS ? (
+      {activeTab === TABS.PET ? (
+        <PetPage onStartFocus={() => setActiveTab(TABS.FOCUS)} />
+      ) : activeTab === TABS.MOOD ? (
+        <MoodTracker />
+      ) : activeTab === TABS.GAME ? (
+        <GamePage onStartFocus={() => setActiveTab(TABS.FOCUS)} />
+      ) : activeTab === TABS.PROJECTS ? (
         <ProjectsPage />
       ) : activeTab === TABS.HABITS ? (
         <HabitPage />
@@ -648,7 +663,7 @@ const TimeTracker = ({ initialTab }) => {
                       if (unit === 'h' || unit === 'hour') return val * 60;
                       return val;
                     })() : 25} 
-                    autoStart={false}
+                    autoStart={countdown === 0 && !!focusedTask}
                   />
                   
                   {focusedTask && (
@@ -688,7 +703,11 @@ const TimeTracker = ({ initialTab }) => {
           {/* To Do Tab Content */}
           <div className={activeTab === TABS.TODO ? 'block' : 'hidden'}>
             <div className="-mx-4 sm:-mx-6">
-              <TodoPage />
+              <TodoPage onStartFocus={(task) => {
+                setFocusedTask({ ...task, estimatedTime: `${Math.round((task.durationH || 1) * 60)}m` });
+                setCountdown(3);
+                setActiveTab(TABS.FOCUS);
+              }} />
             </div>
           </div>
 
@@ -779,6 +798,10 @@ const TimeTracker = ({ initialTab }) => {
             <div className="pt-4">
               <GardenTab />
             </div>
+          </div>
+
+          <div className={activeTab === TABS.FARM ? 'block' : 'hidden'}>
+            <FarmPage onStartFocus={() => setActiveTab(TABS.FOCUS)} />
           </div>
 
           {/* Goals Tab Content */}

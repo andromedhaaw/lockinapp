@@ -7,6 +7,7 @@ const GrowthHub = () => {
   const [buddy, setBuddy] = useState('');
   const [roomStarted, setRoomStarted] = useState(false);
   const [reaction, setReaction] = useState('');
+  const ownershipTitle = localStorage.getItem('lockin_ownership_title') || 'Deep Work Founder';
   const sessions = useMemo(() => { try { return JSON.parse(localStorage.getItem('lockin_focus_sessions') || '[]'); } catch { return []; } }, []);
   const totalMinutes = sessions.reduce((sum, session) => sum + Number(session.durationMinutes || 0), 0);
   const weeklyStreak = Math.min(7, new Set(sessions.map((session) => session.completedAt?.slice(0, 10))).size);
@@ -16,6 +17,7 @@ const GrowthHub = () => {
   const seeds = Object.values(inventory).reduce((sum, value) => sum + value, 0);
 
   return <div className="mx-auto max-w-4xl space-y-6 bg-[#fbfcfb] p-4 sm:p-8">
+    <div className="inline-flex rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white">Focus Room identity · {ownershipTitle}</div>
     <div><p className="text-xs font-black uppercase tracking-[0.2em] text-[#249653]">Growth</p><h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900 dark:text-white">Make progress visible.</h1><p className="mt-2 text-sm text-slate-500">Share momentum, focus with someone, and let consistency become your identity.</p></div>
     <div className="grid gap-4 md:grid-cols-[1.25fr_0.75fr]">
       <div className="rounded-3xl bg-slate-950 p-6 text-white shadow-sm"><div className="flex items-center justify-between"><span className="text-xs font-black uppercase tracking-[0.18em] text-[#8bb99a]">Your progress card</span><Zap className="h-5 w-5 text-[#4dcd7d]" /></div><div className="mt-8 text-3xl font-black">{shareText}</div><p className="mt-3 text-sm text-slate-400">A small start is still a vote for the person you are becoming.</p><button onClick={share} className="mt-6 flex items-center gap-2 rounded-xl bg-[#4dcd7d] px-4 py-3 text-sm font-extrabold text-slate-950 hover:bg-[#70dc98]"><Share2 className="h-4 w-4" /> Share my progress</button></div>

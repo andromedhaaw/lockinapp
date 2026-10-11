@@ -7,7 +7,7 @@ import {
   Wind,
   CalendarDays,
   ChevronLeft,
-  ChevronRight,
+  ChevronRight, ChevronDown, Play,
 } from 'lucide-react';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -125,7 +125,7 @@ function PriorityChip({ priority }) {
 }
 
 // Standard task card
-function TaskCard({ task, isOverdue, onToggle, zen }) {
+function TaskCard({ task, isOverdue, onToggle, zen, onStart }) {
   const [hovered, setHovered] = useState(false);
   const [popping, setPopping] = useState(false);
   const handleToggle = () => {
@@ -164,6 +164,7 @@ function TaskCard({ task, isOverdue, onToggle, zen }) {
           textDecoration: task.done ? 'line-through' : 'none',
         }}>{task.title}</span>
         <TagChip tag={task.tag} />
+        {!task.done && onStart && <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStart(task); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, border: 'none', borderRadius: 9, padding: '6px 9px', background: '#eaf8ee', color: '#249653', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}><Play style={{ width: 11, height: 11, fill: 'currentColor' }} />Start</button>}
       </div>
     );
   }
@@ -220,6 +221,7 @@ function TaskCard({ task, isOverdue, onToggle, zen }) {
             )}
           </div>
         </div>
+        {!task.done && onStart && <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onStart(task); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, border: 'none', borderRadius: 9, padding: '6px 9px', background: '#eaf8ee', color: '#249653', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}><Play style={{ width: 11, height: 11, fill: 'currentColor' }} />Start</button>}
         {hovered && !task.done && (
           <ArrowRight style={{ width: 14, height: 14, color: '#d1d5db', marginTop: 4, flexShrink: 0 }} />
         )}
@@ -385,7 +387,7 @@ function CalendarPanel({ tasks, activeFilter, onReschedule, onResize }) {
 }
 
 // ─── main ─────────────────────────────────────────────────────────────────────
-export default function TodoPage() {
+export default function TodoPage({ onStartFocus }) {
   const [tasks, setTasks] = useState(() => {
     try {
       const saved = localStorage.getItem('lockin_todos');
@@ -400,6 +402,9 @@ export default function TodoPage() {
   const [newPriority, setNewPriority] = useState('None');
   const [newDue, setNewDue] = useState('today');
   const [newTag, setNewTag] = useState('work');
+  const [inlineSession, setInlineSession] = useState(null);
+  const [inlinePaused, setInlinePaused] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('All');
 
   // View modes: 'list' | 'split' | 'zen'
   const [viewMode, setViewMode] = useState('list');
@@ -413,6 +418,23 @@ export default function TodoPage() {
   useEffect(() => {
     if (showForm && inputRef.current) inputRef.current.focus();
   }, [showForm]);
+
+  useEffect(() => {
+    if (!inlineSession || inlinePaused) return undefined;
+    const timer = setInterval(() => setInlineSession((session) => {
+      if (!session || session.remaining <= 1) return null;
+      return { ...session, remaining: session.remaining - 1 };
+    }), 1000);
+    return () => clearInterval(timer);
+  }, [inlineSession, inlinePaused]);
+
+  const startInlineSession = (task) => {
+    const total = Math.max(60, Math.round((task.durationH || 0.25) * 3600));
+    setInlineSession({ task, remaining: total, total });
+    setInlinePaused(false);
+  };
+  const formatInlineTime = (value) => `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
+  const taskEmoji = (task) => ({ work: '💼', personal: '🏠', admin: '📋', product: '🚀', finance: '💰', daily: '🌞' }[task?.tag] || '🎯');
 
   const counts = useMemo(() => FILTERS.reduce((acc, f) => {
     acc[f] = tasks.filter(t => {
@@ -484,6 +506,10 @@ export default function TodoPage() {
 
   const isZen  = viewMode === 'zen';
   const isSplit = viewMode === 'split';
+  const isCategory = viewMode === 'category';
+  const taskCategories = ['All', ...Array.from(new Set(tasks.map((task) => task.tag || 'Work'))).filter((tag) => tag !== 'All')];
+  const categoryTasks = categoryFilter === 'All' ? filtered : filtered.filter((task) => (task.tag || 'Work') === categoryFilter);
+  const categoryGroups = Array.from(new Set(categoryTasks.map((task) => task.tag || 'Work'))).map((category) => ({ priority: category, tasks: categoryTasks.filter((task) => (task.tag || 'Work') === category) }));
 
   // ── ZEN MODE full render ──────────────────────────────────────────────────
   if (isZen) {
@@ -495,6 +521,15 @@ export default function TodoPage() {
         display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
         paddingTop: 60, paddingBottom: 100,
       }}>
+        {inlineSession && (
+          <div style={{ marginBottom: 24, padding: 20, borderRadius: 24, background: '#17131a', color: '#fff', textAlign: 'center', boxShadow: '0 12px 30px rgba(30,20,40,.16)' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, opacity: .8 }}>{inlineSession.task.title}</div>
+            <div style={{ fontSize: 64, lineHeight: 1, margin: '12px 0', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', letterSpacing: '-3px' }}>{formatInlineTime(inlineSession.remaining)}</div>
+            <div style={{ width: 210, height: 8, margin: '0 auto 16px', borderRadius: 99, background: '#403744', overflow: 'hidden' }}><div style={{ height: '100%', width: `${((inlineSession.total - inlineSession.remaining) / inlineSession.total) * 100}%`, background: '#a98aff', transition: 'width .4s' }} /></div>
+            <div style={{ fontSize: 46, marginBottom: 12 }}>{taskEmoji(inlineSession.task)}</div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}><button onClick={() => setInlinePaused((paused) => !paused)} style={{ border: 0, borderRadius: 99, padding: '10px 22px', background: '#30272f', color: '#fff', fontWeight: 800, cursor: 'pointer' }}>{inlinePaused ? 'Resume' : 'Pause'}</button><button onClick={() => setInlineSession(null)} style={{ border: 0, borderRadius: 99, padding: '10px 22px', background: '#ff7d86', color: '#40151b', fontWeight: 800, cursor: 'pointer' }}>Stop</button></div>
+          </div>
+        )}
         <style>{`
           @keyframes tdFadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
           .td-fadein { animation: tdFadeUp .2s ease; }
@@ -544,7 +579,7 @@ export default function TodoPage() {
               {filtered.map(task => {
                 const d = new Date(task.due); d.setHours(0,0,0,0);
                 return (
-                  <TaskCard key={task.id} task={task} isOverdue={d < todayDate()} onToggle={() => toggleDone(task.id)} zen />
+                  <TaskCard key={task.id} task={task} isOverdue={d < todayDate()} onToggle={() => toggleDone(task.id)} onStart={onStartFocus || startInlineSession} zen />
                 );
               })}
             </div>
@@ -585,7 +620,7 @@ export default function TodoPage() {
           </div>
 
           {/* Right action buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap' }}>
             {/* Zen button */}
             <button
               title="Zen Mode — distraction-free list"
@@ -623,6 +658,13 @@ export default function TodoPage() {
               <CalendarDays style={{ width: 13, height: 13 }} />
               {isSplit ? 'List only' : 'View + Calendar'}
             </button>
+            <button
+              onClick={() => setViewMode(isCategory ? 'list' : 'category')}
+              style={{ fontSize: 11, fontWeight: 700, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${isCategory ? '#f2c36b' : '#e5e7eb'}`, background: isCategory ? '#fff7ed' : '#fff', color: isCategory ? '#c2410c' : '#6b7280', cursor: 'pointer' }}
+            >
+              {isCategory ? 'List view' : 'Categories'}
+            </button>
+            {isCategory && <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap', justifyContent: 'flex-end' }}>{taskCategories.map((category) => <button key={category} onClick={() => setCategoryFilter(category)} style={{ border: 0, borderRadius: 99, padding: '6px 10px', whiteSpace: 'nowrap', background: categoryFilter === category ? '#eaf8ee' : '#f3f4f6', color: categoryFilter === category ? '#249653' : '#6b7280', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{category}</button>)}</div>}
 
             {/* New task */}
             <button
@@ -734,11 +776,11 @@ export default function TodoPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {filtered.map(task => {
+                {isCategory ? categoryGroups.map((group) => <div key={group.priority} style={{ marginBottom: 18 }}><div style={{ display: 'flex', alignItems: 'center', gap: 7, margin: '0 0 8px', padding: '6px 10px', width: 'fit-content', borderRadius: 99, background: group.priority === 'High' ? '#fff0f0' : group.priority === 'Medium' ? '#fff7ed' : '#f1f5f9', color: group.priority === 'High' ? '#c2410c' : '#64748b', fontSize: 11, fontWeight: 800 }}>{group.priority} ({group.tasks.length}) <ChevronDown style={{ width: 13, height: 13 }} /></div>{group.tasks.map(task => { const d = new Date(task.due); d.setHours(0,0,0,0); return <div key={task.id} className="td-fadein"><TaskCard task={task} isOverdue={d < todayDate()} onToggle={() => toggleDone(task.id)} onStart={onStartFocus || startInlineSession} /></div>; })}</div>) : filtered.map(task => {
                   const d = new Date(task.due); d.setHours(0,0,0,0);
                   return (
                     <div key={task.id} className="td-fadein">
-                      <TaskCard task={task} isOverdue={d < todayDate()} onToggle={() => toggleDone(task.id)} />
+                    <TaskCard task={task} isOverdue={d < todayDate()} onToggle={() => toggleDone(task.id)} onStart={onStartFocus || startInlineSession} />
                     </div>
                   );
                 })}
@@ -758,7 +800,7 @@ export default function TodoPage() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {done.map(task => (
-                      <TaskCard key={task.id} task={task} isOverdue={false} onToggle={() => toggleDone(task.id)} />
+                      <TaskCard key={task.id} task={task} isOverdue={false} onToggle={() => toggleDone(task.id)} onStart={startInlineSession} />
                     ))}
                   </div>
                 </div>

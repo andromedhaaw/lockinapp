@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Sprout, ChevronDown, Sparkles, Moon, Repeat, Flag } from 'lucide-react';
+import { Clock, History, Calendar, CalendarDays, Timer, CheckSquare, User, Users, Trophy, Lock, Brain, Sprout, ChevronDown, Sparkles, Moon, Repeat, Flag, Wheat } from 'lucide-react';
 import MobileLayout from '../components/mobile/MobileLayout';
 import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import { TodayPlanner } from '../components/today';
@@ -39,6 +39,7 @@ import { WorkCertificate } from '../components/certificate';
 import { formatTimeToHours, getDateKey } from '../utils/timeUtils';
 import { TABS, HISTORY_PERIODS } from '../constants';
 import GardenTab from '../components/garden/mobile/GardenTab';
+import FarmPage from '../components/farm/FarmPage';
 
 const tabs = [
   { id: TABS.FOR_YOU, label: 'For You', icon: Sparkles },
@@ -52,6 +53,7 @@ const tabs = [
   { id: TABS.PROFILE, label: 'Profile', icon: User },
   { id: TABS.DAILY_SHUTDOWN, label: 'Shutdown', icon: Moon },
   { id: TABS.GARDEN, label: 'Garden', icon: Sprout },
+  { id: TABS.FARM, label: 'Farm', icon: Wheat },
 ];
 
 const historyPeriods = [
@@ -655,6 +657,10 @@ const MobileTimeTracker = () => {
             <div className="pt-4 pb-20">
               <GardenTab />
             </div>
+          </div>
+
+          <div className={activeTab === TABS.FARM ? 'block -mx-2' : 'hidden'}>
+            <FarmPage onStartFocus={() => setActiveTab(TABS.TASKS)} />
           </div>
 
           {/* Social Tab Content - Leaderboard & Pods */}

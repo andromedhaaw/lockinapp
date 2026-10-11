@@ -10,6 +10,7 @@ import { calculateStreak, calculateLevel } from '../../utils/gamificationUtils';
 
 const Profile = ({ grindMode, setGrindMode, darkMode, setDarkMode, adhdMode, setAdhdMode }) => {
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const ownershipTitle = localStorage.getItem('lockin_ownership_title') || 'Deep Work Founder';
   const { getTotalYearHours, getHoursForDate } = useWorkHistory();
   
   // Calculate Stats
@@ -57,7 +58,7 @@ const Profile = ({ grindMode, setGrindMode, darkMode, setDarkMode, adhdMode, set
         </div>
         <div>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Productivity Master</h2>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Keep locking in!</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">{ownershipTitle}</p>
           <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#4dcd7d]/10 px-3 py-1 text-xs font-bold text-[#249653]">Level {levelData.level.title} · {xp.toLocaleString()} XP</div>
         </div>
       </div>

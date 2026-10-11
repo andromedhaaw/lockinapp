@@ -169,7 +169,7 @@ const TaskList = ({ onFocus }) => {
 
       {/* ADHD Anti-Overwhelm: Spinner Wheel Trigger */}
       {activeTasks.length > 0 && (
-        <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-emerald-500/10 dark:from-amber-950/20 dark:via-orange-950/20 dark:to-emerald-950/20 rounded-2xl border border-amber-200/60 dark:border-amber-800/40">
+        <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-pink-500 text-white flex items-center justify-center shadow-sm">
               <Sparkles className="w-4 h-4" />

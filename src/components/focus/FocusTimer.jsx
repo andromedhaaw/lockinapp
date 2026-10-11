@@ -130,6 +130,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
   const [showBrainDump, setShowBrainDump] = useState(false);
   const [brainDump, setBrainDump] = useState('');
   const [sessionEndAt, setSessionEndAt] = useState(null);
+  const [sessionStartedAt, setSessionStartedAt] = useState(null);
 
   useEffect(() => {
     if (!showRewardToast) return undefined;
@@ -163,6 +164,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
         setSeconds(remaining % 60);
         setCustomMinutes(session.minutes);
         setSessionEndAt(session.endAt);
+        setSessionStartedAt(session.startedAt || Date.now());
         setIsActive(remaining > 0);
         setIsPaused(false);
       } catch {}
@@ -190,6 +192,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
     setSeconds(0);
     setCompletedSessionType(null);
     setSessionEndAt(null);
+    setSessionStartedAt(null);
   }, [customMinutes]);
 
   const handleStartPreset = (m) => {
@@ -204,6 +207,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
     setShowShareCard(false);
     const session = { minutes: m, task: focusedTaskName || 'Focus session', startedAt: Date.now(), endAt: Date.now() + m * 60 * 1000 };
     setSessionEndAt(session.endAt);
+    setSessionStartedAt(session.startedAt);
     localStorage.setItem('lockin_active_focus', JSON.stringify(session));
     window.dispatchEvent(new Event('lockin-focus-sync'));
     playTone(660, 0.1);
@@ -270,11 +274,18 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
       localStorage.setItem('lockin_active_focus', JSON.stringify({ minutes: customMinutes, task: focusedTaskName || 'Focus session', startedAt: Date.now(), endAt: newEndAt }));
       setIsActive(true);
       setIsPaused(false);
+      setSessionStartedAt(Date.now());
       playTone(587, 0.12);
     } else {
       setIsPaused(!isPaused);
       playTone(440, 0.1);
     }
+  };
+
+  const formatActual = (startedAt) => {
+    if (!startedAt) return '00:00:00';
+    const elapsed = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+    return `${String(Math.floor(elapsed / 3600)).padStart(2, '0')}:${String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`;
   };
 
   useEffect(() => {
@@ -322,6 +333,13 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
 
   return (
     <div className="relative flex flex-col items-center justify-center p-4 sm:p-6 space-y-7 max-w-lg mx-auto">
+      {isActive && (
+        <div className="flex w-full items-end justify-center gap-7 rounded-2xl border border-slate-100 bg-white px-5 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div><div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Actual</div><div className="mt-1 font-mono text-lg font-bold text-[#4dcd7d]">{formatActual(sessionStartedAt)}</div></div>
+          <div><div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Planned</div><div className="mt-1 font-mono text-lg font-bold text-slate-600 dark:text-slate-300">{customMinutes}m</div></div>
+          <button onClick={finishSessionNow} className="mb-0.5 inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#249653] transition hover:text-red-500"><Square className="h-3 w-3 fill-current" /> Stop</button>
+        </div>
+      )}
       <div className="fixed right-4 top-5 z-40 flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:right-6">
         <span className="text-xs font-semibold text-gray-700 dark:text-white">Zen Mode</span>
         <button

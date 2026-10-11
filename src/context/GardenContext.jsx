@@ -154,6 +154,13 @@ export const GardenProvider = ({ children }) => {
     });
   };
 
+  const spendCoins = (amount) => {
+    const cost = Math.max(0, Number(amount) || 0);
+    if (coins < cost) return false;
+    setCoins(prev => prev - cost);
+    return true;
+  };
+
   return (
     <GardenContext.Provider value={{
       coins,
@@ -165,6 +172,7 @@ export const GardenProvider = ({ children }) => {
       buyToInventory,
       plantFromInventory,
       removePlant,
+      spendCoins,
       plantTypes: PLANT_TYPES
     }}>
       {children}

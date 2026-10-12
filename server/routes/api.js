@@ -7,6 +7,7 @@ const { logSession, getHistory, getStats } = require('../controllers/sessionCont
 const { getTasks, createTask, updateTask, deleteTask } = require('../controllers/taskController');
 const { getGoals, createGoal, deleteGoal } = require('../controllers/goalController');
 const { getLeaderboard } = require('../controllers/socialController');
+const { publishFarm, visitFarm, reactToFarm } = require('../controllers/farmController');
 const { getDashboardStats, getUsers, deleteUser } = require('../controllers/adminController');
 
 /**
@@ -102,6 +103,9 @@ router.delete('/goals/:id', protect, deleteGoal);
  *         description: Leaderboard data
  */
 router.get('/social/leaderboard', protect, getLeaderboard);
+router.put('/farm', protect, publishFarm);
+router.get('/farm/:visitCode', visitFarm);
+router.post('/farm/:visitCode/reactions', reactToFarm);
 
 // --- Admin Routes ---
 router.get('/admin/dashboard', protect, admin, getDashboardStats);

@@ -17,6 +17,7 @@ export const TABS = {
   TRACKER: 'tracker',
   HISTORY: 'history',
   FOCUS: 'focus',
+  TIIMO: 'tiimo',
   TASKS: 'tasks',
   TODO: 'todo',
   DEADLINE: 'deadline',

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, CheckSquare, Timer, Dices, Sparkles, X, Lightbulb } from 'lucide-react';
+import { Plus, CheckSquare, Timer, Sparkles, X, Lightbulb, CalendarDays, Clock3, Leaf } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import TaskItem from './TaskItem';
 import TaskSpinnerModal from './TaskSpinnerModal';
@@ -15,14 +15,25 @@ const TaskList = ({ onFocus }) => {
   });
   const [newTaskName, setNewTaskName] = useState('');
   const [newTime, setNewTime] = useState('');
+  const [newDeadlineDate, setNewDeadlineDate] = useState('');
+  const [newDeadlineTime, setNewDeadlineTime] = useState('');
   const [showSpinnerModal, setShowSpinnerModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [zenMode, setZenMode] = useState(false);
 
   // Sync to localStorage whenever tasks change
   useEffect(() => {
     localStorage.setItem('lockin_tasks_offline', JSON.stringify(tasks));
   }, [tasks]);
+
+  useEffect(() => {
+    const syncCompletedFocus = () => {
+      try { setTasks(JSON.parse(localStorage.getItem('lockin_tasks_offline') || '[]')); } catch {}
+    };
+    window.addEventListener('local-data-updated', syncCompletedFocus);
+    return () => window.removeEventListener('local-data-updated', syncCompletedFocus);
+  }, []);
 
   // Load tasks from API but don't overwrite if failed
   useEffect(() => {
@@ -45,10 +56,15 @@ const TaskList = ({ onFocus }) => {
     
     if (!newTaskName.trim()) return;
 
+    const deadline = newDeadlineDate
+      ? `${newDeadlineDate}T${newDeadlineTime || '23:59'}`
+      : null;
+    const taskId = Date.now().toString();
     const newTask = {
-      id: Date.now().toString(), // Temporary ID for frontend
+      id: taskId, // Temporary ID for frontend
       name: newTaskName.trim(),
       estimatedTime: newTime.trim(),
+      deadline,
       completed: false,
       createdAt: new Date().toISOString()
     };
@@ -57,12 +73,33 @@ const TaskList = ({ onFocus }) => {
     setTasks(prev => [newTask, ...prev]);
     setNewTaskName('');
     setNewTime('');
+    setNewDeadlineDate('');
+    setNewDeadlineTime('');
+
+    if (deadline) {
+      try {
+        const storedDeadlines = JSON.parse(localStorage.getItem('lockin_deadlines') || '[]');
+        const deadlineItem = {
+          id: `task-${taskId}`,
+          sourceTaskId: taskId,
+          title: newTask.name,
+          deadline,
+          priority: 'medium',
+          notes: newTask.estimatedTime ? `Estimated time: ${newTask.estimatedTime}` : '',
+          createdAt: newTask.createdAt,
+        };
+        localStorage.setItem('lockin_deadlines', JSON.stringify([...storedDeadlines, deadlineItem]));
+        window.dispatchEvent(new CustomEvent('lockin:deadlines-updated'));
+      } catch (error) {
+        console.warn('Failed to save task deadline locally', error);
+      }
+    }
 
     // Try to sync with BE in background
     try {
       const res = await api.post('/tasks', newTask);
       // Update with server ID if successful
-      setTasks(prev => prev.map(t => t.id === newTask.id ? res.data : t));
+      setTasks(prev => prev.map(t => t.id === newTask.id ? { ...newTask, ...res.data } : t));
     } catch (error) {
       console.warn("Failed to sync new task to backend", error);
     }
@@ -104,6 +141,13 @@ const TaskList = ({ onFocus }) => {
   const deleteTask = async (id) => {
     // Optimistic Update
     setTasks(prev => prev.filter(t => t._id !== id && t.id !== id));
+    try {
+      const storedDeadlines = JSON.parse(localStorage.getItem('lockin_deadlines') || '[]');
+      localStorage.setItem('lockin_deadlines', JSON.stringify(storedDeadlines.filter(item => item.sourceTaskId !== id && item.id !== `task-${id}`)));
+      window.dispatchEvent(new CustomEvent('lockin:deadlines-updated'));
+    } catch (error) {
+      console.warn('Failed to remove linked deadline locally', error);
+    }
 
     try {
       await api.delete(`/tasks/${id}`);
@@ -120,7 +164,17 @@ const TaskList = ({ onFocus }) => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center space-y-2">
+      <div className="relative text-center space-y-2">
+        <button
+          type="button"
+          onClick={() => setZenMode((current) => !current)}
+          aria-pressed={zenMode}
+          className={`absolute right-0 top-0 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold transition-all active:scale-95 ${zenMode ? 'border-[#34C759] bg-[#eaf8ee] text-[#249653] shadow-sm dark:bg-[#34C759]/10' : 'border-slate-200 bg-white text-slate-500 hover:border-[#bcebc9] hover:text-[#249653] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}
+          title={zenMode ? 'Show deadlines' : 'Hide deadlines'}
+        >
+          <Leaf className="h-4 w-4" />
+          Zen
+        </button>
         <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center text-green-600 dark:text-green-400">
           <CheckSquare className="w-6 h-6" />
         </div>
@@ -144,8 +198,8 @@ const TaskList = ({ onFocus }) => {
              <CheckSquare className="w-4 h-4" />
           </div>
         </div>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_0.8fr_auto]">
+          <div className="relative min-w-0">
             <input
               type="text"
               value={newTime}
@@ -157,9 +211,31 @@ const TaskList = ({ onFocus }) => {
                <Timer className="w-4 h-4" />
             </div>
           </div>
+          <div className="relative min-w-0">
+            <input
+              type="date"
+              value={newDeadlineDate}
+              min={new Date().toLocaleDateString('en-CA')}
+              onChange={(e) => setNewDeadlineDate(e.target.value)}
+              aria-label="Deadline date"
+              className="w-full pl-4 pr-10 py-2.5 rounded-xl bg-gray-50/50 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-700/50 focus:border-green-500/50 focus:bg-white dark:focus:bg-slate-800 outline-none transition-all text-sm text-gray-600 dark:text-white font-medium"
+            />
+            <CalendarDays className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300 dark:text-gray-600" />
+          </div>
+          <div className={`relative min-w-0 transition-opacity ${newDeadlineDate ? 'opacity-100' : 'opacity-50'}`}>
+            <input
+              type="time"
+              value={newDeadlineTime}
+              onChange={(e) => setNewDeadlineTime(e.target.value)}
+              disabled={!newDeadlineDate}
+              aria-label="Deadline time"
+              className="w-full pl-4 pr-10 py-2.5 rounded-xl bg-gray-50/50 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-700/50 focus:border-green-500/50 focus:bg-white dark:focus:bg-slate-800 outline-none transition-all text-sm text-gray-600 dark:text-white font-medium disabled:cursor-not-allowed"
+            />
+            <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300 dark:text-gray-600" />
+          </div>
           <button
             type="submit"
-            className="px-5 py-2.5 bg-green-600 dark:bg-green-500 text-white rounded-xl hover:bg-green-700 dark:hover:bg-green-600 active:scale-95 transition-all flex items-center gap-1.5 text-sm font-bold shadow-md shadow-green-500/10"
+            className="justify-center px-5 py-2.5 bg-green-600 dark:bg-green-500 text-white rounded-xl hover:bg-green-700 dark:hover:bg-green-600 active:scale-95 transition-all flex items-center gap-1.5 text-sm font-bold shadow-md shadow-green-500/10"
           >
             <Plus className="w-4 h-4" />
             Add
@@ -209,6 +285,7 @@ const TaskList = ({ onFocus }) => {
                   onDelete={deleteTask}
                   onFocus={onFocus}
                   onOpen={setSelectedTask}
+                  showDeadline={!zenMode}
                 />
               ))}
             </div>
@@ -226,6 +303,7 @@ const TaskList = ({ onFocus }) => {
                   onToggle={toggleTask} 
                   onDelete={deleteTask}
                   onOpen={setSelectedTask}
+                  showDeadline={!zenMode}
                 />
               ))}
             </div>

@@ -496,6 +496,20 @@ export default function DeadlinePage({ tasks = [] }) {
   const [showDeadlineForm, setShowDeadlineForm] = useState(false);
   const [showDDayForm,     setShowDDayForm]     = useState(false);
 
+  useEffect(() => {
+    const refreshLinkedDeadlines = () => {
+      try {
+        setDeadlines(JSON.parse(localStorage.getItem(STORAGE_KEY_DEADLINES) || '[]'));
+      } catch {}
+    };
+    window.addEventListener('lockin:deadlines-updated', refreshLinkedDeadlines);
+    window.addEventListener('storage', refreshLinkedDeadlines);
+    return () => {
+      window.removeEventListener('lockin:deadlines-updated', refreshLinkedDeadlines);
+      window.removeEventListener('storage', refreshLinkedDeadlines);
+    };
+  }, []);
+
   // Persist
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY_DEADLINES, JSON.stringify(deadlines)); } catch {}

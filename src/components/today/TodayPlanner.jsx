@@ -10,11 +10,7 @@ import {
   Check,
   PanelLeft,
   PanelRight,
-  Flag,
-  Repeat,
-  Link2,
   Clock,
-  ArrowUpDown,
   ListTodo,
   Target,
   Folder,
@@ -23,10 +19,14 @@ import {
   X,
   ExternalLink,
   Sparkles,
-  CheckSquare
+  CheckSquare,
+  Pencil,
+  ListChecks,
 } from 'lucide-react';
 import WeekCalendar from './WeekCalendar';
 import DayTimebox from './DayTimebox';
+import CalendarTaskRail from './CalendarTaskRail';
+import TodayIntelligence from './TodayIntelligence';
 
 // Format minutes to H:MM string (e.g. 190 -> "3:10", 30 -> "0:30")
 const formatMinutes = (totalMinutes) => {
@@ -314,6 +314,7 @@ export const TodayPlanner = ({ onStartFocus }) => {
   const [activeCardId, setActiveCardId] = useState('bd-1');
   const [draggedTaskId, setDraggedTaskId] = useState(null);
   const [draggedDayTask, setDraggedDayTask] = useState(null);
+  const [celebratedTaskTitle, setCelebratedTaskTitle] = useState(null);
 
   // Modal / Inline Add Task State
   const [addingTarget, setAddingTarget] = useState(null); // 'brain-dump' or day id or 'timebox'
@@ -321,6 +322,40 @@ export const TodayPlanner = ({ onStartFocus }) => {
   const [newTaskTag, setNewTaskTag] = useState('Deep Work');
   const [newTaskMinutes, setNewTaskMinutes] = useState(30);
   const [newTaskTime, setNewTaskTime] = useState('');
+  const [newTaskSubtasks, setNewTaskSubtasks] = useState('');
+  const [editingTask, setEditingTask] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editTag, setEditTag] = useState('Deep Work');
+  const [editMinutes, setEditMinutes] = useState(30);
+  const [editSubtaskTitle, setEditSubtaskTitle] = useState('');
+  const [addingSubtaskFor, setAddingSubtaskFor] = useState(null);
+  const [subtaskDraft, setSubtaskDraft] = useState('');
+
+  useEffect(() => {
+    const syncExternalChanges = () => {
+      try {
+        const savedBrainDump = localStorage.getItem('lockin_today_braindump');
+        const savedDays = localStorage.getItem('lockin_today_days');
+        if (savedBrainDump) setBrainDump(JSON.parse(savedBrainDump));
+        if (savedDays) setDays(JSON.parse(savedDays));
+      } catch {}
+    };
+    const celebrate = (event) => {
+      const title = event.detail?.title;
+      if (!title) return;
+      setCelebratedTaskTitle(title);
+      window.setTimeout(() => setCelebratedTaskTitle(null), 900);
+    };
+    window.addEventListener('local-data-updated', syncExternalChanges);
+    window.addEventListener('focus-task-completed', celebrate);
+    return () => { window.removeEventListener('local-data-updated', syncExternalChanges); window.removeEventListener('focus-task-completed', celebrate); };
+  }, []);
+
+  useEffect(() => {
+    if (!editingTask) return;
+    const latest = brainDump.find((task) => task.id === editingTask.id);
+    if (latest && latest.subtasks?.length !== editingTask.subtasks?.length) setEditingTask(latest);
+  }, [brainDump, editingTask]);
 
   const reorderBrainDump = (targetId) => {
     if (!draggedTaskId || draggedTaskId === targetId) return;
@@ -404,6 +439,12 @@ export const TodayPlanner = ({ onStartFocus }) => {
     );
   };
 
+  const openTaskEditor = (task) => { setEditingTask(task); setEditTitle(task.title); setEditTag(task.tag || 'Deep Work'); setEditMinutes(task.minutes || 30); setEditSubtaskTitle(''); };
+  const updateBrainDumpTask = (taskId, updater) => setBrainDump((current) => current.map((task) => task.id === taskId ? updater(task) : task));
+  const toggleSubtask = (taskId, subtaskId) => updateBrainDumpTask(taskId, (task) => ({ ...task, subtasks: (task.subtasks || []).map((subtask) => subtask.id === subtaskId ? { ...subtask, completed: !subtask.completed } : subtask) }));
+  const addSubtask = (taskId, value) => { const title = value.trim(); if (!title) return; updateBrainDumpTask(taskId, (task) => ({ ...task, subtasks: [...(task.subtasks || []), { id: `sub-${Date.now()}`, title, completed: false }] })); setSubtaskDraft(''); setAddingSubtaskFor(null); };
+  const saveTaskEdit = (event) => { event.preventDefault(); if (!editingTask || !editTitle.trim()) return; const minutes = Math.max(5, Number(editMinutes) || 30); updateBrainDumpTask(editingTask.id, (task) => ({ ...task, title: editTitle.trim(), tag: editTag, tagColor: TAG_CONFIG[editTag]?.colorKey || 'blue', minutes, duration: formatMinutes(minutes) })); if (editSubtaskTitle.trim()) addSubtask(editingTask.id, editSubtaskTitle); setEditingTask(null); };
+
   const toggleDayTask = (dayId, taskId) => {
     setDays((prev) =>
       prev.map((day) => {
@@ -442,6 +483,7 @@ export const TodayPlanner = ({ onStartFocus }) => {
       time: newTaskTime.trim() || undefined,
       completed: false,
       icons: [],
+      subtasks: newTaskSubtasks.split(',').map((title) => title.trim()).filter(Boolean).map((title, index) => ({ id: `sub-${Date.now()}-${index}`, title, completed: false })),
     };
 
     if (addingTarget === 'brain-dump') {
@@ -459,7 +501,14 @@ export const TodayPlanner = ({ onStartFocus }) => {
 
     setNewTaskTitle('');
     setNewTaskTime('');
+    setNewTaskSubtasks('');
     setAddingTarget(null);
+  };
+
+  const addCalendarTask = (title, minutes = 30) => {
+    const estimatedMinutes = Math.max(5, Number(minutes) || 30);
+    const task = { id: `task-${Date.now()}`, title, tag: 'Deep Work', tagColor: 'blue', duration: formatMinutes(estimatedMinutes), minutes: estimatedMinutes, completed: false, icons: [] };
+    setDays((current) => current.map((day) => day.isToday ? { ...day, tasks: [task, ...day.tasks] } : day));
   };
 
   // Move a task to Thu Today / Timebox
@@ -489,7 +538,7 @@ export const TodayPlanner = ({ onStartFocus }) => {
   return (
     <div
       className="w-full dark:bg-slate-950 min-h-screen text-slate-800 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200"
-      style={{ background: 'linear-gradient(160deg, #f8f9ff 0%, #f3f4f6 100%)' }}
+      style={{ background: '#faf9f6' }}
     >
       {/* ============================================================== */}
       {/* TOP HEADER: Pixel-perfect replica of Ellie top bar            */}
@@ -673,6 +722,8 @@ export const TodayPlanner = ({ onStartFocus }) => {
         </div>
       </header>
 
+      <TodayIntelligence tasks={brainDump} onStartFocus={onStartFocus} />
+
       {/* ============================================================== */}
       {/* MAIN 3-COLUMN CONTENT CANVAS                                   */}
       {/* ============================================================== */}
@@ -687,7 +738,14 @@ export const TodayPlanner = ({ onStartFocus }) => {
               <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-100 font-semibold text-base">
                 <span>🧠</span>
                 <span>Brain Dump</span>
-                <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 ml-0.5 cursor-pointer hover:text-slate-600" />
+                <button
+                  type="button"
+                  onClick={() => setShowBrainDump(false)}
+                  title="Collapse Brain Dump"
+                  className="ml-1 rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
 
@@ -705,6 +763,13 @@ export const TodayPlanner = ({ onStartFocus }) => {
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                     autoFocus
                     className="w-full text-xs font-medium text-slate-800 dark:text-slate-100 outline-hidden bg-transparent placeholder-slate-400"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Subtasks (separate with commas)..."
+                    value={newTaskSubtasks}
+                    onChange={(e) => setNewTaskSubtasks(e.target.value)}
+                    className="w-full rounded-lg bg-slate-50 px-2 py-1.5 text-[11px] font-medium text-slate-700 outline-hidden placeholder-slate-400 dark:bg-slate-700 dark:text-slate-100"
                   />
                   <div className="flex items-center justify-between pt-1">
                     <select
@@ -790,7 +855,7 @@ export const TodayPlanner = ({ onStartFocus }) => {
                     }}
                     onDragEnd={() => setDraggedTaskId(null)}
                     onClick={() => setActiveCardId(task.id)}
-                    className={`bg-white dark:bg-slate-800 rounded-xl p-3 border transition-all relative group cursor-grab active:cursor-grabbing ${draggedTaskId === task.id ? 'opacity-50' : ''} ${
+                    className={`bg-white dark:bg-slate-800 rounded-xl p-3 border transition-all relative group cursor-grab active:cursor-grabbing ${celebratedTaskTitle === task.title ? 'animate-success' : ''} ${draggedTaskId === task.id ? 'opacity-50' : ''} ${
                       task.completed
                         ? 'opacity-50 border-slate-200 dark:border-slate-700'
                         : isSelected
@@ -827,11 +892,18 @@ export const TodayPlanner = ({ onStartFocus }) => {
 
                       {/* Duration Badge */}
                       <div className="shrink-0">
-                        <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-700/50 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-700">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); const value = window.prompt('Estimated minutes', String(task.minutes || 30)); if (value === null) return; const minutes = Math.max(5, Number(value) || 30); updateBrainDumpTask(task.id, (current) => ({ ...current, minutes, duration: formatMinutes(minutes) })); }} title="Edit estimated time" className="rounded-md font-mono text-[11px] text-slate-400 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 dark:text-slate-500 dark:hover:bg-slate-700/50 border border-slate-100 bg-slate-50 px-1.5 py-0.5 dark:border-slate-700">
                           {task.duration}
-                        </span>
+                        </button>
                       </div>
                     </div>
+
+                    {(task.subtasks?.length > 0 || addingSubtaskFor === task.id) && (
+                      <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-2 dark:border-slate-700">
+                        {(task.subtasks || []).map((subtask) => <button type="button" key={subtask.id} onClick={(e) => { e.stopPropagation(); toggleSubtask(task.id, subtask.id); }} className="flex w-full items-center gap-2 text-left text-[11px] text-slate-600 hover:text-indigo-600 dark:text-slate-300"><span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${subtask.completed ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-slate-300'}`}>{subtask.completed && <Check className="h-2.5 w-2.5 stroke-[3]" />}</span><span className={subtask.completed ? 'line-through text-slate-400' : ''}>{subtask.title}</span></button>)}
+                        {addingSubtaskFor === task.id && <form onSubmit={(e) => { e.preventDefault(); addSubtask(task.id, subtaskDraft); }} className="flex items-center gap-2"><span className="text-slate-300">+</span><input autoFocus value={subtaskDraft} onChange={(e) => setSubtaskDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { setAddingSubtaskFor(null); setSubtaskDraft(''); } }} placeholder="Add subtask" className="min-w-0 flex-1 bg-transparent text-[11px] outline-none" /></form>}
+                      </div>
+                    )}
 
                     {/* Metadata footer: Tag + Icons */}
                     <div className="flex items-center justify-between mt-2 pt-1">
@@ -843,29 +915,13 @@ export const TodayPlanner = ({ onStartFocus }) => {
                           {tagInfo.label}
                         </span>
 
-                        {/* Badges / Icons */}
-                        {task.icons?.includes('flag') && (
-                          <Flag className="w-2.5 h-2.5 text-slate-400 ml-1" />
-                        )}
-                        {task.icons?.includes('repeat') && (
-                          <Repeat className="w-2.5 h-2.5 text-slate-400" />
-                        )}
-                        {task.icons?.includes('link') && (
-                          <Link2 className="w-2.5 h-2.5 text-slate-400" />
-                        )}
                       </div>
 
-                      {/* Quick Schedule Button (Hover) */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          scheduleTaskToToday(task);
-                        }}
-                        title="Schedule into Today"
-                        className="opacity-0 group-hover:opacity-100 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline transition-opacity"
-                      >
-                        + Today
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {task.subtasks?.length > 0 && <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400"><ListChecks className="h-3 w-3" />{task.subtasks.filter((subtask) => subtask.completed).length}/{task.subtasks.length}</span>}
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setAddingSubtaskFor(task.id); setSubtaskDraft(''); }} className="text-[10px] font-bold text-slate-400 opacity-0 transition hover:text-indigo-600 group-hover:opacity-100">+ Subtask</button>
+                      </div>
+
                     </div>
                   </div>
                 );
@@ -878,6 +934,7 @@ export const TodayPlanner = ({ onStartFocus }) => {
         {/* COLUMN 2: MULTI-DAY PLANNER / KANBAN (Middle Column)       */}
         {/* ========================================================== */}
         {activeTabMode === 'calendar' && <WeekCalendar days={days} setDays={setDays} matchesFilter={matchesFilter} onSelect={setActiveCardId} />}
+        {activeTabMode === 'calendar' && showTimebox && <CalendarTaskRail day={days.find((day) => day.isToday) || days[0]} matchesFilter={matchesFilter} onToggle={toggleDayTask} onSelect={setActiveCardId} onStartFocus={onStartFocus} onAddTask={addCalendarTask} />}
 
         <main className={`${activeTabMode === 'calendar' ? 'hidden' : 'flex'} flex-1 overflow-x-auto p-4 sm:p-5 gap-4 lg:gap-5 h-[calc(100vh-3.5rem)]`}>
           {days.map((day) => {
@@ -1010,7 +1067,7 @@ export const TodayPlanner = ({ onStartFocus }) => {
                         }}
                         onDragEnd={() => setDraggedDayTask(null)}
                         style={{ opacity: task.completed ? 0.55 : 1 }}
-                        className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-150 overflow-hidden group cursor-grab active:cursor-grabbing ${draggedDayTask?.taskId === task.id ? 'opacity-40' : ''}`}
+                        className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-150 overflow-hidden group cursor-grab active:cursor-grabbing ${celebratedTaskTitle === task.title ? 'animate-success' : ''} ${draggedDayTask?.taskId === task.id ? 'opacity-40' : ''}`}
                       >
                         <div className="flex">
                           <div style={{ width: 3, background: task.completed ? '#cbd5e1' : accentLBar, flexShrink: 0 }} />
@@ -1049,7 +1106,7 @@ export const TodayPlanner = ({ onStartFocus }) => {
                               </span>
                               {day.isToday && (
                                 <button
-                                  onClick={() => onStartFocus && onStartFocus()}
+                                  onClick={() => onStartFocus && onStartFocus(task)}
                                   className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 transition-all"
                                 >
                                   <Play className="w-2.5 h-2.5" /> Focus
@@ -1162,6 +1219,8 @@ export const TodayPlanner = ({ onStartFocus }) => {
           </aside>
         )}
       </div>
+
+      {editingTask && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/20 p-4 backdrop-blur-sm" onMouseDown={() => setEditingTask(null)}><form onSubmit={saveTaskEdit} onMouseDown={(event) => event.stopPropagation()} className="li-card w-full max-w-md border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900"><div className="flex items-start justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.16em] text-indigo-500">Edit task</p><h2 className="mt-1 text-xl font-black text-slate-900 dark:text-white">Update your next step</h2></div><button type="button" onClick={() => setEditingTask(null)} className="text-xl text-slate-400">×</button></div><label className="mt-5 block text-[10px] font-black uppercase tracking-wider text-slate-400">Task name<input autoFocus value={editTitle} onChange={(event) => setEditTitle(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold outline-none focus:border-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-white" /></label><div className="mt-4 flex items-center justify-between"><label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Tag<select value={editTag} onChange={(event) => setEditTag(event.target.value)} className="ml-2 rounded-lg border border-slate-200 px-2 py-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white"><option>Deep Work</option><option>Personal</option><option>Admin</option></select></label><span className="flex items-center gap-1 text-xs font-bold text-slate-400"><ListChecks className="h-4 w-4" />{editingTask.subtasks?.filter((subtask) => subtask.completed).length || 0}/{editingTask.subtasks?.length || 0}</span></div><div className="mt-5 rounded-xl bg-slate-50 p-3 dark:bg-slate-800"><p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Subtasks</p><div className="mt-2 space-y-2">{(editingTask.subtasks || []).map((subtask) => <button type="button" key={subtask.id} onClick={() => { toggleSubtask(editingTask.id, subtask.id); setEditingTask((current) => ({ ...current, subtasks: (current.subtasks || []).map((item) => item.id === subtask.id ? { ...item, completed: !item.completed } : item) })); }} className="flex w-full items-center gap-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-200"><span className={`flex h-4 w-4 items-center justify-center rounded border ${subtask.completed ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-slate-300'}`}>{subtask.completed && <Check className="h-3 w-3" />}</span>{subtask.title}</button>)}</div><div className="mt-3 flex gap-2"><input value={editSubtaskTitle} onChange={(event) => setEditSubtaskTitle(event.target.value)} placeholder="Add a subtask" className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white" /><button type="button" onClick={() => { if (editSubtaskTitle.trim()) { addSubtask(editingTask.id, editSubtaskTitle); setEditSubtaskTitle(''); } }} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-black text-white">Add</button></div></div><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setEditingTask(null)} className="rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-500">Cancel</button><button type="submit" className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-black text-white">Save changes</button></div></form></div>}
     </div>
   );
 };

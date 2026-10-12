@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Leaf, Play, Sparkles } from 'lucide-react';
 import { useGarden } from '../../context/GardenContext';
+import { getGentleStreakStatus } from '../../utils/streakCare';
+import GentleReturnCard from './GentleReturnCard';
 
 const ForYou = ({ onStartFocus }) => {
   const [task, setTask] = useState('');
@@ -10,6 +12,7 @@ const ForYou = ({ onStartFocus }) => {
   });
   const { grid, inventory } = useGarden();
   const sessions = useMemo(() => { try { return JSON.parse(localStorage.getItem('lockin_focus_sessions') || '[]'); } catch { return []; } }, []);
+  const streakCare = useMemo(() => getGentleStreakStatus(), []);
   const todayKey = new Date().toISOString().slice(0, 10);
   const todaySessions = sessions.filter((session) => session.completedAt?.slice(0, 10) === todayKey);
   const todayTasks = (() => { try { return JSON.parse(localStorage.getItem('lockin_todos') || '[]').filter((item) => !item.done && new Date(item.due).toDateString() === new Date().toDateString()).length; } catch { return 0; } })();
@@ -37,7 +40,8 @@ const ForYou = ({ onStartFocus }) => {
   return (
     <div className="mx-auto max-w-2xl space-y-5 bg-[#fbfcfb] p-4 sm:p-8">
       <div className="space-y-1"><p className="text-xs font-bold uppercase tracking-[0.14em] text-[#249653]">For you</p><h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Make today count.</h1><p className="text-sm text-slate-500 dark:text-slate-400">{todayTasks > 0 ? `You have ${todayTasks} task${todayTasks === 1 ? '' : 's'} left today.` : 'Choose one meaningful thing to begin.'}</p></div>
-      {!activeFocus && todaySessions.length === 0 && (
+      {!activeFocus && <GentleReturnCard status={streakCare} onRestart={() => start(2)} />}
+      {!activeFocus && todaySessions.length === 0 && !streakCare.returning && !streakCare.freezeApplied && (
         <div className="rounded-3xl border border-[#bcebc9] bg-[#f0fbf3] p-5 shadow-sm dark:border-[#4dcd7d]/25 dark:bg-[#4dcd7d]/10 sm:p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#249653]">Your first move</p>
           <h2 className="mt-1 text-xl font-black tracking-tight text-slate-900 dark:text-white">Choose one task. Start small.</h2>

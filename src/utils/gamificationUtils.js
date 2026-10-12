@@ -1,4 +1,5 @@
 import { getDateKey } from './timeUtils';
+import { getGentleStreakStatus, localDateKey } from './streakCare';
 
 export const LEVELS = [
   { minHours: 0, title: 'Novice', color: 'text-gray-600', bg: 'bg-gray-100' },
@@ -9,6 +10,8 @@ export const LEVELS = [
 ];
 
 export const calculateStreak = (history = {}) => {
+  const activeDates = new Set(Object.entries(history).filter(([, value]) => Number(value) > 0).map(([key]) => localDateKey(new Date(`${key}T00:00:00`))));
+  if (activeDates.size > 0) return getGentleStreakStatus(activeDates).currentStreak;
   let streak = 0;
   const today = new Date();
   

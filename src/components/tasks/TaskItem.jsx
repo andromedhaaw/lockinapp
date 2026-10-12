@@ -1,6 +1,35 @@
-import { Check, Trash2, Clock, ChevronRight } from 'lucide-react';
+import { Check, Trash2, Clock, ChevronRight, CalendarDays } from 'lucide-react';
 
-const TaskItem = ({ task, onToggle, onDelete, onFocus, onOpen }) => {
+const formatDeadline = (deadline) => {
+  if (!deadline) return '';
+  const date = new Date(deadline);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
+};
+
+const formatTimeRemaining = (deadline) => {
+  const target = new Date(deadline).getTime();
+  if (Number.isNaN(target)) return '';
+
+  const difference = target - Date.now();
+  const absoluteMinutes = Math.ceil(Math.abs(difference) / 60000);
+  const isOverdue = difference < 0;
+  let amount;
+
+  if (absoluteMinutes < 60) {
+    amount = `${Math.max(1, absoluteMinutes)} minute${absoluteMinutes === 1 ? '' : 's'}`;
+  } else if (absoluteMinutes < 1440) {
+    const hours = Math.ceil(absoluteMinutes / 60);
+    amount = `${hours} hour${hours === 1 ? '' : 's'}`;
+  } else {
+    const days = Math.ceil(absoluteMinutes / 1440);
+    amount = `${days} day${days === 1 ? '' : 's'}`;
+  }
+
+  return isOverdue ? `${amount} overdue` : `${amount} remaining`;
+};
+
+const TaskItem = ({ task, onToggle, onDelete, onFocus, onOpen, showDeadline = true }) => {
   return (
     <div className={`group flex items-center justify-between p-3 rounded-lg border transition-all ${
       task.completed 
@@ -31,6 +60,12 @@ const TaskItem = ({ task, onToggle, onDelete, onFocus, onOpen }) => {
             }`}>
               <Clock className="w-3 h-3" />
               <span>{task.estimatedTime}</span>
+            </div>
+          )}
+          {showDeadline && task.deadline && (
+            <div className={`mt-0.5 flex items-center gap-1 text-xs font-semibold ${new Date(task.deadline).getTime() < Date.now() ? 'text-red-500 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
+              <CalendarDays className="h-3 w-3" />
+              <span>Due {formatDeadline(task.deadline)} · {formatTimeRemaining(task.deadline)}</span>
             </div>
           )}
         </div>

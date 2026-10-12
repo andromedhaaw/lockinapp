@@ -25,7 +25,7 @@ import { TaskList } from '../components/tasks';
 import { TodoPage } from '../components/todo';
 import { DeadlinePage } from '../components/deadline';
 import { Profile } from '../components/profile';
-import { Leaderboard, SocialNotification, CommunityBanner, EncouragementModal, RivalActivityFeed } from '../components/social';
+import { Leaderboard, SocialNotification, CommunityBanner, EncouragementModal, RivalActivityFeed, SocialViewCards } from '../components/social';
 import { GoalsTab } from '../components/goals';
 import { AnalyticsTab, TagAnalytics } from '../components/analytics';
 import { ForYou } from '../components/foryou';
@@ -37,6 +37,7 @@ import GamePage from '../components/game/GamePage';
 import MoodTracker from '../components/mood/MoodTracker';
 import PetPage from '../components/pet/PetPage';
 import FarmPage from '../components/farm/FarmPage';
+import { TiimoExperiment } from '../components/tiimo';
 import { Heart } from 'lucide-react';
 
 import { DeepWorkScore } from '../components/insights';
@@ -45,12 +46,13 @@ import { AccountabilityPods } from '../components/pods';
 import { WorkCertificate } from '../components/certificate';
 import { formatTimeToHours, getDateKey } from '../utils/timeUtils';
 import { TABS, HISTORY_PERIODS } from '../constants';
+import TrackerInsightSummary from '../components/tracker/TrackerInsightSummary';
 
 const tabs = [
-  { id: TABS.FOR_YOU, label: 'For You', icon: Sparkles },
   { id: TABS.TODAY, label: 'Today', icon: CalendarDays },
   { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
   { id: TABS.FOCUS, label: 'Focus', icon: Timer },
+  { id: TABS.TIIMO, label: 'Tiimo', icon: Clock },
   { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
   { id: TABS.TODO, label: 'To Do', icon: CheckSquare },
   { id: TABS.DEADLINE, label: 'Deadline', icon: CalendarDays },
@@ -95,7 +97,7 @@ const FocusTagSummary = () => {
  * Main TimeTracker page component
  */
 const TimeTracker = ({ initialTab }) => {
-  const [activeTab, setActiveTab] = useState(() => initialTab || TABS.FOR_YOU);
+  const [activeTab, setActiveTab] = useState(() => initialTab || TABS.TODAY);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarHidden, setSidebarHidden] = useState(false);
   const [showTagAnalytics, setShowTagAnalytics] = useState(false);
@@ -225,10 +227,10 @@ const TimeTracker = ({ initialTab }) => {
 
   // ADHD Mode keeps only the core action loop visible.
   const adhdTabs = [
-    { id: TABS.FOR_YOU, label: 'For You', icon: Sparkles },
     { id: TABS.TODAY, label: 'Today', icon: CalendarDays },
     { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
     { id: TABS.FOCUS, label: 'Focus', icon: Timer },
+    { id: TABS.TIIMO, label: 'Tiimo', icon: Clock },
     { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
     { id: TABS.TODO, label: 'To Do', icon: CheckSquare },
     { id: TABS.DEADLINE, label: 'Deadline', icon: CalendarDays },
@@ -372,7 +374,7 @@ const TimeTracker = ({ initialTab }) => {
   };
 
   return (
-    <div className="min-h-screen dark:bg-slate-950 transition-colors duration-300" style={{ background: 'linear-gradient(160deg, #f8f9ff 0%, #f3f4f6 100%)' }}>
+    <div className="li-shell dark:bg-slate-950 transition-colors duration-200">
       {/* Tab Navigation */}
       <TabNavigation
         tabs={visibleTabs}
@@ -390,12 +392,14 @@ const TimeTracker = ({ initialTab }) => {
       <div className={sidebarHidden ? '' : sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}>
       {activeTab === TABS.PET ? (
         <PetPage onStartFocus={() => setActiveTab(TABS.FOCUS)} />
+      ) : activeTab === TABS.TIIMO ? (
+        <TiimoExperiment />
       ) : activeTab === TABS.MOOD ? (
         <MoodTracker />
       ) : activeTab === TABS.GAME ? (
         <GamePage onStartFocus={() => setActiveTab(TABS.FOCUS)} />
       ) : activeTab === TABS.PROJECTS ? (
-        <ProjectsPage />
+        <ProjectsPage onStartFocus={(task) => { setFocusedTask(task); setCountdown(3); setActiveTab(TABS.FOCUS); }} />
       ) : activeTab === TABS.HABITS ? (
         <HabitPage />
       ) : activeTab === TABS.TAG_ANALYTICS ? (
@@ -405,7 +409,13 @@ const TimeTracker = ({ initialTab }) => {
       ) : activeTab === TABS.FOR_YOU ? (
         <ForYou onStartFocus={(minutes) => { if (!minutes) setActiveTab(TABS.FOCUS); }} />
       ) : activeTab === TABS.TODAY ? (
-        <TodayPlanner onStartFocus={() => setActiveTab(TABS.FOCUS)} />
+        <TodayPlanner onStartFocus={(task) => {
+          if (task) {
+            setFocusedTask({ ...task, name: task.name || task.title, estimatedTime: `${task.minutes || 30}m` });
+            setCountdown(3);
+          }
+          setActiveTab(TABS.FOCUS);
+        }} />
       ) : (
         <div className="p-4 sm:p-6 pb-32">
           <div className={`${activeTab === TABS.GARDEN ? 'max-w-7xl' : 'max-w-3xl'} mx-auto transition-all duration-500`}>
@@ -475,6 +485,8 @@ const TimeTracker = ({ initialTab }) => {
                   onFinish={handleFinishWithEncouragement}
                 />
               </div>
+
+              <TrackerInsightSummary />
 
               {/* Action Buttons: Work History & Insights in Tracker Page */}
               <div className="mt-16 flex flex-wrap items-center justify-center gap-3">
@@ -664,6 +676,8 @@ const TimeTracker = ({ initialTab }) => {
                       return val;
                     })() : 25} 
                     autoStart={countdown === 0 && !!focusedTask}
+                    focusedTaskName={focusedTask?.name || focusedTask?.title || null}
+                    focusTask={focusedTask}
                   />
                   
                   {focusedTask && (
@@ -728,51 +742,11 @@ const TimeTracker = ({ initialTab }) => {
           {/* Social Tab Content - Leaderboard & Pods */}
           <div className={activeTab === TABS.LEADERBOARD ? 'block' : 'hidden'}>
             <div className="pt-4 space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">
-                🏆 Social & Community
-              </h2>
+              <div className="mx-auto max-w-4xl"><p className="text-xs font-black uppercase tracking-[.18em] text-[#249653]">Community</p><h2 className="mt-1 text-3xl font-black tracking-tight text-slate-900 dark:text-white">Focus is better together.</h2><p className="mt-1 text-sm text-slate-500">Compete lightly, encourage often, and keep your pod moving.</p></div>
               
               <CommunityBanner />
 
-              {/* Sub-navigation for Social */}
-              <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-md">
-                <button
-                  onClick={() => setSocialView('leaderboard')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                    socialView === 'leaderboard'
-                      ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 shadow-sm'
-                      : 'text-gray-500 hover:text-yellow-600'
-                  }`}
-                >
-                  Leaderboard
-                </button>
-                <button
-                  onClick={() => setSocialView('activity')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                    socialView === 'activity'
-                      ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                      : 'text-gray-500 hover:text-green-600'
-                  }`}
-                >
-                  Live Feed
-                </button>
-                <button
-                  onClick={() => setSocialView('pods')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                    socialView === 'pods'
-                      ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 shadow-sm'
-                      : 'text-gray-500 hover:text-purple-600'
-                  }`}
-                >
-                  My Pod
-                </button>
-                <button
-                  onClick={() => setSocialView('growth')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${socialView === 'growth' ? 'bg-[#eaf8ee] text-[#249653] shadow-sm' : 'text-gray-500 hover:text-[#249653]'}`}
-                >
-                  Growth
-                </button>
-              </div>
+              <SocialViewCards value={socialView} onChange={setSocialView} />
 
               {/* Social Content */}
               {socialView === 'leaderboard' && (
@@ -807,7 +781,7 @@ const TimeTracker = ({ initialTab }) => {
           {/* Goals Tab Content */}
           <div className={activeTab === TABS.GOALS ? 'block' : 'hidden'}>
             <div className="pt-4">
-              <GoalsTab />
+              <GoalsTab onOpenProject={() => setActiveTab(TABS.PROJECTS)} />
             </div>
           </div>
 

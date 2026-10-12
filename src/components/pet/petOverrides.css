@@ -69,3 +69,18 @@
 .pet-penguin .pet-nose:after{content:''!important;position:absolute!important;left:5px!important;right:5px!important;top:5px!important;height:8px!important;border:0!important;border-bottom:2px solid #26365f!important;border-radius:50%!important}
 .pet-penguin .pet-cheek{display:block!important;top:116px!important;width:17px!important;height:9px!important;opacity:.72!important}.pet-penguin .pet-cheek-left{left:38px!important}.pet-penguin .pet-cheek-right{right:38px!important}
 .pet-penguin .pet-leg{top:226px!important;width:49px!important;height:26px!important}.pet-penguin .pet-leg-left{left:15px!important}.pet-penguin .pet-leg-right{right:15px!important}
+
+/* Persistent sleep state */
+.pet-room-sleeping{background:linear-gradient(155deg,#fff 0%,#f3f1ff 100%)!important}
+.pet-sleeping{animation:pet-sleep-breathe 3.8s ease-in-out infinite!important;transform:translateY(8px) scale(.98)}
+.pet-sleeping .pet-eye{animation:none!important;transform:scaleY(.16)!important}
+.pet-sleeping .pet-arm-left{transform:rotate(18deg)!important}
+.pet-sleeping .pet-arm-right{transform:rotate(-18deg)!important}
+.pet-zzz{animation:pet-zzz-float 2.2s ease-in-out infinite}
+@keyframes pet-sleep-breathe{50%{transform:translateY(11px) scale(.975)}}
+@keyframes pet-zzz-float{50%{transform:translateY(-8px);opacity:.55}}
+.pet-celebrate{animation:pet-companion-celebrate .75s ease-in-out 2!important}
+.pet-celebrate .pet-arm-left{animation:feed-left .6s ease-in-out 2!important}
+.pet-celebrate .pet-arm-right{animation:feed-right .6s ease-in-out 2!important}
+.pet-sleepy .pet-eye{animation:none!important;transform:scaleY(.45)}
+@keyframes pet-companion-celebrate{50%{transform:translateY(-14px) rotate(2deg)}}

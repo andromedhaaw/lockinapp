@@ -17,7 +17,7 @@ export const Card = ({
   return (
     <div
       className={`
-        rounded-3xl shadow-lg p-6 border
+        rounded-2xl shadow-[0_1px_2px_rgba(34,51,39,0.035)] p-6 border
         ${variants[variant]}
         ${className}
       `}

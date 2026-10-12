@@ -27,7 +27,7 @@ import { useCurrentTime, useWorkTimer, useWorkHistory } from '../hooks';
 import { FocusTimer } from '../components/focus';
 import { TaskList } from '../components/tasks';
 import { Profile } from '../components/profile';
-import { Leaderboard, SocialNotification, CommunityBanner, EncouragementModal, RivalActivityFeed } from '../components/social';
+import { Leaderboard, SocialNotification, CommunityBanner, EncouragementModal, RivalActivityFeed, SocialViewCards } from '../components/social';
 import { GoalsTab } from '../components/goals';
 import { AnalyticsTab } from '../components/analytics';
 import TagAnalytics from '../components/analytics/TagAnalytics';
@@ -40,11 +40,13 @@ import { formatTimeToHours, getDateKey } from '../utils/timeUtils';
 import { TABS, HISTORY_PERIODS } from '../constants';
 import GardenTab from '../components/garden/mobile/GardenTab';
 import FarmPage from '../components/farm/FarmPage';
+import { TiimoExperiment } from '../components/tiimo';
+import TrackerInsightSummary from '../components/tracker/TrackerInsightSummary';
 
 const tabs = [
-  { id: TABS.FOR_YOU, label: 'For You', icon: Sparkles },
   { id: TABS.TODAY, label: 'Today', icon: CalendarDays },
   { id: TABS.TRACKER, label: 'Tracker', icon: Clock },
+  { id: TABS.TIIMO, label: 'Tiimo', icon: Timer },
   { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
   { id: TABS.PROJECTS, label: 'Projects', icon: Flag },
@@ -66,7 +68,7 @@ const historyPeriods = [
  * Mobile TimeTracker page component
  */
 const MobileTimeTracker = () => {
-  const [activeTab, setActiveTab] = useState(TABS.FOR_YOU);
+  const [activeTab, setActiveTab] = useState(TABS.TODAY);
   const [showTagAnalytics, setShowTagAnalytics] = useState(false);
   useEffect(() => {
     const openAnalytics = () => setActiveTab(TABS.TAG_ANALYTICS);
@@ -321,11 +323,20 @@ const MobileTimeTracker = () => {
             <HabitPage />
           </div>
 
+          <div className={activeTab === TABS.TIIMO ? 'block -mx-4 -mt-4' : 'hidden'}>
+            <TiimoExperiment />
+          </div>
+
 
           {/* Today Tab Content */}
           <div className={activeTab === TABS.TODAY ? 'block' : 'hidden'}>
             <div className="-mx-4 -mt-4 pb-20">
-              <TodayPlanner onStartFocus={() => setActiveTab(TABS.TASKS)} />
+              <TodayPlanner onStartFocus={(task) => {
+                setFocusedTask(task || { name: 'Gentle start', estimatedTime: '2m' });
+                setCountdown(3);
+                setShowFocusTimer(true);
+                setActiveTab(TABS.TASKS);
+              }} />
             </div>
           </div>
 
@@ -390,6 +401,8 @@ const MobileTimeTracker = () => {
                   onFinish={handleFinishWithEncouragement}
                 />
               </div>
+
+              <TrackerInsightSummary />
 
               {/* Action Buttons: Work History & Insights in Mobile Tracker Page */}
               <div className="mt-5 flex flex-wrap justify-center gap-2 pb-6">
@@ -608,6 +621,8 @@ const MobileTimeTracker = () => {
                                 return val;
                               })() : 25} 
                               autoStart={false}
+                              focusedTaskName={focusedTask?.name || focusedTask?.title || null}
+                              focusTask={focusedTask}
                             />
                          </div>
 
@@ -666,51 +681,11 @@ const MobileTimeTracker = () => {
           {/* Social Tab Content - Leaderboard & Pods */}
           <div className={activeTab === TABS.LEADERBOARD ? 'block' : 'hidden'}>
             <div className="pt-4 space-y-6 pb-20">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">
-                🏆 Social & Community
-              </h2>
+              <div><p className="text-xs font-black uppercase tracking-[.18em] text-[#249653]">Community</p><h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white">Focus is better together.</h2><p className="mt-1 text-sm text-slate-500">Compete lightly and keep your pod moving.</p></div>
               
               <CommunityBanner />
 
-              {/* Sub-navigation for Social */}
-              <div className="flex justify-center bg-white dark:bg-slate-800 p-1 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm mx-auto max-w-[320px]">
-                <button
-                  onClick={() => setSocialView('leaderboard')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                    socialView === 'leaderboard'
-                      ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 shadow-sm'
-                      : 'text-gray-500 hover:text-yellow-600'
-                  }`}
-                >
-                  Leaderboard
-                </button>
-                <button
-                  onClick={() => setSocialView('activity')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                    socialView === 'activity'
-                      ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 shadow-sm'
-                      : 'text-gray-500 hover:text-green-600'
-                  }`}
-                >
-                  Live Feed
-                </button>
-                <button
-                  onClick={() => setSocialView('pods')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                    socialView === 'pods'
-                      ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 shadow-sm'
-                      : 'text-gray-500 hover:text-purple-600'
-                  }`}
-                >
-                  My Pod
-                </button>
-                <button
-                  onClick={() => setSocialView('growth')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${socialView === 'growth' ? 'bg-[#eaf8ee] text-[#249653] shadow-sm' : 'text-gray-500 hover:text-[#249653]'}`}
-                >
-                  Growth
-                </button>
-              </div>
+              <SocialViewCards value={socialView} onChange={setSocialView} />
 
               {/* Social Content */}
               {socialView === 'leaderboard' && (
@@ -735,12 +710,12 @@ const MobileTimeTracker = () => {
           {/* Goals Tab Content */}
           <div className={activeTab === TABS.GOALS ? 'block' : 'hidden'}>
             <div className="pt-4 pb-20">
-              <GoalsTab />
+              <GoalsTab onOpenProject={() => setActiveTab(TABS.PROJECTS)} />
             </div>
           </div>
 
           <div className={activeTab === TABS.PROJECTS ? 'block' : 'hidden'}>
-            <ProjectsPage />
+            <ProjectsPage onStartFocus={(task) => { setFocusedTask(task); setCountdown(3); setShowFocusTimer(true); setActiveTab(TABS.FOCUS); }} />
           </div>
 
 

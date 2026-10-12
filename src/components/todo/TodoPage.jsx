@@ -416,6 +416,17 @@ export default function TodoPage({ onStartFocus }) {
   }, [tasks]);
 
   useEffect(() => {
+    const syncCompletedFocus = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem('lockin_todos') || '[]');
+        setTasks(saved.map((task) => ({ ...task, due: new Date(task.due) })));
+      } catch {}
+    };
+    window.addEventListener('local-data-updated', syncCompletedFocus);
+    return () => window.removeEventListener('local-data-updated', syncCompletedFocus);
+  }, []);
+
+  useEffect(() => {
     if (showForm && inputRef.current) inputRef.current.focus();
   }, [showForm]);
 
@@ -609,7 +620,7 @@ export default function TodoPage({ onStartFocus }) {
         transition: 'max-width .3s ease',
       }}>
         {/* ── Toolbar row ───────────────────────────────────────── */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 6, flexWrap: 'wrap' }}>
           <div>
             <h1 style={{ fontSize: 30, fontWeight: 800, color: '#111827', margin: 0, letterSpacing: '-0.5px' }}>
               To Do List
@@ -620,17 +631,17 @@ export default function TodoPage({ onStartFocus }) {
           </div>
 
           {/* Right action buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {/* Zen button */}
             <button
               title="Zen Mode — distraction-free list"
               onClick={() => setViewMode('zen')}
               style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '8px 14px', borderRadius: 99,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                height: 36, padding: '0 14px', borderRadius: 12, whiteSpace: 'nowrap',
                 border: '1.5px solid #e5e7eb', background: '#fff',
-                color: '#6b7280', fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', transition: 'all .15s',
+                color: '#6b7280', fontSize: 12, fontWeight: 700,
+                cursor: 'pointer', transition: 'all .2s cubic-bezier(.2,.8,.2,1)',
               }}
               onMouseEnter={e => { e.currentTarget.style.background='#f0fdf4'; e.currentTarget.style.borderColor='#48bb78'; e.currentTarget.style.color='#276749'; }}
               onMouseLeave={e => { e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#e5e7eb'; e.currentTarget.style.color='#6b7280'; }}
@@ -644,13 +655,13 @@ export default function TodoPage({ onStartFocus }) {
               title={isSplit ? "Switch to list view" : "Show calendar alongside"}
               onClick={() => setViewMode(isSplit ? 'list' : 'split')}
               style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '8px 14px', borderRadius: 99,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                height: 36, padding: '0 14px', borderRadius: 12, whiteSpace: 'nowrap',
                 border: isSplit ? '1.5px solid #6366f1' : '1.5px solid #e5e7eb',
                 background: isSplit ? '#eef2ff' : '#fff',
                 color: isSplit ? '#3730a3' : '#6b7280',
-                fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', transition: 'all .15s',
+                fontSize: 12, fontWeight: 700,
+                cursor: 'pointer', transition: 'all .2s cubic-bezier(.2,.8,.2,1)',
               }}
               onMouseEnter={e => { if (!isSplit) { e.currentTarget.style.background='#eef2ff'; e.currentTarget.style.borderColor='#6366f1'; e.currentTarget.style.color='#3730a3'; }}}
               onMouseLeave={e => { if (!isSplit) { e.currentTarget.style.background='#fff'; e.currentTarget.style.borderColor='#e5e7eb'; e.currentTarget.style.color='#6b7280'; }}}
@@ -660,7 +671,7 @@ export default function TodoPage({ onStartFocus }) {
             </button>
             <button
               onClick={() => setViewMode(isCategory ? 'list' : 'category')}
-              style={{ fontSize: 11, fontWeight: 700, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${isCategory ? '#f2c36b' : '#e5e7eb'}`, background: isCategory ? '#fff7ed' : '#fff', color: isCategory ? '#c2410c' : '#6b7280', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 36, padding: '0 14px', borderRadius: 12, whiteSpace: 'nowrap', fontSize: 12, fontWeight: 700, border: `1.5px solid ${isCategory ? '#f2c36b' : '#e5e7eb'}`, background: isCategory ? '#fff7ed' : '#fff', color: isCategory ? '#c2410c' : '#6b7280', cursor: 'pointer', transition: 'all .2s cubic-bezier(.2,.8,.2,1)' }}
             >
               {isCategory ? 'List view' : 'Categories'}
             </button>
@@ -673,11 +684,11 @@ export default function TodoPage({ onStartFocus }) {
               onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 14px rgba(17,24,39,0.28)'; }}
               onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 2px 8px rgba(17,24,39,0.18)'; }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '9px 18px', borderRadius: 99,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                height: 36, padding: '0 14px', borderRadius: 12, whiteSpace: 'nowrap',
                 background: '#111827', border: 'none',
-                color: '#fff', fontSize: 13, fontWeight: 700,
-                cursor: 'pointer', transition: 'all .15s',
+                color: '#fff', fontSize: 12, fontWeight: 700,
+                cursor: 'pointer', transition: 'all .2s cubic-bezier(.2,.8,.2,1)',
                 boxShadow: '0 2px 8px rgba(17,24,39,0.18)',
               }}
             >

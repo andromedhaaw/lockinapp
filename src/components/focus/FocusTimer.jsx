@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Play, Pause, RotateCcw, Timer, Clock, Settings2, Zap, Coffee, Sparkles, Tag, Check, Square, BarChart3, X } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Play, Pause, RotateCcw, Timer, Clock, Settings2, Zap, Coffee, Sparkles, Tag, Check, Square, BarChart3, X, Leaf } from 'lucide-react';
 import VisualTimeTimer from './VisualTimeTimer';
 import { useGarden } from '../../context/GardenContext';
 import FocusShareModal from './FocusShareModal';
+import FocusCompletionMoment from './FocusCompletionMoment';
 
 // Preset tags for pomodoro focus sessions
 const PRESET_TAGS = [
@@ -12,6 +12,27 @@ const PRESET_TAGS = [
   { id: 'code',  name: 'Code',  icon: '💻' },
   { id: 'write', name: 'Write', icon: '✍️' },
 ];
+
+const completeFocusedTask = (focusTask, focusedTaskName) => {
+  if (!focusedTaskName && !focusTask) return;
+  const taskId = focusTask?._id || focusTask?.id;
+  const matches = (task) => (taskId && (task.id === taskId || task._id === taskId)) || (task.title || task.name) === focusedTaskName;
+  try {
+    const updateFlat = (key, completionField) => {
+      const saved = JSON.parse(localStorage.getItem(key) || '[]');
+      localStorage.setItem(key, JSON.stringify(saved.map((task) => matches(task) ? { ...task, [completionField]: true, completedAt: new Date().toISOString() } : task)));
+    };
+    updateFlat('lockin_tasks_offline', 'completed');
+    updateFlat('lockin_todos', 'done');
+    updateFlat('lockin_today_braindump', 'completed');
+    const days = JSON.parse(localStorage.getItem('lockin_today_days') || '[]');
+    localStorage.setItem('lockin_today_days', JSON.stringify(days.map((day) => ({ ...day, tasks: (day.tasks || []).map((task) => matches(task) ? { ...task, completed: true, completedAt: new Date().toISOString() } : task) }))));
+    window.dispatchEvent(new CustomEvent('focus-task-completed', { detail: { id: taskId, title: focusedTaskName } }));
+    window.dispatchEvent(new Event('local-data-updated'));
+  } catch (error) {
+    console.warn('Could not sync completed focus task', error);
+  }
+};
 
 // Sensory Audio Chimes using Web Audio API
 const playTone = (frequency, duration = 0.15, type = 'sine', gainVal = 0.1) => {
@@ -51,7 +72,7 @@ const playCompletionFanfare = () => {
   } catch (e) {}
 };
 
-const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = null }) => {
+const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = null, focusTask = null }) => {
   const { rewardFocusSession } = useGarden();
   const [minutes, setMinutes] = useState(initialMinutes);
   const [seconds, setSeconds] = useState(0);
@@ -132,6 +153,18 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
   const [sessionEndAt, setSessionEndAt] = useState(null);
   const [sessionStartedAt, setSessionStartedAt] = useState(null);
 
+  const taskContext = useMemo(() => {
+    if (focusTask) return focusTask;
+    if (!focusedTaskName) return null;
+    try {
+      const brainDump = JSON.parse(localStorage.getItem('lockin_today_braindump') || '[]');
+      const days = JSON.parse(localStorage.getItem('lockin_today_days') || '[]');
+      const candidates = [...brainDump, ...days.flatMap((day) => day.tasks || [])];
+      return candidates.find((task) => (task.title || task.name) === focusedTaskName) || null;
+    } catch { return null; }
+  }, [focusedTaskName, focusTask]);
+  const focusTag = taskContext?.tag || selectedTag;
+
   useEffect(() => {
     if (!showRewardToast) return undefined;
     const timeout = setTimeout(() => setShowRewardToast(false), 3000);
@@ -210,6 +243,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
     setSessionStartedAt(session.startedAt);
     localStorage.setItem('lockin_active_focus', JSON.stringify(session));
     window.dispatchEvent(new Event('lockin-focus-sync'));
+    window.dispatchEvent(new Event('focus-session-started'));
     playTone(660, 0.1);
   };
 
@@ -231,12 +265,6 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
           setIsActive(false);
           clearInterval(interval);
           playCompletionFanfare();
-          confetti({
-            particleCount: 90,
-            spread: 70,
-            origin: { y: 0.6 },
-          });
-
           if (customMinutes <= 2) {
             setCompletedSessionType('warmup');
           } else {
@@ -244,9 +272,12 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
           }
 
           const reward = rewardFocusSession(customMinutes);
+          completeFocusedTask(focusTask, focusedTaskName);
           const session = {
             id: Date.now().toString(),
             durationMinutes: customMinutes,
+            actualMinutes: Math.max(1, Math.round((Date.now() - (sessionStartedAt || Date.now() - customMinutes * 60000)) / 60000)),
+            plannedMinutes: customMinutes,
             completedAt: new Date().toISOString(),
             taskName: focusedTaskName || 'Focus session',
             tag: selectedTag,
@@ -254,18 +285,20 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
           };
           const existing = JSON.parse(localStorage.getItem('lockin_focus_sessions') || '[]');
           localStorage.setItem('lockin_focus_sessions', JSON.stringify([session, ...existing].slice(0, 100)));
+          localStorage.setItem('lockin_pet_last_focus', JSON.stringify({ sessionId: session.id, minutes: session.actualMinutes, taskName: session.taskName, completedAt: session.completedAt }));
+          localStorage.setItem('lockin_farm_pending_session', JSON.stringify(session));
           window.dispatchEvent(new Event('local-data-updated'));
           setLastReward(session);
-          setShowRewardToast(true);
+          setShowRewardToast(false);
           setRecentSessions([session, ...existing].slice(0, 3));
-          setShowShareCard(true);
+          setShowShareCard(false);
         }
       }, 1000);
     } else {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isActive, isPaused, minutes, seconds, customMinutes, sessionEndAt]);
+  }, [isActive, isPaused, minutes, seconds, customMinutes, sessionEndAt, sessionStartedAt, selectedTag, focusedTaskName, focusTask, rewardFocusSession]);
 
   const toggleTimer = () => {
     if (!isActive) {
@@ -334,22 +367,22 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
   return (
     <div className="relative flex flex-col items-center justify-center p-4 sm:p-6 space-y-7 max-w-lg mx-auto">
       {isActive && (
-        <div className="flex w-full items-end justify-center gap-7 rounded-2xl border border-slate-100 bg-white px-5 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div><div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Actual</div><div className="mt-1 font-mono text-lg font-bold text-[#4dcd7d]">{formatActual(sessionStartedAt)}</div></div>
-          <div><div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Planned</div><div className="mt-1 font-mono text-lg font-bold text-slate-600 dark:text-slate-300">{customMinutes}m</div></div>
-          <button onClick={finishSessionNow} className="mb-0.5 inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#249653] transition hover:text-red-500"><Square className="h-3 w-3 fill-current" /> Stop</button>
+        <div className="li-card flex w-full items-center justify-between gap-4 border border-slate-100 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+          <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.16em] text-[#249653]">Now focusing · {focusTag}</p><p className="mt-1 truncate text-sm font-black text-slate-800 dark:text-white">{focusedTaskName || 'Focus session'}</p></div>
+          <div className="flex shrink-0 items-end gap-5"><div><div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Actual</div><div className="mt-1 font-mono text-base font-bold text-[#249653]">{formatActual(sessionStartedAt).slice(3)}</div></div><div><div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Planned</div><div className="mt-1 font-mono text-base font-bold text-slate-600 dark:text-slate-300">{customMinutes}m</div></div></div>
         </div>
       )}
-      <div className="fixed right-4 top-5 z-40 flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:right-6">
-        <span className="text-xs font-semibold text-gray-700 dark:text-white">Zen Mode</span>
-        <button
-          onClick={() => setZenMode((enabled) => !enabled)}
-          aria-label="Toggle Zen Mode"
-          className={`relative h-6 w-12 rounded-full transition-colors duration-300 ${zenMode ? 'bg-green-500' : 'bg-gray-200 dark:bg-slate-700'}`}
-        >
-          <div className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${zenMode ? 'translate-x-6' : 'translate-x-0'}`} />
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setZenMode((enabled) => !enabled)}
+        aria-label="Toggle Zen Mode"
+        aria-pressed={zenMode}
+        className={`fixed right-4 top-5 z-40 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold shadow-sm transition-all active:scale-95 sm:right-6 ${zenMode ? 'border-[#34C759] bg-[#eaf8ee] text-[#249653] dark:bg-[#34C759]/10' : 'border-slate-200 bg-white text-slate-500 hover:border-[#bcebc9] hover:text-[#249653] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}
+        title={zenMode ? 'Exit Zen Mode' : 'Enter Zen Mode'}
+      >
+        <Leaf className="h-4 w-4" />
+        Zen
+      </button>
       {/* Header */}
       <div className="text-center space-y-1">
         <h2 className="text-2xl font-bold text-green-800 dark:text-green-400">
@@ -365,7 +398,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
       </div>
 
       {/* Timer Mode Switcher (Digital Pomodoro vs Visual Time Timer) */}
-      <div className="flex items-center justify-center p-1 bg-gray-100 dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xs mb-8">
+      {!isActive && <div className="flex items-center justify-center p-1 bg-gray-100 dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-xs mb-8">
         <button
           onClick={() => handleTimerModeChange('digital')}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
@@ -388,10 +421,10 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
           <Clock className="w-4 h-4 text-rose-500" />
           <span>Visual Time Timer</span>
         </button>
-      </div>
+      </div>}
 
       {/* Completion Modal / Celebration Alert */}
-      {completedSessionType && (
+      {false && completedSessionType && (
         <div className="relative w-full p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 dark:from-emerald-950/40 dark:to-green-950/40 border border-emerald-300 dark:border-emerald-800 text-center space-y-3 animate-in zoom-in-95 duration-200">
           <button type="button" onClick={() => setCompletedSessionType(null)} aria-label="Tutup pesan" title="Tutup" className="absolute right-3 top-3 rounded-lg p-1 text-slate-400 transition hover:bg-white/70 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"><X className="h-4 w-4" /></button>
           <div className="inline-flex p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300">
@@ -452,8 +485,10 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
         </div>
       )}
 
+      {completedSessionType && <FocusCompletionMoment type={completedSessionType} session={lastReward} taskName={focusedTaskName} onContinue={() => { setCompletedSessionType(null); handleStartPreset(completedSessionType === 'warmup' ? 15 : customMinutes); }} onNewSession={() => { resetTimer(); setCompletedSessionType(null); }} onShare={() => setShowShareCard(true)} onClose={() => setCompletedSessionType(null)} />}
+
       {/* Timer View: Visual Time Timer OR Digital Pomodoro */}
-      {timerMode === 'visual' ? (
+      {!completedSessionType && (timerMode === 'visual' ? (
         <VisualTimeTimer
           minutes={minutes}
           seconds={seconds}
@@ -552,7 +587,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
 
           {/* Main Controls */}
           <div className="flex items-center gap-6">
-            <button
+            {!isActive && <button
               onClick={() => setShowSettings(!showSettings)}
               className={`p-3.5 rounded-2xl shadow-sm border transition-colors ${
                 showSettings
@@ -562,7 +597,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
               title="Pengaturan Durasi Kustom"
             >
               <Settings2 className="w-5 h-5" />
-            </button>
+            </button>}
 
             <button
               onClick={toggleTimer}
@@ -589,17 +624,17 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
               </button>
             )}
 
-            <button
+            {!isActive && <button
               onClick={resetTimer}
               className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-gray-100 dark:border-slate-800 text-gray-500 hover:text-red-500 transition-colors"
               title="Reset Timer"
             >
               <RotateCcw className="w-5 h-5" />
-            </button>
+            </button>}
           </div>
 
           {/* Custom Slider Settings Panel */}
-          {showSettings && (
+          {!isActive && showSettings && (
             <div className="w-full bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-2">
               <div className="flex items-center justify-between mb-2 text-xs font-bold text-gray-700 dark:text-gray-300">
                 <span className="flex items-center gap-1.5">
@@ -628,7 +663,7 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
           )}
 
           {/* Quick Presets (ADHD-Friendly: 2m Warmup highlighted!) */}
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          {!isActive && <div className="flex flex-wrap items-center justify-center gap-2">
             <button
               onClick={() => handleStartPreset(2)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
@@ -655,9 +690,9 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
                 {m}m
               </button>
             ))}
-          </div>
+          </div>}
         </>
-      )}
+      ))}
 
       {showRewardToast && lastReward && (
         <div className="fixed right-4 top-24 z-50 w-[min(360px,calc(100vw-2rem))] rounded-2xl bg-[#eaf8ee] border border-[#4dcd7d]/40 px-4 py-3 text-xs text-[#245b36] shadow-lg">

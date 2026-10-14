@@ -156,9 +156,9 @@ export const PLANT_TYPES = {
 
 export const GARDEN_STORAGE_KEY = 'lockin_garden_data_v2';
 export const COINS_STORAGE_KEY = 'lockin_coins_balance';
-export const GRID_SIZE = 75; // 3 pages × 5×5
+export const GRID_SIZE = 100; // 4 pages × 5×5 (Garden A, B, C, D)
 export const PAGE_SIZE = 25; // 5×5 per page
-export const TOTAL_PAGES = 3;
+export const TOTAL_PAGES = 4;
 
 // Helper to create a plant entry
 const createPlant = (type, daysAgo = 0) => ({
@@ -166,24 +166,29 @@ const createPlant = (type, daysAgo = 0) => ({
   plantedAt: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString()
 });
 
-// Initial grid with some dummy data spread across 3 pages
+// Initial grid with dummy data spread across 4 pages
 export const INITIAL_DUMMY_GARDEN = Array(GRID_SIZE).fill(null).map((_, index) => {
-  // Page 1 (slots 0-24)
+  // Page 1 (slots 0-24: Garden A)
   if (index === 0) return createPlant(PLANT_TYPES.PINE, 20);
   if (index === 4) return createPlant(PLANT_TYPES.CHERRY, 15);
   if (index === 12) return createPlant(PLANT_TYPES.APPLE, 5);
   if (index === 13) return createPlant(PLANT_TYPES.BONSAI, 10);
   if (index === 20) return createPlant(PLANT_TYPES.CACTUS, 8);
 
-  // Page 2 (slots 25-49)
+  // Page 2 (slots 25-49: Garden B)
   if (index === 31) return createPlant(PLANT_TYPES.ROSE, 2);
   if (index === 37) return createPlant(PLANT_TYPES.TULIP, 1);
   if (index === 43) return createPlant(PLANT_TYPES.SUNFLOWER, 3);
 
-  // Page 3 (slots 50-74)
+  // Page 3 (slots 50-74: Garden C)
   if (index === 56) return createPlant(PLANT_TYPES.PALM, 12);
   if (index === 62) return createPlant(PLANT_TYPES.MUSHROOM, 7);
   if (index === 68) return createPlant(PLANT_TYPES.PALMOIL, 6);
+
+  // Page 4 (slots 75-99: Garden D)
+  if (index === 76) return createPlant(PLANT_TYPES.LAVENDER, 4);
+  if (index === 82) return createPlant(PLANT_TYPES.CRYSTAL_SAKURA, 1);
+  if (index === 88) return createPlant(PLANT_TYPES.STRAWBERRY, 2);
 
   return null;
 });

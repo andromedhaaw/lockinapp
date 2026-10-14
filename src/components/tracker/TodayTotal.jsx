@@ -6,14 +6,14 @@ import { formatDurationHours, formatTime } from '../../utils/timeUtils';
  */
 export const TodayTotal = ({ hours, currentSessionTime = 0, isTracking = false }) => {
   return (
-    <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-2 mb-5 border border-green-200 dark:border-green-800 shadow-sm">
-      <div className="text-center text-green-700 dark:text-green-300">
-        <div className="text-[9px] font-bold uppercase mb-0.5 tracking-tight">Today's Total</div>
+    <div className="rounded-2xl border border-[#e9e7e1] bg-white p-3 mb-5 shadow-[0_2px_8px_rgba(34,51,39,.05)] dark:border-slate-800 dark:bg-slate-900">
+      <div className="text-center text-[#17211b] dark:text-slate-100">
+        <div className="text-[9px] font-bold uppercase mb-0.5 tracking-tight text-[#748078]">Today's Total</div>
         <div className="text-lg font-mono font-bold">
           {formatDurationHours(hours)}
         </div>
         {isTracking && (
-          <div className="mt-0.5 text-[9px] font-semibold text-green-600 dark:text-green-400">
+            <div className="mt-0.5 text-[9px] font-semibold text-[#249653] dark:text-[#4dcd7d]">
             + Current Session {formatTime(currentSessionTime)}
           </div>
         )}

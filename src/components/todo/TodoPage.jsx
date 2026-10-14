@@ -62,6 +62,35 @@ const INITIAL_TASKS = [
   { id: 9,  title: 'Follow up on legal review',                  due: addDays(todayDate(),-1), priority: 'High',   done: false, tag: 'legal',         startHour: 13, durationH: 1 },
 ];
 
+// Keep the demo experience useful even when an older local-storage snapshot
+// only contains overdue items. We only add a sample when that date bucket is
+// empty, so real user data is never duplicated or overwritten.
+const ensureDemoDistribution = (items) => {
+  const today = todayDate();
+  const key = (date) => {
+    const value = new Date(date);
+    value.setHours(0, 0, 0, 0);
+    return value.getTime();
+  };
+  const demos = [
+    { id: 'demo-today-focus', title: 'Review today\'s focus plan', due: today, priority: 'Medium', done: false, tag: 'work', startHour: 10, durationH: 1 },
+    { id: 'demo-tomorrow-plan', title: 'Plan tomorrow\'s top three', due: addDays(today, 1), priority: 'Low', done: false, tag: 'daily inboxes', startHour: 9, durationH: 0.5 },
+    { id: 'demo-upcoming-notes', title: 'Sketch next week\'s priorities', due: addDays(today, 5), priority: 'None', done: false, tag: 'product', startHour: 14, durationH: 1 },
+  ];
+  const result = [...items];
+  const buckets = [key(today), key(addDays(today, 1)), key(addDays(today, 2))];
+  demos.forEach((demo, index) => {
+    const hasTask = result.some((task) => {
+      const taskKey = key(task.due);
+      if (index === 0) return taskKey === buckets[0];
+      if (index === 1) return taskKey === buckets[1];
+      return taskKey > buckets[1];
+    });
+    if (!hasTask && !result.some((task) => task.id === demo.id)) result.push(demo);
+  });
+  return result;
+};
+
 let nextId = 100;
 
 function dueLabel(d) {
@@ -175,6 +204,7 @@ function TaskCard({ task, isOverdue, onToggle, zen, onStart }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         background: task.done ? '#fafafa' : '#ffffff', borderRadius: 16, padding: '14px 16px',
+        width: '100%', boxSizing: 'border-box', minHeight: 92,
         boxShadow: hovered && !task.done ? '0 4px 20px rgba(0,0,0,0.10)' : '0 1px 6px rgba(0,0,0,0.06)',
         border: isOverdue && !task.done ? '1.5px solid #fed7d7'
           : hovered && !task.done ? '1.5px solid #e0e7ff' : '1.5px solid transparent',
@@ -391,7 +421,7 @@ export default function TodoPage({ onStartFocus }) {
   const [tasks, setTasks] = useState(() => {
     try {
       const saved = localStorage.getItem('lockin_todos');
-      if (saved) return JSON.parse(saved).map(t => ({ ...t, due: new Date(t.due) }));
+      if (saved) return ensureDemoDistribution(JSON.parse(saved).map(t => ({ ...t, due: new Date(t.due) })));
     } catch (_) {}
     return INITIAL_TASKS;
   });
@@ -405,6 +435,8 @@ export default function TodoPage({ onStartFocus }) {
   const [inlineSession, setInlineSession] = useState(null);
   const [inlinePaused, setInlinePaused] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const openEditor = undefined;
+  const toggleMicrotask = undefined;
 
   // View modes: 'list' | 'split' | 'zen'
   const [viewMode, setViewMode] = useState('list');
@@ -419,7 +451,7 @@ export default function TodoPage({ onStartFocus }) {
     const syncCompletedFocus = () => {
       try {
         const saved = JSON.parse(localStorage.getItem('lockin_todos') || '[]');
-        setTasks(saved.map((task) => ({ ...task, due: new Date(task.due) })));
+        setTasks(ensureDemoDistribution(saved.map((task) => ({ ...task, due: new Date(task.due) }))));
       } catch {}
     };
     window.addEventListener('local-data-updated', syncCompletedFocus);
@@ -604,7 +636,7 @@ export default function TodoPage({ onStartFocus }) {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(160deg, #f8f9ff 0%, #f3f4f6 100%)',
+      background: '#f5f5f5',
       fontFamily: "'Inter','Segoe UI',sans-serif",
       paddingBottom: 100,
     }}>
@@ -623,7 +655,7 @@ export default function TodoPage({ onStartFocus }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 6, flexWrap: 'wrap' }}>
           <div>
             <h1 style={{ fontSize: 30, fontWeight: 800, color: '#111827', margin: 0, letterSpacing: '-0.5px' }}>
-              To Do List
+              Routine (To Do)
             </h1>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>
               {subtitles[activeFilter]}
@@ -675,7 +707,6 @@ export default function TodoPage({ onStartFocus }) {
             >
               {isCategory ? 'List view' : 'Categories'}
             </button>
-            {isCategory && <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap', justifyContent: 'flex-end' }}>{taskCategories.map((category) => <button key={category} onClick={() => setCategoryFilter(category)} style={{ border: 0, borderRadius: 99, padding: '6px 10px', whiteSpace: 'nowrap', background: categoryFilter === category ? '#eaf8ee' : '#f3f4f6', color: categoryFilter === category ? '#249653' : '#6b7280', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>{category}</button>)}</div>}
 
             {/* New task */}
             <button
@@ -723,6 +754,10 @@ export default function TodoPage({ onStartFocus }) {
             <FilterPill key={f} label={f} count={counts[f]} active={f === activeFilter} onClick={() => setActiveFilter(f)} />
           ))}
         </div>
+        {isCategory && <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginTop: -14, marginBottom: 20, padding: '8px 0' }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.06em', marginRight: 2 }}>Category</span>
+          {taskCategories.map((category) => <button key={category} onClick={() => setCategoryFilter(category)} style={{ border: `1px solid ${categoryFilter === category ? '#bcebc9' : '#e5e7eb'}`, borderRadius: 99, padding: '6px 11px', whiteSpace: 'nowrap', background: categoryFilter === category ? '#eaf8ee' : '#fff', color: categoryFilter === category ? '#249653' : '#64748b', fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all .18s ease' }}>{category}</button>)}
+        </div>}
 
         {/* ── Split layout ──────────────────────────────────────── */}
         <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
@@ -763,6 +798,14 @@ export default function TodoPage({ onStartFocus }) {
                     <option value="finance">finance</option>
                     <option value="daily inboxes">daily inboxes</option>
                   </select>
+                  {false && <div style={{ width: '100%', borderTop: '1px solid #f3f4f6', paddingTop: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: '#475569', marginBottom: 7 }}>Microtasks <span style={{ color: '#94a3b8', fontWeight: 500 }}>· make the first step smaller</span></div>
+                    {newMicrotasks.map((microtask, index) => <div key={`${microtask.title}-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#64748b', marginBottom: 5 }}><span style={{ color: '#4dcd7d' }}>✓</span>{microtask.title}</div>)}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input value={newMicrotask} onChange={e => setNewMicrotask(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMicrotaskToDraft(); } }} placeholder="Add a smaller step…" style={{ flex: 1, minWidth: 0, border: '1px solid #e2e8f0', borderRadius: 10, padding: '8px 10px', outline: 0, fontSize: 12, color: '#334155' }} />
+                      <button type="button" onClick={addMicrotaskToDraft} style={{ border: '1px solid #dbe5df', borderRadius: 10, padding: '0 11px', background: '#f0fbf3', color: '#249653', fontWeight: 800, cursor: 'pointer' }}>Add step</button>
+                    </div>
+                  </div>}
                   <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
                     <button type="button" onClick={() => setShowForm(false)} style={btnGhost}>Cancel</button>
                     <button type="submit" style={btnDark}>Add task</button>
@@ -772,7 +815,7 @@ export default function TodoPage({ onStartFocus }) {
             )}
 
             {/* Task Cards */}
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && doneInFilter === 0 ? (
               <div style={{
                 textAlign: 'center', padding: '64px 20px',
                 background: '#fff', borderRadius: 20, boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
@@ -785,9 +828,9 @@ export default function TodoPage({ onStartFocus }) {
                   {activeFilter === 'Overdue' ? 'Great job staying on top of things.' : 'Add a task to get started.'}
                 </div>
               </div>
-            ) : (
+            ) : filtered.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {isCategory ? categoryGroups.map((group) => <div key={group.priority} style={{ marginBottom: 18 }}><div style={{ display: 'flex', alignItems: 'center', gap: 7, margin: '0 0 8px', padding: '6px 10px', width: 'fit-content', borderRadius: 99, background: group.priority === 'High' ? '#fff0f0' : group.priority === 'Medium' ? '#fff7ed' : '#f1f5f9', color: group.priority === 'High' ? '#c2410c' : '#64748b', fontSize: 11, fontWeight: 800 }}>{group.priority} ({group.tasks.length}) <ChevronDown style={{ width: 13, height: 13 }} /></div>{group.tasks.map(task => { const d = new Date(task.due); d.setHours(0,0,0,0); return <div key={task.id} className="td-fadein"><TaskCard task={task} isOverdue={d < todayDate()} onToggle={() => toggleDone(task.id)} onStart={onStartFocus || startInlineSession} /></div>; })}</div>) : filtered.map(task => {
+                {isCategory ? categoryGroups.map((group) => <div key={group.priority} style={{ marginBottom: 18 }}><div style={{ display: 'flex', alignItems: 'center', gap: 7, margin: '0 0 8px', padding: '6px 10px', width: 'fit-content', borderRadius: 99, background: group.priority === 'High' ? '#fff0f0' : group.priority === 'Medium' ? '#fff7ed' : '#f1f5f9', color: group.priority === 'High' ? '#c2410c' : '#64748b', fontSize: 11, fontWeight: 800 }}>{group.priority} ({group.tasks.length}) <ChevronDown style={{ width: 13, height: 13 }} /></div>{group.tasks.map(task => { const d = new Date(task.due); d.setHours(0,0,0,0); return <div key={task.id} className="td-fadein"><TaskCard task={task} isOverdue={d < todayDate()} onToggle={() => toggleDone(task.id)} onStart={onStartFocus || startInlineSession} onEdit={openEditor} onMicroToggle={toggleMicrotask} /></div>; })}</div>) : filtered.map(task => {
                   const d = new Date(task.due); d.setHours(0,0,0,0);
                   return (
                     <div key={task.id} className="td-fadein">
@@ -796,20 +839,20 @@ export default function TodoPage({ onStartFocus }) {
                   );
                 })}
               </div>
-            )}
+            ) : null}
 
             {/* Completed section */}
             {(() => {
               const done = allInFilter.filter(t => t.done);
               if (!done.length) return null;
               return (
-                <div style={{ marginTop: 28 }}>
+                <div style={{ marginTop: filtered.length > 0 ? 28 : 0, paddingTop: filtered.length > 0 ? 0 : 4 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                     <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
                     <span style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.5px' }}>COMPLETED · {done.length}</span>
                     <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {done.map(task => (
                       <TaskCard key={task.id} task={task} isOverdue={false} onToggle={() => toggleDone(task.id)} onStart={startInlineSession} />
                     ))}
@@ -826,6 +869,21 @@ export default function TodoPage({ onStartFocus }) {
             </div>
           )}
         </div>
+        {false && editingTask && <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(15, 23, 42, .24)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onMouseDown={(event) => { if (event.target === event.currentTarget) setEditingTask(null); }}>
+          <form onSubmit={saveEditedTask} style={{ width: 'min(520px, 100%)', maxHeight: 'min(680px, 90vh)', overflowY: 'auto', background: '#fff', borderRadius: 20, padding: 22, boxShadow: '0 24px 70px rgba(15,23,42,.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}><div><div style={{ fontSize: 17, fontWeight: 800, color: '#17211b' }}>Edit task</div><div style={{ marginTop: 3, fontSize: 12, color: '#94a3b8' }}>Make the next step easier to see.</div></div><button type="button" onClick={() => setEditingTask(null)} style={{ border: 0, background: '#f8fafc', borderRadius: 99, width: 30, height: 30, color: '#64748b', cursor: 'pointer' }}>×</button></div>
+            <input autoFocus value={editingTask.title} onChange={e => setEditingTask(prev => ({ ...prev, title: e.target.value }))} placeholder="Task name" style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #e2e8f0', borderRadius: 11, padding: '11px 12px', fontSize: 14, outline: 0, color: '#17211b' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+              <label style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>Urgency<select value={editingTask.urgency} onChange={e => setEditingTask(prev => ({ ...prev, urgency: e.target.value }))} style={{ ...selStyle, width: '100%', marginTop: 5 }}><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></label>
+              <label style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>Deadline<input type="datetime-local" value={editingTask.deadline || ''} onChange={e => setEditingTask(prev => ({ ...prev, deadline: e.target.value }))} style={{ ...selStyle, width: '100%', marginTop: 5, boxSizing: 'border-box' }} /></label>
+            </div>
+            <div style={{ marginTop: 18, borderTop: '1px solid #f1f5f9', paddingTop: 14 }}><div style={{ fontSize: 12, fontWeight: 800, color: '#475569', marginBottom: 8 }}>Microtasks</div>
+              {(editingTask.microtasks || []).map((microtask, index) => <div key={`${editingTask.id}-edit-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}><input type="checkbox" checked={!!microtask.done} onChange={() => setEditingTask(prev => ({ ...prev, microtasks: prev.microtasks.map((item, itemIndex) => itemIndex === index ? { ...item, done: !item.done } : item) }))} style={{ accentColor: '#4dcd7d' }} /><input value={microtask.title} onChange={e => setEditingTask(prev => ({ ...prev, microtasks: prev.microtasks.map((item, itemIndex) => itemIndex === index ? { ...item, title: e.target.value } : item) }))} style={{ flex: 1, minWidth: 0, border: '1px solid #e2e8f0', borderRadius: 9, padding: '7px 9px', fontSize: 12, outline: 0 }} /></div>)}
+              <div style={{ display: 'flex', gap: 8 }}><input value={editingTask.draftMicrotask || ''} onChange={e => setEditingTask(prev => ({ ...prev, draftMicrotask: e.target.value }))} placeholder="Add a microtask" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const title = editingTask.draftMicrotask?.trim(); if (title) setEditingTask(prev => ({ ...prev, microtasks: [...(prev.microtasks || []), { title, done: false }], draftMicrotask: '' })); } }} style={{ flex: 1, minWidth: 0, border: '1px solid #e2e8f0', borderRadius: 9, padding: '8px 9px', fontSize: 12, outline: 0 }} /><button type="button" onClick={() => { const title = editingTask.draftMicrotask?.trim(); if (title) setEditingTask(prev => ({ ...prev, microtasks: [...(prev.microtasks || []), { title, done: false }], draftMicrotask: '' })); }} style={{ border: '1px solid #dbe5df', borderRadius: 9, padding: '0 11px', background: '#f0fbf3', color: '#249653', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>Add</button></div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 22 }}><button type="button" onClick={() => setEditingTask(null)} style={btnGhost}>Cancel</button><button type="submit" style={btnDark}>Save changes</button></div>
+          </form>
+        </div>}
       </div>
     </div>
   );

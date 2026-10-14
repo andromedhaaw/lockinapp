@@ -1,671 +1,198 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  Clock, Plus, Trash2, CalendarDays, Flag, AlertTriangle,
-  ChevronDown, X, Timer, Milestone, Target, Check,
-} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, Check, Flag, Milestone, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-const STORAGE_KEY_DEADLINES = 'lockin_deadlines';
-const STORAGE_KEY_DDAYS     = 'lockin_ddays';
+const DEADLINE_KEY = 'lockin_deadlines';
+const DDAY_KEY = 'lockin_ddays';
 
-// Palette options for D-Day cards (Merah, Kuning, Hijau, Pink, Oren, Biru)
 const DDAY_COLORS = {
-  green: {
-    id: 'green',
-    label: 'Hijau',
-    gradient: '#4dcd7d',
-    border: '#bbf7d0',
-    hoverBorder: '#86efac',
-    textColor: '#ffffff',
-  },
-  blue: {
-    id: 'blue',
-    label: 'Biru',
-    gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-    border: '#bfdbfe',
-    hoverBorder: '#93c5fd',
-    textColor: '#ffffff',
-  },
-  red: {
-    id: 'red',
-    label: 'Merah',
-    gradient: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
-    border: '#fecaca',
-    hoverBorder: '#fca5a5',
-    textColor: '#ffffff',
-  },
-  yellow: {
-    id: 'yellow',
-    label: 'Kuning',
-    gradient: 'linear-gradient(135deg, #eab308 0%, #a16207 100%)',
-    border: '#fef08a',
-    hoverBorder: '#fde047',
-    textColor: '#ffffff',
-  },
-  pink: {
-    id: 'pink',
-    label: 'Pink',
-    gradient: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
-    border: '#fbcfe8',
-    hoverBorder: '#f472b6',
-    textColor: '#ffffff',
-  },
-  orange: {
-    id: 'orange',
-    label: 'Oren',
-    gradient: 'linear-gradient(135deg, #f97316 0%, #c2410c 100%)',
-    border: '#fed7aa',
-    hoverBorder: '#fdba74',
-    textColor: '#ffffff',
-  },
+  green: { label: 'Green', accent: '#4dcd7d', soft: '#f1fbf4' },
+  blue: { label: 'Blue', accent: '#4f8ff7', soft: '#f2f7ff' },
+  red: { label: 'Red', accent: '#ef5350', soft: '#fff4f3' },
+  yellow: { label: 'Yellow', accent: '#d5a72f', soft: '#fffaf0' },
+  pink: { label: 'Pink', accent: '#ec6aa7', soft: '#fff4f9' },
+  orange: { label: 'Orange', accent: '#f08a45', soft: '#fff7f1' },
 };
 
-const MS = {
-  minute: 60_000,
-  hour:   3_600_000,
-  day:    86_400_000,
+const readJson = (key, fallback = []) => {
+  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch { return fallback; }
 };
 
-function msUntil(dateStr) {
-  return new Date(dateStr).getTime() - Date.now();
-}
-
-function formatCountdown(ms) {
-  if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, overdue: true };
-  const totalSec = Math.floor(ms / 1000);
-  const days     = Math.floor(totalSec / 86400);
-  const hours    = Math.floor((totalSec % 86400) / 3600);
-  const minutes  = Math.floor((totalSec % 3600) / 60);
-  const seconds  = totalSec % 60;
-  return { days, hours, minutes, seconds, overdue: false };
-}
-
-function urgencyLevel(ms) {
-  if (ms <= 0)          return { label: 'Overdue',   color: '#ef4444', bg: '#fef2f2', border: '#fecaca' };
-  if (ms < MS.day)      return { label: 'Due today', color: '#f97316', bg: '#fff7ed', border: '#fed7aa' };
-  if (ms < MS.day * 3)  return { label: 'Very soon', color: '#eab308', bg: '#fefce8', border: '#fef08a' };
-  if (ms < MS.day * 7)  return { label: 'This week', color: '#0d9488', bg: '#f0fdfa', border: '#99f6e4' };
-  return { label: 'Upcoming',  color: '#4dcd7d', bg: '#f0fdf4', border: '#bbf7d0' };
-}
-
-const PRIORITY_CONFIG = {
-  High:   { color: '#ef4444', bg: '#fef2f2', label: '🔴 High' },
-  Medium: { color: '#f97316', bg: '#fff7ed', label: '🟠 Medium' },
-  Low:    { color: '#4dcd7d', bg: '#f0fdf4', label: '🟢 Low' },
+const normalizeProjectDate = (value) => {
+  if (!value || value === 'Set deadline') return null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value;
+  const parsed = new Date(`${value}, ${new Date().getFullYear()}`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 };
 
-// ─── Countdown Clock component ─────────────────────────────────────────────
-function CountdownClock({ targetDate }) {
-  const [cd, setCd] = useState(() => formatCountdown(msUntil(targetDate)));
+const getRemaining = (value, now = Date.now()) => new Date(value).getTime() - now;
+const formatDate = (value, withTime = true) => new Intl.DateTimeFormat('en', withTime
+  ? { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }
+  : { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(value));
+const formatRemaining = (ms) => {
+  const absolute = Math.abs(ms);
+  const days = Math.floor(absolute / 86_400_000);
+  const hours = Math.floor((absolute % 86_400_000) / 3_600_000);
+  if (ms < 0) return days ? `${days}d overdue` : `${Math.max(1, hours)}h overdue`;
+  if (days) return `${days}d ${hours}h remaining`;
+  const minutes = Math.max(1, Math.floor(absolute / 60_000));
+  return hours ? `${hours}h remaining` : `${minutes}m remaining`;
+};
+
+const urgency = (ms) => {
+  if (ms < 0) return { label: 'Overdue', color: '#ef5350', surface: '#fff5f4' };
+  if (ms < 86_400_000) return { label: 'Today', color: '#ef5350', surface: '#fff8f7' };
+  if (ms < 7 * 86_400_000) return { label: 'This week', color: '#b68a3a', surface: '#fdfaf3' };
+  return { label: 'Upcoming', color: '#748078', surface: '#fafaf8' };
+};
+
+const priorityTone = { High: '#ef5350', Medium: '#b68a3a', Low: '#4dcd7d' };
+
+const DeadlinePage = ({ tasks = [] }) => {
+  const [mode, setMode] = useState(() => localStorage.getItem('lockin_deadline_mode') || 'deadline');
+  const [deadlines, setDeadlines] = useState(() => readJson(DEADLINE_KEY));
+  const [ddays, setDdays] = useState(() => readJson(DDAY_KEY));
+  const [showForm, setShowForm] = useState(false);
+  const [undoState, setUndoState] = useState(null);
+  const [now, setNow] = useState(Date.now());
+  const [deadlineFilter, setDeadlineFilter] = useState('all');
 
   useEffect(() => {
-    const id = setInterval(() => setCd(formatCountdown(msUntil(targetDate))), 1000);
-    return () => clearInterval(id);
-  }, [targetDate]);
-
-  if (cd.overdue) {
-    return (
-      <span style={{ fontSize: 12, fontWeight: 700, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 4 }}>
-        <AlertTriangle style={{ width: 13, height: 13 }} /> Overdue
-      </span>
-    );
-  }
-
-  const parts = [];
-  if (cd.days > 0)    parts.push(<span key="d"><b>{cd.days}</b><small>d</small></span>);
-  if (cd.hours > 0)   parts.push(<span key="h"><b>{cd.hours}</b><small>h</small></span>);
-  if (cd.minutes > 0) parts.push(<span key="m"><b>{cd.minutes}</b><small>m</small></span>);
-  if (cd.days === 0)  parts.push(<span key="s"><b>{cd.seconds}</b><small>s</small></span>);
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, fontFamily: 'monospace', fontSize: 13, color: '#374151' }}>
-      {parts}
-    </div>
-  );
-}
-
-// ─── D-Day counter component ───────────────────────────────────────────────
-function DDayClock({ targetDate }) {
-  const ms  = msUntil(targetDate);
-  const total = Math.abs(Math.ceil(ms / MS.day));
-  const over  = ms < 0;
-
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{
-        fontSize: 44, fontWeight: 900, letterSpacing: -1.5,
-        color: '#ffffff',
-        lineHeight: 1,
-        fontFamily: "'Inter','Segoe UI',sans-serif",
-      }}>
-        {over ? '+' : ''}{total}
-      </div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.85)', marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-        {over ? 'hari lewat' : 'hari lagi'}
-      </div>
-    </div>
-  );
-}
-
-// ─── Deadline Card ─────────────────────────────────────────────────────────
-function DeadlineCard({ item, onDelete }) {
-  const [hovered, setHovered] = useState(false);
-  const ms  = msUntil(item.deadline);
-  const urg = urgencyLevel(ms);
-  const pri = PRIORITY_CONFIG[item.priority] || PRIORITY_CONFIG.Medium;
-
-  const deadlineFmt = new Date(item.deadline).toLocaleDateString('id-ID', {
-    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-  });
-
-  return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: '#fff', borderRadius: 16, padding: '16px 18px',
-        border: `1.5px solid ${hovered ? urg.border : '#e5e7eb'}`,
-        boxShadow: hovered ? `0 6px 24px rgba(0,0,0,0.09)` : '0 1px 6px rgba(0,0,0,0.05)',
-        transition: 'all .18s ease',
-        transform: hovered ? 'translateY(-2px)' : 'none',
-        display: 'flex', flexDirection: 'column', gap: 12,
-      }}
-    >
-      {/* Top row */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-            <span style={{
-              fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99,
-              background: urg.bg, color: urg.color, border: `1px solid ${urg.border}`,
-            }}>
-              {urg.label}
-            </span>
-            <span style={{
-              fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
-              background: pri.bg, color: pri.color,
-            }}>
-              {pri.label}
-            </span>
-          </div>
-          <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827', lineHeight: 1.3 }}>
-            {item.title}
-          </p>
-          {item.notes && (
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280', lineHeight: 1.4 }}>
-              {item.notes}
-            </p>
-          )}
-        </div>
-        <button
-          onClick={() => onDelete(item.id)}
-          style={{
-            border: 'none', background: 'transparent', cursor: 'pointer', padding: 4,
-            color: '#d1d5db', borderRadius: 8,
-            transition: 'all .15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = '#fef2f2'; }}
-          onMouseLeave={e => { e.currentTarget.style.color = '#d1d5db'; e.currentTarget.style.background = 'transparent'; }}
-        >
-          <Trash2 style={{ width: 15, height: 15 }} />
-        </button>
-      </div>
-
-      {/* Countdown + Date */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 14px', borderRadius: 12,
-        background: urg.bg, border: `1px solid ${urg.border}`,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6b7280', fontWeight: 500 }}>
-          <CalendarDays style={{ width: 13, height: 13 }} />
-          {deadlineFmt}
-        </div>
-        <CountdownClock targetDate={item.deadline} />
-      </div>
-    </div>
-  );
-}
-
-// ─── D-Day Event Card ───────────────────────────────────────────────────────
-function DDayCard({ item, onDelete }) {
-  const [hovered, setHovered] = useState(false);
-  const ms   = msUntil(item.targetDate);
-  const over = ms < 0;
-
-  const colorConfig = DDAY_COLORS[item.color] || DDAY_COLORS.green;
-
-  const dateFmt = new Date(item.targetDate).toLocaleDateString('id-ID', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  });
-
-  return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: '#fff', borderRadius: 20, overflow: 'hidden',
-        border: `1.5px solid ${hovered ? colorConfig.hoverBorder : '#e5e7eb'}`,
-        boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.08)' : '0 1px 6px rgba(0,0,0,0.04)',
-        transition: 'all .18s ease',
-        transform: hovered ? 'translateY(-2px)' : 'none',
-      }}
-    >
-      {/* Gradient header using selected card color */}
-      <div style={{
-        background: colorConfig.gradient,
-        padding: '20px 22px 18px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <div>
-          <span style={{
-            fontSize: 10, fontWeight: 800, color: '#fff', background: 'rgba(0,0,0,0.18)',
-            padding: '2px 8px', borderRadius: 99, letterSpacing: '0.5px', textTransform: 'uppercase',
-            display: 'inline-block', marginBottom: 5,
-          }}>
-            {over ? 'D + Day (Lewat)' : 'D - Day'}
-          </span>
-          <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#fff', lineHeight: 1.25 }}>
-            {item.title}
-          </p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <DDayClock targetDate={item.targetDate} />
-          <button
-            onClick={() => onDelete(item.id)}
-            style={{
-              border: 'none', background: 'rgba(255,255,255,0.22)', cursor: 'pointer', padding: 6,
-              borderRadius: 8, color: '#fff', display: 'flex', alignItems: 'center',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.38)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.22)'}
-            title="Hapus event"
-          >
-            <X style={{ width: 14, height: 14 }} />
-          </button>
-        </div>
-      </div>
-
-      {/* Date footer */}
-      <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6b7280', fontWeight: 500 }}>
-        <CalendarDays style={{ width: 13, height: 13, color: '#4dcd7d' }} />
-        {dateFmt}
-        {item.notes && (
-          <span style={{ marginLeft: 8, color: '#9ca3af' }}>· {item.notes}</span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Add Deadline Form ──────────────────────────────────────────────────────
-function AddDeadlineForm({ onAdd, onClose }) {
-  const [title,    setTitle]    = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [priority, setPriority] = useState('Medium');
-  const [notes,    setNotes]    = useState('');
-  const inputRef = useRef(null);
-
-  useEffect(() => { inputRef.current?.focus(); }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!title.trim() || !deadline) return;
-    onAdd({ id: Date.now(), title: title.trim(), deadline, priority, notes: notes.trim(), createdAt: new Date().toISOString() });
-    onClose();
-  };
-
-  const fieldStyle = {
-    width: '100%', padding: '10px 12px', borderRadius: 10,
-    border: '1.5px solid #e5e7eb', fontSize: 13, fontFamily: 'inherit',
-    outline: 'none', transition: 'border .15s',
-    background: '#f9fafb', color: '#111827', boxSizing: 'border-box',
-  };
-
-  return (
-    <form onSubmit={handleSubmit} style={{
-      background: '#fff', borderRadius: 18, padding: '20px 22px',
-      border: '1.5px solid #bbf7d0', boxShadow: '0 4px 24px rgba(34,197,94,0.12)',
-      marginBottom: 20,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>
-          Add Deadline Task
-        </p>
-        <button type="button" onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#9ca3af', fontSize: 16, padding: 0 }}>
-          <X style={{ width: 16, height: 16 }} />
-        </button>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <input ref={inputRef} type="text" placeholder="Task name..." value={title} onChange={e => setTitle(e.target.value)} style={fieldStyle}
-          onFocus={e => e.target.style.borderColor = '#16a34a'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} required />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 4, display: 'block' }}>Deadline</label>
-            <input type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} style={fieldStyle}
-              onFocus={e => e.target.style.borderColor = '#16a34a'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} required />
-          </div>
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 4, display: 'block' }}>Priority</label>
-            <select value={priority} onChange={e => setPriority(e.target.value)} style={fieldStyle}>
-              <option>High</option>
-              <option>Medium</option>
-              <option>Low</option>
-            </select>
-          </div>
-        </div>
-        <input type="text" placeholder="Notes (optional)..." value={notes} onChange={e => setNotes(e.target.value)} style={fieldStyle}
-          onFocus={e => e.target.style.borderColor = '#16a34a'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 4 }}>
-          <button type="button" onClick={onClose} style={{ padding: '9px 18px', borderRadius: 10, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#6b7280' }}>
-            Cancel
-          </button>
-          <button type="submit" style={{ padding: '9px 22px', borderRadius: 10, border: 'none', background: '#4dcd7d', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 10px rgba(77,205,125,0.3)' }}>
-            Add Task
-          </button>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-// ─── Add D-Day Form ──────────────────────────────────────────────────────────
-function AddDDayForm({ onAdd, onClose }) {
-  const [title,  setTitle]  = useState('');
-  const [date,   setDate]   = useState('');
-  const [color,  setColor]  = useState('green'); // default color
-  const [notes,  setNotes]  = useState('');
-  const inputRef = useRef(null);
-
-  useEffect(() => { inputRef.current?.focus(); }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!title.trim() || !date) return;
-    onAdd({
-      id: Date.now(),
-      title: title.trim(),
-      targetDate: date,
-      color,
-      notes: notes.trim(),
-      createdAt: new Date().toISOString(),
-    });
-    onClose();
-  };
-
-  const fieldStyle = {
-    width: '100%', padding: '10px 12px', borderRadius: 10,
-    border: '1.5px solid #e5e7eb', fontSize: 13, fontFamily: 'inherit',
-    outline: 'none', transition: 'border .15s',
-    background: '#f9fafb', color: '#111827', boxSizing: 'border-box',
-  };
-
-  return (
-    <form onSubmit={handleSubmit} style={{
-      background: '#fff', borderRadius: 18, padding: '20px 22px',
-      border: '1.5px solid #bbf7d0', boxShadow: '0 4px 24px rgba(34,197,94,0.12)',
-      marginBottom: 20,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>Add D-Day Event</p>
-        <button type="button" onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#9ca3af', padding: 0 }}>
-          <X style={{ width: 16, height: 16 }} />
-        </button>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <input ref={inputRef} type="text" placeholder="Event name (e.g. Tes JLPT N1)..." value={title} onChange={e => setTitle(e.target.value)} style={fieldStyle}
-          onFocus={e => e.target.style.borderColor = '#16a34a'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} required />
-        <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 4, display: 'block' }}>Tanggal Event</label>
-          <input type="date" value={date} onChange={e => setDate(e.target.value)} style={fieldStyle}
-            onFocus={e => e.target.style.borderColor = '#16a34a'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} required />
-        </div>
-
-        {/* Color Picker: Merah, Kuning, Hijau, Pink, Oren, Biru */}
-        <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', marginBottom: 6, display: 'block' }}>
-            Pilih Warna Card
-          </label>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            {Object.entries(DDAY_COLORS).map(([cKey, cCfg]) => {
-              const isSelected = color === cKey;
-              return (
-                <button
-                  key={cKey}
-                  type="button"
-                  onClick={() => setColor(cKey)}
-                  title={cCfg.label}
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    background: cCfg.gradient,
-                    border: isSelected ? '2.5px solid #111827' : '2px solid transparent',
-                    boxShadow: isSelected ? '0 0 0 2px #fff, 0 4px 10px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.12)',
-                    cursor: 'pointer',
-                    transform: isSelected ? 'scale(1.15)' : 'scale(1)',
-                    transition: 'all 0.15s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                  }}
-                >
-                  {isSelected && <Check style={{ width: 14, height: 14, strokeWidth: 3 }} />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <input type="text" placeholder="Catatan (opsional)..." value={notes} onChange={e => setNotes(e.target.value)} style={fieldStyle}
-          onFocus={e => e.target.style.borderColor = '#16a34a'} onBlur={e => e.target.style.borderColor = '#e5e7eb'} />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 4 }}>
-          <button type="button" onClick={onClose} style={{ padding: '9px 18px', borderRadius: 10, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#6b7280' }}>
-            Cancel
-          </button>
-          <button type="submit" style={{ padding: '9px 22px', borderRadius: 10, border: 'none', background: '#4dcd7d', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 10px rgba(77,205,125,0.3)' }}>
-            Save Event
-          </button>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-// ─── Main Page ──────────────────────────────────────────────────────────────
-export default function DeadlinePage({ tasks = [] }) {
-  const [mode, setMode] = useState('deadline'); // 'deadline' | 'dday'
-
-  // Deadline tasks
-  const [deadlines, setDeadlines] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_DEADLINES);
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
-
-  // D-Day events
-  const [ddays, setDdays] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_DDAYS);
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
-
-  const [showDeadlineForm, setShowDeadlineForm] = useState(false);
-  const [showDDayForm,     setShowDDayForm]     = useState(false);
-
-  useEffect(() => {
-    const refreshLinkedDeadlines = () => {
-      try {
-        setDeadlines(JSON.parse(localStorage.getItem(STORAGE_KEY_DEADLINES) || '[]'));
-      } catch {}
-    };
-    window.addEventListener('lockin:deadlines-updated', refreshLinkedDeadlines);
-    window.addEventListener('storage', refreshLinkedDeadlines);
+    const interval = window.setInterval(() => setNow(Date.now()), 60_000);
+    const refresh = () => setDeadlines(readJson(DEADLINE_KEY));
+    window.addEventListener('lockin:deadlines-updated', refresh);
+    window.addEventListener('storage', refresh);
     return () => {
-      window.removeEventListener('lockin:deadlines-updated', refreshLinkedDeadlines);
-      window.removeEventListener('storage', refreshLinkedDeadlines);
+      window.clearInterval(interval);
+      window.removeEventListener('lockin:deadlines-updated', refresh);
+      window.removeEventListener('storage', refresh);
     };
   }, []);
 
-  // Persist
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY_DEADLINES, JSON.stringify(deadlines)); } catch {}
-  }, [deadlines]);
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY_DDAYS, JSON.stringify(ddays)); } catch {}
-  }, [ddays]);
+  useEffect(() => { localStorage.setItem(DEADLINE_KEY, JSON.stringify(deadlines)); }, [deadlines]);
+  useEffect(() => { localStorage.setItem(DDAY_KEY, JSON.stringify(ddays)); }, [ddays]);
+  useEffect(() => { localStorage.setItem('lockin_deadline_mode', mode); setShowForm(false); setDeadlineFilter('all'); }, [mode]);
+  useEffect(() => { if (!undoState) return undefined; const timer = window.setTimeout(() => setUndoState(null), 5000); return () => window.clearTimeout(timer); }, [undoState]);
 
-  const addDeadline = (item) => setDeadlines(prev => [...prev, item]);
-  const delDeadline = (id)   => setDeadlines(prev => prev.filter(d => d.id !== id));
-  const addDDay     = (item) => setDdays(prev => [...prev, item]);
-  const delDDay     = (id)   => setDdays(prev => prev.filter(d => d.id !== id));
+  const entries = useMemo(() => {
+    const linkedTasks = tasks.filter((task) => task.deadline).map((task) => ({ id: `task-${task.id || task._id}`, title: task.title || task.name, deadline: task.deadline, priority: task.priority || 'Medium', source: 'Task', linked: true }));
+    const projects = readJson('lockin_projects').map((project) => {
+      const deadline = normalizeProjectDate(project.deadline);
+      return deadline ? { id: `project-${project.id}`, title: project.name, deadline, priority: project.priority || 'Medium', source: 'Project', linked: true } : null;
+    }).filter(Boolean);
+    const merged = [...deadlines.map((item) => ({ ...item, source: item.source || 'Task' })), ...linkedTasks, ...projects];
+    const unique = new Map();
+    merged.forEach((item) => {
+      const key = item.sourceTaskId ? `task-${item.sourceTaskId}` : item.id;
+      if (!unique.has(key) && item.deadline && !Number.isNaN(new Date(item.deadline).getTime())) unique.set(key, item);
+    });
+    return [...unique.values()].sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+  }, [deadlines, tasks]);
 
-  // Sort deadlines soonest first
-  const sortedDeadlines = [...deadlines].sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
-  const sortedDDays     = [...ddays].sort((a, b) => new Date(a.targetDate) - new Date(b.targetDate));
+  const groups = useMemo(() => {
+    const result = { Overdue: [], Today: [], 'This week': [], Upcoming: [] };
+    entries.forEach((entry) => result[urgency(getRemaining(entry.deadline, now)).label].push(entry));
+    return result;
+  }, [entries, now]);
+  const filterOptions = useMemo(() => ([
+    { key: 'overdue', label: 'Overdue', hint: 'Needs attention', count: groups.Overdue.length, tone: '#ef5350' },
+    { key: 'due', label: 'Due soon', hint: 'Next 7 days', count: groups.Today.length + groups['This week'].length, tone: '#ef5350' },
+    { key: 'upcoming', label: 'Upcoming', hint: 'Later on', count: groups.Upcoming.length, tone: '#748078' },
+    { key: 'all', label: 'All', hint: 'Everything', count: entries.length, tone: '#17211b' },
+  ]), [entries.length, groups]);
+  const visibleEntries = useMemo(() => {
+    if (deadlineFilter === 'all') return entries;
+    if (deadlineFilter === 'due') return [...groups.Today, ...groups['This week']];
+    return groups[deadlineFilter === 'upcoming' ? 'Upcoming' : 'Overdue'];
+  }, [deadlineFilter, entries, groups]);
+  const visibleGroups = useMemo(() => {
+    if (deadlineFilter === 'all') return groups;
+    const label = deadlineFilter === 'due' ? 'Due soon' : deadlineFilter === 'upcoming' ? 'Upcoming' : 'Overdue';
+    return { [label]: visibleEntries };
+  }, [deadlineFilter, groups, visibleEntries]);
+  const sortedDdays = useMemo(() => [...ddays].sort((a, b) => new Date(a.targetDate) - new Date(b.targetDate)), [ddays]);
 
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'transparent',
-      fontFamily: "'Inter','Segoe UI',sans-serif",
-      paddingBottom: 100,
-    }}>
-      <style>{`
-        @keyframes dlFadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-        .dl-card { animation: dlFadeUp .22s ease; }
-      `}</style>
+  const removeDeadline = (entry) => {
+    const index = deadlines.findIndex((item) => item.id === entry.id);
+    if (index < 0) return;
+    setUndoState({ type: 'deadline', item: deadlines[index], index });
+    setDeadlines((current) => current.filter((item) => item.id !== entry.id));
+  };
+  const removeDDay = (entry) => {
+    const index = ddays.findIndex((item) => item.id === entry.id);
+    setUndoState({ type: 'dday', item: entry, index });
+    setDdays((current) => current.filter((item) => item.id !== entry.id));
+  };
+  const undo = () => {
+    if (!undoState) return;
+    const restore = (current) => { const next = [...current]; next.splice(Math.max(0, undoState.index), 0, undoState.item); return next; };
+    if (undoState.type === 'dday') setDdays(restore); else setDeadlines(restore);
+    setUndoState(null);
+  };
 
-      <div style={{ maxWidth: 660, margin: '0 auto', padding: '32px 20px 0' }}>
+  const modeCopy = mode === 'deadline'
+    ? { eyebrow: 'Time-sensitive work', title: 'Deadlines', description: 'Task and project dates, ordered by urgency.', action: 'Add deadline' }
+    : { eyebrow: 'Important moments', title: 'D-Day', description: 'Keep meaningful events visible without turning them into tasks.', action: 'Add event' };
 
-        {/* ── Header ─────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: '#111827', letterSpacing: '-0.5px' }}>
-              {mode === 'deadline' ? 'Deadline' : 'D-Day'}
-            </h1>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>
-              {mode === 'deadline'
-                ? 'Pantau deadline tugas & berapa sisa waktunya'
-                : 'Countdown menuju event penting kamu'}
-            </p>
-          </div>
+  return <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6">
+    <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[#e9e7e1] pb-5">
+      <div><p className="text-[10px] font-black uppercase tracking-[.16em] text-[#249653]">{modeCopy.eyebrow}</p><h1 className="mt-1 text-3xl font-extrabold tracking-[-.035em] text-[#17211b]">{modeCopy.title}</h1><p className="mt-1 text-sm text-[#748078]">{modeCopy.description}</p></div>
+      <button type="button" onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#17211b] px-4 py-2.5 text-xs font-bold text-white transition-transform duration-200 active:scale-95"><Plus className="h-4 w-4" />{modeCopy.action}</button>
+    </header>
 
-          {/* + Add button */}
-          <button
-            onClick={() => mode === 'deadline' ? setShowDeadlineForm(v => !v) : setShowDDayForm(v => !v)}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(34,197,94,0.35)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(34,197,94,0.25)'; }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              padding: '10px 20px', borderRadius: 99,
-              background: '#4dcd7d',
-              border: 'none', color: '#fff', fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', transition: 'all .15s',
-              boxShadow: '0 2px 10px rgba(34,197,94,0.25)',
-            }}
-          >
-            <Plus style={{ width: 15, height: 15, strokeWidth: 2.5 }} />
-            {mode === 'deadline' ? 'Add deadline' : 'Add event'}
-          </button>
-        </div>
+    <nav className="mt-5 inline-flex rounded-xl bg-[#eceeea] p-1" aria-label="Deadline views">
+      {[['deadline', Flag, 'Deadline'], ['dday', Milestone, 'D-Day']].map(([value, Icon, label]) => <button key={value} type="button" onClick={() => setMode(value)} className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all duration-200 ${mode === value ? 'bg-white text-[#17211b] shadow-[0_1px_3px_rgba(23,33,27,.08)]' : 'text-[#748078] hover:text-[#17211b]'}`}><Icon className="h-3.5 w-3.5" />{label}</button>)}
+    </nav>
 
-        {/* ── Toggle buttons ──────────────────────────────────────── */}
-        <div style={{
-          display: 'inline-flex', background: '#fff', borderRadius: 12,
-          border: '1.5px solid #e5e7eb', padding: 4, gap: 4, marginBottom: 24,
-          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-        }}>
-          {[
-            { key: 'deadline', icon: Flag,      label: 'Deadline' },
-            { key: 'dday',     icon: Milestone, label: 'D-Day'    },
-          ].map(({ key, icon: Icon, label }) => {
-            const active = mode === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setMode(key)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 7,
-                  padding: '8px 18px', borderRadius: 9, border: 'none',
-                  background: active ? '#4dcd7d' : 'transparent',
-                  color: active ? '#fff' : '#6b7280',
-                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                  transition: 'all .18s ease',
-                  boxShadow: active ? '0 2px 10px rgba(34,197,94,0.25)' : 'none',
-                }}
-              >
-                <Icon style={{ width: 14, height: 14 }} />
-                {label}
-              </button>
-            );
-          })}
-        </div>
+    {mode === 'deadline' && <>
+      <section className="mt-5 grid gap-2 sm:grid-cols-4" aria-label="Deadline views">
+        {filterOptions.map((option) => <FilterCard key={option.key} option={option} active={deadlineFilter === option.key} onClick={() => setDeadlineFilter(option.key)} />)}
+      </section>
+      {showForm && <DeadlineForm onClose={() => setShowForm(false)} onAdd={(entry) => { setDeadlines((current) => [{ id: Date.now(), ...entry, createdAt: new Date().toISOString() }, ...current]); setShowForm(false); }} />}
+      <div className="mt-6 space-y-7">{Object.entries(visibleGroups).map(([label, items]) => items.length > 0 && <section key={label}><SectionLabel label={label} count={items.length} /><div className="overflow-hidden rounded-xl border border-[#e9e7e1] bg-white">{items.map((entry, index) => <DeadlineRow key={entry.id} entry={entry} now={now} onRemove={removeDeadline} last={index === items.length - 1} />)}</div></section>)}{visibleEntries.length === 0 && <EmptyState icon={deadlineFilter === 'overdue' ? Check : Flag} title={deadlineFilter === 'overdue' ? 'You are all caught up.' : 'Nothing here yet.'} description={deadlineFilter === 'all' ? 'Deadlines added to Tasks and Projects will appear here.' : 'Try another view or add a new deadline when something needs a date.'} />}</div>
+    </>}
 
-        {/* ── Forms ───────────────────────────────────────────────── */}
-        {showDeadlineForm && mode === 'deadline' && (
-          <div className="dl-card">
-            <AddDeadlineForm onAdd={addDeadline} onClose={() => setShowDeadlineForm(false)} />
-          </div>
-        )}
-        {showDDayForm && mode === 'dday' && (
-          <div className="dl-card">
-            <AddDDayForm onAdd={addDDay} onClose={() => setShowDDayForm(false)} />
-          </div>
-        )}
+    {mode === 'dday' && <>
+      {showForm && <DDayForm onClose={() => setShowForm(false)} onAdd={(entry) => { setDdays((current) => [{ id: Date.now(), ...entry, createdAt: new Date().toISOString() }, ...current]); setShowForm(false); }} />}
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">{sortedDdays.map((entry) => <DDayCard key={entry.id} entry={entry} now={now} onRemove={removeDDay} />)}</div>
+      {sortedDdays.length === 0 && <div className="mt-6"><EmptyState icon={Milestone} title="No important dates yet." description="Add an exam, launch, trip, anniversary, or another moment worth counting toward." /></div>}
+    </>}
 
-        {/* ── Deadline List ────────────────────────────────────────── */}
-        {mode === 'deadline' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {sortedDeadlines.length === 0 ? (
-              <EmptyState
-                icon={<Flag style={{ width: 32, height: 32, color: '#d1d5db' }} />}
-                title="Belum ada deadline"
-                desc="Tambahkan deadline task kamu agar tidak ketinggalan!"
-              />
-            ) : sortedDeadlines.map(item => (
-              <div key={item.id} className="dl-card">
-                <DeadlineCard item={item} onDelete={delDeadline} />
-              </div>
-            ))}
-          </div>
-        )}
+    {undoState && <div className="fixed bottom-6 left-1/2 z-[110] flex -translate-x-1/2 items-center gap-4 rounded-xl bg-[#17211b] px-4 py-3 text-xs font-bold text-white shadow-xl"><span>{undoState.type === 'dday' ? 'Event removed' : 'Deadline removed'}</span><button type="button" onClick={undo} className="inline-flex items-center gap-1.5 text-[#7ee2a0]"><RotateCcw className="h-3.5 w-3.5" />Undo</button></div>}
+  </main>;
+};
 
-        {/* ── D-Day List ──────────────────────────────────────────── */}
-        {mode === 'dday' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {sortedDDays.length === 0 ? (
-              <EmptyState
-                icon={<Milestone style={{ width: 32, height: 32, color: '#d1d5db' }} />}
-                title="Belum ada event"
-                desc='Contoh: Tes JLPT N1 pada 7 Juli 2027 → "kurang 60 hari lagi"'
-              />
-            ) : sortedDDays.map(item => (
-              <div key={item.id} className="dl-card">
-                <DDayCard item={item} onDelete={delDDay} />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+const FilterCard = ({ option, active, onClick }) => <button type="button" onClick={onClick} aria-pressed={active} className={`group rounded-xl border px-3 py-3 text-left transition-all duration-200 ${active ? 'border-[#17211b] bg-white shadow-[0_4px_14px_rgba(23,33,27,.08)]' : 'border-[#e9e7e1] bg-white/70 hover:-translate-y-0.5 hover:border-[#cfd5cf] hover:bg-white'}`}><div className="flex items-center justify-between gap-2"><span className={`text-xs font-extrabold ${active ? 'text-[#17211b]' : 'text-[#748078]'}`}>{option.label}</span><span className="font-mono text-lg font-extrabold" style={{ color: option.tone }}>{option.count}</span></div><p className="mt-1 text-[10px] font-medium text-[#9aa29c]">{option.hint}</p><div className={`mt-2 h-1 rounded-full transition-all duration-200 ${active ? 'bg-[#4dcd7d]' : 'bg-[#e9e7e1] group-hover:bg-[#dfe3de]'}`} /></button>;
+const SectionLabel = ({ label, count }) => <div className="mb-2 flex items-center gap-2"><span className="text-[10px] font-black uppercase tracking-[.14em] text-[#748078]">{label}</span><span className="text-[10px] font-bold text-[#a0a7a2]">{count}</span><div className="h-px flex-1 bg-[#e9e7e1]" /></div>;
 
-// ─── Empty state ────────────────────────────────────────────────────────────
-function EmptyState({ icon, title, desc }) {
-  return (
-    <div style={{
-      textAlign: 'center', padding: '60px 20px',
-      background: '#fff', borderRadius: 20,
-      border: '1.5px dashed #e5e7eb',
-    }}>
-      <div style={{ marginBottom: 12 }}>{icon}</div>
-      <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#374151' }}>{title}</p>
-      <p style={{ margin: '6px 0 0', fontSize: 13, color: '#9ca3af', maxWidth: 300, marginLeft: 'auto', marginRight: 'auto' }}>{desc}</p>
-    </div>
-  );
-}
+const DeadlineRow = ({ entry, now, onRemove, last }) => {
+  const remaining = getRemaining(entry.deadline, now);
+  const state = urgency(remaining);
+  return <article className={`group flex items-center gap-3 px-4 py-3.5 transition-colors duration-200 hover:bg-white ${last ? '' : 'border-b border-[#efede8]'}`} style={{ backgroundColor: state.surface }}><span className="h-8 w-1 shrink-0 rounded-full" style={{ background: state.color }} /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h2 className="truncate text-sm font-bold text-[#17211b]">{entry.title}</h2><span className="rounded-md bg-white/80 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-[#748078]">{entry.source}</span></div><p className="mt-1 flex items-center gap-1.5 text-[10px] font-medium text-[#748078]"><CalendarDays className="h-3 w-3" />{formatDate(entry.deadline)}<span>·</span><span style={{ color: priorityTone[entry.priority] || priorityTone.Medium }}>{entry.priority || 'Medium'}</span></p></div><div className="shrink-0 text-right"><p className="font-mono text-[11px] font-bold" style={{ color: state.color }}>{formatRemaining(remaining)}</p><p className="mt-0.5 text-[9px] font-semibold text-[#8a948d]">{state.label}</p></div>{!entry.linked && <button type="button" onClick={() => onRemove(entry)} className="rounded-lg p-2 text-[#b2b8b3] opacity-0 transition hover:bg-white hover:text-[#ef5350] group-hover:opacity-100" aria-label={`Remove ${entry.title}`}><Trash2 className="h-3.5 w-3.5" /></button>}</article>;
+};
+
+const DDayCard = ({ entry, now, onRemove }) => {
+  const palette = DDAY_COLORS[entry.color] || DDAY_COLORS.green;
+  const remaining = getRemaining(`${entry.targetDate}T23:59:59`, now);
+  const dayCount = Math.max(0, Math.ceil(Math.abs(remaining) / 86_400_000));
+  return <article className="group relative overflow-hidden rounded-2xl border border-[#e2e5e0] bg-white p-5 shadow-[0_2px_10px_rgba(23,33,27,.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(23,33,27,.07)]"><div className="absolute inset-x-0 top-0 h-1" style={{ background: palette.accent }} /><div className="flex items-start justify-between gap-4"><div className="min-w-0"><span className="rounded-md px-2 py-1 text-[9px] font-black uppercase tracking-[.12em]" style={{ background: palette.soft, color: palette.accent }}>{remaining < 0 ? 'Passed' : 'D-Day'}</span><h2 className="mt-3 truncate text-lg font-extrabold tracking-tight text-[#17211b]">{entry.title}</h2>{entry.notes && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#748078]">{entry.notes}</p>}</div><div className="shrink-0 text-right"><p className="font-mono text-3xl font-extrabold tracking-[-.06em]" style={{ color: palette.accent }}>{remaining < 0 ? '+' : ''}{dayCount}</p><p className="text-[9px] font-bold uppercase tracking-[.1em] text-[#8a948d]">days</p></div></div><div className="mt-5 flex items-center justify-between border-t border-[#efede8] pt-3"><p className="flex items-center gap-1.5 text-[10px] font-semibold text-[#748078]"><CalendarDays className="h-3.5 w-3.5" />{formatDate(`${entry.targetDate}T12:00:00`, false)}</p><button type="button" onClick={() => onRemove(entry)} className="rounded-lg p-2 text-[#b2b8b3] opacity-0 transition hover:bg-[#fff1f0] hover:text-[#ef5350] group-hover:opacity-100" aria-label={`Remove ${entry.title}`}><Trash2 className="h-3.5 w-3.5" /></button></div></article>;
+};
+
+const Field = ({ className = '', ...props }) => <input {...props} className={`rounded-xl border border-[#e2e5e0] bg-white px-3 py-2.5 text-sm font-semibold text-[#17211b] outline-none transition focus:border-[#4dcd7d] ${className}`} />;
+
+const DeadlineForm = ({ onClose, onAdd }) => {
+  const [title, setTitle] = useState(''); const [deadline, setDeadline] = useState(''); const [priority, setPriority] = useState('Medium');
+  const submit = (event) => { event.preventDefault(); if (title.trim() && deadline) onAdd({ title: title.trim(), deadline, priority, source: 'Task' }); };
+  return <EditorShell title="New deadline" prompt="What needs a firm date?" onClose={onClose}><form onSubmit={submit}><div className="mt-4 grid gap-3 sm:grid-cols-[1fr_190px_120px]"><Field autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Task or milestone" /><Field type="datetime-local" value={deadline} onChange={(event) => setDeadline(event.target.value)} className="text-xs" /><select value={priority} onChange={(event) => setPriority(event.target.value)} className="rounded-xl border border-[#e2e5e0] px-3 py-2.5 text-xs font-semibold outline-none"><option>High</option><option>Medium</option><option>Low</option></select></div><FormActions onClose={onClose} /></form></EditorShell>;
+};
+
+const DDayForm = ({ onClose, onAdd }) => {
+  const [title, setTitle] = useState(''); const [targetDate, setTargetDate] = useState(''); const [notes, setNotes] = useState(''); const [color, setColor] = useState('green');
+  const submit = (event) => { event.preventDefault(); if (title.trim() && targetDate) onAdd({ title: title.trim(), targetDate, notes: notes.trim(), color }); };
+  return <EditorShell title="New D-Day" prompt="Which moment do you want to keep visible?" onClose={onClose}><form onSubmit={submit}><div className="mt-4 grid gap-3 sm:grid-cols-2"><Field autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Exam, launch, trip…" /><Field type="date" value={targetDate} onChange={(event) => setTargetDate(event.target.value)} /></div><Field value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Optional note" className="mt-3 w-full" /><fieldset className="mt-4"><legend className="text-[10px] font-bold uppercase tracking-[.12em] text-[#748078]">Card color</legend><div className="mt-2 flex flex-wrap gap-2">{Object.entries(DDAY_COLORS).map(([key, palette]) => <button key={key} type="button" onClick={() => setColor(key)} aria-label={palette.label} aria-pressed={color === key} className={`flex h-8 w-8 items-center justify-center rounded-full transition-transform duration-200 ${color === key ? 'scale-110 ring-2 ring-[#17211b] ring-offset-2' : 'hover:scale-105'}`} style={{ background: palette.accent }}>{color === key && <Check className="h-4 w-4 text-white" strokeWidth={3} />}</button>)}</div></fieldset><FormActions onClose={onClose} /></form></EditorShell>;
+};
+
+const EditorShell = ({ title, prompt, onClose, children }) => <section className="mt-5 rounded-xl border border-[#e2e5e0] bg-white p-4 shadow-[0_8px_30px_rgba(23,33,27,.06)]"><div className="flex items-center justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.12em] text-[#748078]">{title}</p><p className="mt-1 text-sm font-bold text-[#17211b]">{prompt}</p></div><button type="button" onClick={onClose} className="rounded-lg p-2 text-[#748078] hover:bg-[#fafaf8]"><X className="h-4 w-4" /></button></div>{children}</section>;
+const FormActions = ({ onClose }) => <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={onClose} className="px-3 py-2 text-xs font-bold text-[#748078]">Cancel</button><button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-[#17211b] px-3.5 py-2 text-xs font-bold text-white"><Check className="h-3.5 w-3.5" />Save</button></div>;
+const EmptyState = ({ icon: Icon, title, description }) => <div className="rounded-xl border border-dashed border-[#d9ddd8] bg-white py-16 text-center"><Icon className="mx-auto h-6 w-6 text-[#a0a7a2]" /><p className="mt-3 text-sm font-bold text-[#17211b]">{title}</p><p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-[#748078]">{description}</p></div>;
+
+export default DeadlinePage;

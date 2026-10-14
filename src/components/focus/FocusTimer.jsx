@@ -367,34 +367,45 @@ const FocusTimer = ({ initialMinutes = 25, autoStart = false, focusedTaskName = 
   return (
     <div className="relative flex flex-col items-center justify-center p-4 sm:p-6 space-y-7 max-w-lg mx-auto">
       {isActive && (
-        <div className="li-card flex w-full items-center justify-between gap-4 border border-slate-100 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.16em] text-[#249653]">Now focusing · {focusTag}</p><p className="mt-1 truncate text-sm font-black text-slate-800 dark:text-white">{focusedTaskName || 'Focus session'}</p></div>
-          <div className="flex shrink-0 items-end gap-5"><div><div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Actual</div><div className="mt-1 font-mono text-base font-bold text-[#249653]">{formatActual(sessionStartedAt).slice(3)}</div></div><div><div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Planned</div><div className="mt-1 font-mono text-base font-bold text-slate-600 dark:text-slate-300">{customMinutes}m</div></div></div>
+        <div className="flex w-full items-end justify-center gap-7 rounded-2xl border border-slate-100 bg-white px-5 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div>
+            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Actual</div>
+            <div className="mt-1 font-mono text-lg font-bold leading-7 text-[#4dcd7d]">{formatActual(sessionStartedAt)}</div>
+          </div>
+          <div>
+            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">Planned</div>
+            <div className="mt-1 font-mono text-lg font-bold leading-7 text-slate-600 dark:text-slate-300">{customMinutes}m</div>
+          </div>
+          <div className="pt-[15px]">
+            <button onClick={finishSessionNow} className="inline-flex h-7 items-center gap-1 text-[10px] font-black uppercase leading-7 tracking-wider text-[#249653] transition hover:text-red-500"><Square className="h-3 w-3 fill-current" /> Stop</button>
+          </div>
         </div>
       )}
-      <button
-        type="button"
-        onClick={() => setZenMode((enabled) => !enabled)}
-        aria-label="Toggle Zen Mode"
-        aria-pressed={zenMode}
-        className={`fixed right-4 top-5 z-40 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold shadow-sm transition-all active:scale-95 sm:right-6 ${zenMode ? 'border-[#34C759] bg-[#eaf8ee] text-[#249653] dark:bg-[#34C759]/10' : 'border-slate-200 bg-white text-slate-500 hover:border-[#bcebc9] hover:text-[#249653] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}
-        title={zenMode ? 'Exit Zen Mode' : 'Enter Zen Mode'}
-      >
-        <Leaf className="h-4 w-4" />
-        Zen
-      </button>
       {/* Header */}
-      <div className="text-center space-y-1">
-        <h2 className="text-2xl font-bold text-green-800 dark:text-green-400">
-          Focus Session
-        </h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {isActive
-            ? isPaused
-              ? '⏸️ Sesi dijeda. Ambil napas sejenak.'
-              : '🔥 Sedang fokus. Satu langkah demi satu langkah.'
-            : 'Siap mulai? Pilih durasi atau tekan Mulai 2 Menit.'}
-        </p>
+      <div className="relative w-full min-h-[60px]">
+        <div className="space-y-1 px-16 text-center sm:px-20">
+          <h2 className="text-2xl font-bold text-green-800 dark:text-green-400">
+            Focus Session
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {isActive
+              ? isPaused
+                ? '⏸️ Sesi dijeda. Ambil napas sejenak.'
+                : '🔥 Sedang fokus. Satu langkah demi satu langkah.'
+              : 'Siap mulai? Pilih durasi atau tekan Mulai 2 Menit.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setZenMode((enabled) => !enabled)}
+          aria-label="Toggle Zen Mode"
+          aria-pressed={zenMode}
+          className={`absolute right-0 top-0 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold transition-all duration-200 active:scale-95 ${zenMode ? 'border-[#34C759] bg-[#eaf8ee] text-[#249653] shadow-sm dark:bg-[#34C759]/10' : 'border-slate-200 bg-white text-slate-500 hover:border-[#bcebc9] hover:text-[#249653] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}
+          title={zenMode ? 'Exit Zen Mode' : 'Enter Zen Mode'}
+        >
+          <Leaf className="h-4 w-4" />
+          Zen
+        </button>
       </div>
 
       {/* Timer Mode Switcher (Digital Pomodoro vs Visual Time Timer) */}

@@ -1,0 +1,416 @@
+/* ==========================================================================
+   GARDEN ENVIRONMENTS (HAY DAY & STARDEW VALLEY INSPIRED)
+   - Garden A: Clean White Baseline for UI/UX Experimentation
+   - Garden B: Botanical Greenhouse & Sunlit Terrace
+   - Garden C: Zen Tea Garden & Bamboo Sanctuary
+   - Garden D: Enchanted Twilight Grove & Fairy Meadow
+   ========================================================================== */
+
+/* --- Base Garden Canvas Wrapper --- */
+.garden-environment-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  transition: all 0.4s ease;
+  isolation: isolate;
+}
+
+/* ==========================================================================
+   GARDEN A: CLEAN WHITE / MINIMAL LAB (PRESERVED AS REQUESTED)
+   ========================================================================== */
+.garden-theme-a {
+  background: #ffffff;
+  border: 1px solid #f1f0ea;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.dark .garden-theme-a {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+
+/* Subtle neutral dot pattern for clean UI baseline */
+.garden-theme-a .garden-grid-bg {
+  background-image: radial-gradient(#059669 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.04;
+}
+
+/* ==========================================================================
+   GARDEN B: BOTANICAL GREENHOUSE & SUNLIT TERRACE
+   ========================================================================== */
+.garden-theme-b {
+  background: linear-gradient(180deg, #ecfdf5 0%, #fef3c7 45%, #e8f5e9 100%);
+  border: 2px solid #a7f3d0;
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.12);
+}
+
+.dark .garden-theme-b {
+  background: linear-gradient(180deg, #064e3b 0%, #14532d 45%, #022c22 100%);
+  border-color: #047857;
+}
+
+/* Greenhouse Glass Beams & Ceiling Arches */
+.greenhouse-arches {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.greenhouse-beam {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.1));
+}
+
+.beam-1 { left: 20%; transform: rotate(-6deg); }
+.beam-2 { left: 50%; transform: rotate(0deg); }
+.beam-3 { right: 20%; transform: rotate(6deg); }
+
+.greenhouse-roof-arch {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0 0 50% 50%;
+}
+
+/* Hanging Baskets & Ivy */
+.greenhouse-foliage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  pointer-events: none;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.hanging-basket {
+  position: relative;
+  width: 44px;
+  height: 38px;
+}
+
+.basket-chain {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 20px;
+  background: #78350f;
+}
+
+.basket-pot {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 34px;
+  height: 20px;
+  background: #b45309;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.basket-fern {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 46px;
+  height: 22px;
+  background: #16a34a;
+  border-radius: 50% 50% 30% 30%;
+  box-shadow: inset 0 2px 4px #86efac;
+}
+
+/* Sunbeam Glow */
+.greenhouse-sunbeam {
+  position: absolute;
+  top: -20px;
+  right: 15%;
+  width: 140px;
+  height: 350px;
+  background: linear-gradient(135deg, rgba(254, 240, 138, 0.35) 0%, rgba(254, 240, 138, 0.05) 70%, transparent 100%);
+  transform: rotate(-18deg);
+  pointer-events: none;
+  filter: blur(10px);
+}
+
+/* Terracotta Terraced Soil Slots */
+.garden-theme-b .garden-slot-cell {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(254, 243, 199, 0.85));
+  border: 1.5px solid #fcd34d;
+  box-shadow: 0 4px 10px rgba(180, 83, 9, 0.08);
+}
+
+.dark .garden-theme-b .garden-slot-cell {
+  background: linear-gradient(180deg, rgba(6, 78, 59, 0.9), rgba(4, 120, 87, 0.8));
+  border-color: #059669;
+}
+
+/* ==========================================================================
+   GARDEN C: ZEN TEA GARDEN & BAMBOO SANCTUARY
+   ========================================================================== */
+.garden-theme-c {
+  background: linear-gradient(180deg, #d1fae5 0%, #a7f3d0 40%, #e6f4ea 100%);
+  border: 2px solid #6ee7b7;
+  box-shadow: 0 12px 32px rgba(5, 150, 105, 0.12);
+}
+
+.dark .garden-theme-c {
+  background: linear-gradient(180deg, #022c22 0%, #064e3b 45%, #0f172a 100%);
+  border-color: #059669;
+}
+
+/* Bamboo Stalks in Background */
+.zen-bamboo-grove {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.bamboo-stalk {
+  position: absolute;
+  bottom: 0;
+  width: 10px;
+  height: 92%;
+  background: #34d399;
+  border-radius: 4px;
+  box-shadow: inset -2px 0 rgba(0, 0, 0, 0.12);
+  background-image: repeating-linear-gradient(0deg, transparent 0 26px, #059669 26px 28px);
+}
+
+.stalk-1 { left: 4%; }
+.stalk-2 { left: 9%; height: 75%; opacity: 0.8; }
+.stalk-3 { right: 8%; }
+.stalk-4 { right: 13%; height: 80%; opacity: 0.85; }
+
+/* Stone Lantern (Tōrō) */
+.zen-stone-lantern {
+  position: absolute;
+  bottom: 24px;
+  left: 20px;
+  width: 42px;
+  height: 70px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.lantern-roof {
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 58px;
+  height: 18px;
+  background: #475569;
+  clip-path: polygon(50% 0, 100% 75%, 85% 100%, 15% 100%, 0 75%);
+}
+
+.lantern-firebox {
+  position: absolute;
+  top: 16px;
+  left: 6px;
+  width: 30px;
+  height: 24px;
+  background: #fef08a;
+  border: 3px solid #334155;
+  border-radius: 4px;
+  box-shadow: 0 0 12px rgba(254, 240, 138, 0.7);
+}
+
+.lantern-firebox::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 12px;
+  border-radius: 50%;
+  background: #f59e0b;
+  animation: lantern-flicker 2.5s ease-in-out infinite;
+}
+
+.lantern-base {
+  position: absolute;
+  bottom: 0;
+  left: 10px;
+  width: 22px;
+  height: 30px;
+  background: #64748b;
+  border-radius: 4px;
+}
+
+/* Floating Sakura Blossom Petals */
+.zen-petals {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.zen-petal {
+  position: absolute;
+  width: 9px;
+  height: 6px;
+  background: #fbcfe8;
+  border-radius: 60% 40% 60% 40%;
+  box-shadow: 0 1px 3px rgba(236, 72, 153, 0.2);
+  animation: petal-drift 8s ease-in-out infinite;
+}
+
+.petal-1 { left: 25%; top: 15%; animation-delay: 0s; }
+.petal-2 { left: 75%; top: 30%; animation-delay: -3s; }
+.petal-3 { left: 55%; top: 65%; animation-delay: -5.5s; }
+
+/* Bamboo / Zen Styled Slot Cells */
+.garden-theme-c .garden-slot-cell {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(209, 250, 229, 0.85));
+  border: 1.5px solid #a7f3d0;
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.08);
+}
+
+.dark .garden-theme-c .garden-slot-cell {
+  background: linear-gradient(180deg, rgba(2, 44, 34, 0.9), rgba(6, 78, 59, 0.8));
+  border-color: #047857;
+}
+
+/* ==========================================================================
+   GARDEN D: ENCHANTED TWILIGHT GROVE & FAIRY MEADOW
+   ========================================================================== */
+.garden-theme-d {
+  background: linear-gradient(180deg, #1e1b4b 0%, #312e81 42%, #0f172a 100%);
+  border: 2px solid #818cf8;
+  box-shadow: 0 14px 38px rgba(79, 70, 229, 0.2);
+}
+
+/* Crescent Moon & Stars */
+.twilight-sky {
+  position: absolute;
+  inset: 0 0 50% 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.twilight-moon {
+  position: absolute;
+  right: 32px;
+  top: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow: -8px 6px 0 2px #fef08a, 0 0 24px rgba(254, 240, 138, 0.5);
+  animation: moon-glow 6s ease-in-out infinite alternate;
+}
+
+.twilight-star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 6px #ffffff;
+  animation: star-twinkle 3s ease-in-out infinite;
+}
+
+.star-1 { left: 15%; top: 22%; animation-delay: 0s; }
+.star-2 { left: 45%; top: 12%; animation-delay: -1.2s; }
+.star-3 { right: 38%; top: 26%; animation-delay: -2s; }
+
+/* Drifting Glowing Fireflies */
+.twilight-fireflies {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.firefly {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a3e635;
+  box-shadow: 0 0 10px #bef264, 0 0 20px #84cc16;
+  animation: firefly-float 6s ease-in-out infinite alternate;
+}
+
+.ff-1 { left: 18%; top: 48%; animation-delay: 0s; }
+.ff-2 { right: 22%; top: 62%; animation-delay: -2.4s; }
+.ff-3 { left: 62%; top: 38%; animation-delay: -4s; }
+
+/* Luminescent Fairy Mushrooms */
+.fairy-mushroom-corner {
+  position: absolute;
+  bottom: 18px;
+  right: 22px;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.f-shroom {
+  position: relative;
+  border-radius: 50% 50% 20% 20%;
+  box-shadow: 0 0 12px rgba(244, 114, 182, 0.6);
+}
+
+.shroom-1 { width: 22px; height: 18px; background: #ec4899; }
+.shroom-2 { width: 16px; height: 14px; background: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.6); }
+
+/* Twilight Themed Slot Cells */
+.garden-theme-d .garden-slot-cell {
+  background: linear-gradient(180deg, rgba(30, 27, 75, 0.85), rgba(49, 46, 129, 0.75));
+  border: 1.5px solid #6366f1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 0 8px rgba(99, 102, 241, 0.15);
+}
+
+.garden-theme-d .garden-slot-cell:hover {
+  border-color: #a5b4fc;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+}
+
+/* ==========================================================================
+   ANIMATIONS & KEYFRAMES
+   ========================================================================== */
+@keyframes lantern-flicker {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+  50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; filter: brightness(1.2); }
+}
+
+@keyframes petal-drift {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  25% { opacity: 0.85; }
+  75% { opacity: 0.85; }
+  100% { transform: translate(30px, 45px) rotate(180deg); opacity: 0; }
+}
+
+@keyframes moon-glow {
+  0% { filter: drop-shadow(0 0 4px rgba(254, 240, 138, 0.4)); }
+  100% { filter: drop-shadow(0 0 14px rgba(254, 240, 138, 0.8)); }
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+@keyframes firefly-float {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+  50% { transform: translate(14px, -18px) scale(1.3); opacity: 1; }
+  100% { transform: translate(-8px, -24px) scale(0.8); opacity: 0.3; }
+}

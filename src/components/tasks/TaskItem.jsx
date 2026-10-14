@@ -1,95 +1,87 @@
-import { Check, Trash2, Clock, ChevronRight, CalendarDays } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Check, Trash2, Clock, ChevronRight, ChevronDown, Pencil, CalendarClock } from 'lucide-react';
 
-const formatDeadline = (deadline) => {
-  if (!deadline) return '';
-  const date = new Date(deadline);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
+const formatEstimatedTime = (value) => {
+  if (value === null || value === undefined || value === '') return '';
+  const text = String(value).trim();
+  return /^\d+(?:\.\d+)?$/.test(text) ? `${text} min` : text;
 };
 
-const formatTimeRemaining = (deadline) => {
-  const target = new Date(deadline).getTime();
-  if (Number.isNaN(target)) return '';
+const TaskItem = ({ task, onToggle, onDelete, onFocus, onOpen, onEdit, zen = false }) => {
+  const [editing, setEditing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [draft, setDraft] = useState({});
+  const [microtaskDraft, setMicrotaskDraft] = useState('');
 
-  const difference = target - Date.now();
-  const absoluteMinutes = Math.ceil(Math.abs(difference) / 60000);
-  const isOverdue = difference < 0;
-  let amount;
+  useEffect(() => {
+    if (!editing) return;
+    setDraft({
+      name: task.name || '',
+      urgency: task.urgency || 'Medium',
+      deadline: task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '',
+      microtasks: (task.microtasks || []).map((step) => ({ ...step })),
+    });
+  }, [editing, task]);
 
-  if (absoluteMinutes < 60) {
-    amount = `${Math.max(1, absoluteMinutes)} minute${absoluteMinutes === 1 ? '' : 's'}`;
-  } else if (absoluteMinutes < 1440) {
-    const hours = Math.ceil(absoluteMinutes / 60);
-    amount = `${hours} hour${hours === 1 ? '' : 's'}`;
-  } else {
-    const days = Math.ceil(absoluteMinutes / 1440);
-    amount = `${days} day${days === 1 ? '' : 's'}`;
-  }
+  const save = (event) => {
+    event.preventDefault();
+    if (!draft.name?.trim()) return;
+    onEdit?.(task, {
+      ...task,
+      name: draft.name.trim(),
+      urgency: draft.urgency,
+      deadline: draft.deadline ? new Date(draft.deadline).toISOString() : null,
+      microtasks: draft.microtasks || [],
+    });
+    setEditing(false);
+  };
 
-  return isOverdue ? `${amount} overdue` : `${amount} remaining`;
-};
+  const addMicrotask = () => {
+    const title = microtaskDraft.trim();
+    if (!title) return;
+    setDraft((current) => ({ ...current, microtasks: [...(current.microtasks || []), { title, completed: false }] }));
+    setMicrotaskDraft('');
+  };
 
-const TaskItem = ({ task, onToggle, onDelete, onFocus, onOpen, showDeadline = true }) => {
+  const microtasks = task.microtasks || [];
+  const completedMicrotasks = microtasks.filter((step) => step.completed || step.done).length;
+
   return (
-    <div className={`group flex items-center justify-between p-3 rounded-lg border transition-all ${
-      task.completed 
-        ? 'bg-green-50 border-green-100 dark:bg-green-900/20 dark:border-green-800' 
-        : 'bg-white border-gray-100 dark:bg-slate-900 dark:border-slate-800 hover:border-green-200 dark:hover:border-green-600 hover:shadow-sm'
-    }`} onClick={() => onOpen?.(task)}>
-      <div className="flex items-center gap-3 flex-1">
-        <button
-          onClick={(event) => { event.stopPropagation(); onToggle(task.id); }}
-          className={`flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-            task.completed
-              ? 'bg-green-600 border-green-600 text-white'
-              : 'border-gray-300 dark:border-slate-600 hover:border-green-500 text-transparent'
-          }`}
-        >
-          <Check className="w-3.5 h-3.5" strokeWidth={3} />
-        </button>
-        
-        <div className="flex flex-col">
-          <span className={`text-sm font-medium transition-colors ${
-            task.completed ? 'text-green-800 dark:text-green-400 line-through decoration-green-800/40 dark:decoration-green-400/40' : 'text-gray-700 dark:text-gray-200'
-          }`}>
-            {task.name}
-          </span>
-          {task.estimatedTime && (
-            <div className={`flex items-center gap-1 text-xs ${
-              task.completed ? 'text-green-600/70 dark:text-green-500/70' : 'text-gray-400 dark:text-gray-500'
-            }`}>
-              <Clock className="w-3 h-3" />
-              <span>{task.estimatedTime}</span>
+    <div className={`group rounded-2xl border transition-all ${task.completed ? 'border-green-100 bg-green-50/70 dark:border-green-800 dark:bg-green-900/20' : 'border-slate-200 bg-white hover:border-green-200 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900'}`}>
+      {editing ? (
+        <form onSubmit={save} className="space-y-3 p-4" onClick={(event) => event.stopPropagation()}>
+          <input autoFocus value={draft.name || ''} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium outline-none focus:border-green-400 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+          <div className="grid grid-cols-2 gap-2">
+            <select value={draft.urgency || 'Medium'} onChange={(event) => setDraft((current) => ({ ...current, urgency: event.target.value }))} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"><option>High</option><option>Medium</option><option>Low</option></select>
+            <input type="datetime-local" value={draft.deadline || ''} onChange={(event) => setDraft((current) => ({ ...current, deadline: event.target.value }))} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-xs text-slate-500 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300" />
+          </div>
+          <div className="space-y-1.5">
+            {(draft.microtasks || []).map((step, index) => <label key={`${step.title}-${index}`} className="flex items-center gap-2"><input type="checkbox" checked={!!(step.completed || step.done)} onChange={() => setDraft((current) => ({ ...current, microtasks: current.microtasks.map((item, itemIndex) => itemIndex === index ? { ...item, completed: !(item.completed || item.done) } : item) }))} className="accent-green-500" /><input value={step.title} onChange={(event) => setDraft((current) => ({ ...current, microtasks: current.microtasks.map((item, itemIndex) => itemIndex === index ? { ...item, title: event.target.value } : item) }))} className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white" /></label>)}
+            <div className="flex gap-2"><input value={microtaskDraft} onChange={(event) => setMicrotaskDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addMicrotask(); } }} placeholder="Add microtask" className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white" /><button type="button" onClick={addMicrotask} className="rounded-lg px-2 text-xs font-bold text-green-700 hover:bg-green-50">Add</button></div>
+          </div>
+          <div className="flex justify-end gap-2"><button type="button" onClick={() => setEditing(false)} className="rounded-lg px-3 py-1.5 text-xs font-bold text-slate-500">Cancel</button><button type="submit" className="rounded-lg bg-[#4dcd7d] px-3 py-1.5 text-xs font-black text-slate-950">Save</button></div>
+        </form>
+      ) : (
+        <>
+        <div className="flex items-center gap-3 p-3.5" onClick={() => { if (microtasks.length > 0) setExpanded((current) => !current); }}>
+          <button onClick={(event) => { event.stopPropagation(); onToggle(task.id || task._id); }} className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border transition-colors ${task.completed ? 'border-green-500 bg-green-500 text-white' : 'border-slate-300 text-transparent hover:border-green-400 dark:border-slate-600'}`}><Check className="h-3.5 w-3.5" strokeWidth={3} /></button>
+          <div className="min-w-0 flex-1">
+            <div className={`truncate text-sm font-semibold ${task.completed ? 'text-green-800 line-through decoration-green-800/30 dark:text-green-400' : 'text-slate-800 dark:text-slate-100'}`}>{task.name}</div>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+              {task.estimatedTime && <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{formatEstimatedTime(task.estimatedTime)}</span>}
+              {!zen && <><span className={`rounded-full px-2 py-0.5 font-semibold ${task.urgency === 'High' ? 'bg-red-50 text-red-600' : task.urgency === 'Low' ? 'bg-slate-100 text-slate-500' : 'bg-amber-50 text-amber-700'}`}>{task.urgency || 'Medium'}</span>
+              {task.deadline && <span className="inline-flex items-center gap-1"><CalendarClock className="h-3 w-3" />{new Date(task.deadline).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>}
+              {microtasks.length > 0 && <span>{completedMicrotasks}/{microtasks.length} steps</span>}</>}
             </div>
-          )}
-          {showDeadline && task.deadline && (
-            <div className={`mt-0.5 flex items-center gap-1 text-xs font-semibold ${new Date(task.deadline).getTime() < Date.now() ? 'text-red-500 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
-              <CalendarDays className="h-3 w-3" />
-              <span>Due {formatDeadline(task.deadline)} · {formatTimeRemaining(task.deadline)}</span>
-            </div>
-          )}
+          </div>
+          {microtasks.length > 0 && <button onClick={(event) => { event.stopPropagation(); setExpanded((current) => !current); }} className="flex flex-shrink-0 items-center gap-1 rounded-lg px-1.5 py-1 text-[10px] font-bold text-slate-400 hover:bg-slate-50 hover:text-green-600" aria-expanded={expanded}><span>{completedMicrotasks}/{microtasks.length}</span><ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} /></button>}
+          <button onClick={(event) => { event.stopPropagation(); setEditing(true); }} className="rounded-lg p-1.5 text-slate-300 opacity-0 transition group-hover:opacity-100 hover:bg-slate-100 hover:text-green-600 dark:hover:bg-slate-800" title="Edit task"><Pencil className="h-3.5 w-3.5" /></button>
+          {!task.completed && <button onClick={(event) => { event.stopPropagation(); onFocus && onFocus(task); }} className="flex flex-shrink-0 items-center gap-1 rounded-full bg-green-100 px-2.5 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"><span>Start</span><ChevronRight className="h-4 w-4" /></button>}
+          <button onClick={(event) => { event.stopPropagation(); onDelete(task.id || task._id); }} className="rounded-lg p-1.5 text-slate-300 transition hover:text-red-500" title="Delete task"><Trash2 className="h-3.5 w-3.5" /></button>
         </div>
-      </div>
-
-  <div className="flex items-center">
-        <span className="mr-2 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">{task.energy || 'Medium'}</span>
-        <button
-          onClick={(event) => { event.stopPropagation(); onFocus && onFocus(task); }}
-          className="flex items-center gap-1 px-2.5 py-1.5 mr-2 rounded-full bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50 transition-colors shadow-sm text-xs font-bold uppercase tracking-wide"
-          title="Start task session"
-        >
-          <span>Start</span>
-          <ChevronRight className="w-4 h-4" />
-        </button>
-
-        <button
-          onClick={(event) => { event.stopPropagation(); onDelete(task.id); }}
-          className="text-gray-400 hover:text-red-500 transition-all p-1"
-          title="Delete task"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      </div>
+        {expanded && <ul className="space-y-1 border-t border-slate-100 px-12 pb-3 pt-2 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">{microtasks.map((step, index) => <li key={`${step.title}-${index}`} className={`flex items-center gap-2 ${step.completed || step.done ? 'text-slate-300 line-through' : ''}`}><input type="checkbox" checked={!!(step.completed || step.done)} onChange={(event) => { event.stopPropagation(); onEdit?.(task, { ...task, microtasks: microtasks.map((item, itemIndex) => itemIndex === index ? { ...item, completed: !(item.completed || item.done) } : item) }); }} onClick={(event) => event.stopPropagation()} className="h-3.5 w-3.5 rounded border-slate-300 accent-green-500" />{step.title}</li>)}</ul>}
+        </>
+      )}
     </div>
   );
 };

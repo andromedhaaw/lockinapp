@@ -1,24 +1,2121 @@
-.farm-scene{--sky:#ccebf2;--land-back:#a9cf8a;--land-front:#7fb56c;position:relative;min-height:540px;overflow:hidden;border:1px solid #dfddd5;border-radius:24px;background:var(--sky);box-shadow:0 8px 26px rgba(53,76,57,.08);isolation:isolate;transition:background .22s ease}
-.farm-theme-pond{--sky:#d8edf0;--land-back:#a7cfad;--land-front:#78aa7c}.farm-theme-hill{--sky:#e3e9f1;--land-back:#aec49b;--land-front:#849f6e}
-.farm-scene:after{content:"";position:absolute;inset:0;z-index:20;pointer-events:none;background-image:radial-gradient(rgba(69,78,59,.08) .55px,transparent .65px);background-size:5px 5px;mix-blend-mode:multiply;opacity:.2}
-.farm-scene-sky{position:absolute;inset:0 0 48%;z-index:-3}.farm-scene-sun{position:absolute;right:10%;top:14%;width:58px;height:58px;border-radius:50%;background:#f7d66b;box-shadow:0 0 0 13px rgba(255,242,174,.34),0 10px 38px rgba(229,190,79,.2);animation:farm-sun-float 6s ease-in-out infinite}
-.farm-scene-cloud{position:absolute;width:88px;height:24px;border-radius:50px;background:rgba(255,255,255,.72);animation:farm-cloud-drift 15s ease-in-out infinite alternate}.farm-scene-cloud:before,.farm-scene-cloud:after{content:"";position:absolute;bottom:0;border-radius:50%;background:inherit}.farm-scene-cloud:before{left:16px;width:38px;height:38px}.farm-scene-cloud:after{right:12px;width:45px;height:45px}.cloud-a{left:12%;top:16%}.cloud-b{right:28%;top:8%;transform:scale(.72);animation-delay:-7s}
-.farm-land{position:absolute;z-index:-2;left:-8%;right:-8%;border-radius:50% 50% 0 0}.land-back{top:30%;height:48%;background:var(--land-back)}.land-front{top:44%;bottom:-10%;background:var(--land-front);border-radius:42% 38% 0 0;box-shadow:inset 0 12px 24px rgba(255,255,255,.1)}
-.farm-scene-barn{position:absolute;left:7%;top:29%;z-index:2;width:176px;height:142px;border-radius:8px 8px 12px 12px;background:#c86555;box-shadow:inset -10px 0 rgba(120,57,48,.08),0 13px 22px rgba(54,70,43,.16)}.farm-scene-barn .roof{position:absolute;left:-18px;top:-48px;width:212px;height:61px;background:#6f4a3d;clip-path:polygon(50% 0,100% 75%,92% 100%,8% 100%,0 75%)}.farm-scene-barn .window{position:absolute;left:68px;top:20px;width:38px;height:34px;border:4px solid rgba(255,255,255,.5);border-radius:50%;background:#a8d8de}.farm-scene-barn .window:before,.farm-scene-barn .window:after{content:"";position:absolute;background:rgba(255,255,255,.55)}.farm-scene-barn .window:before{left:50%;top:0;bottom:0;width:3px}.farm-scene-barn .window:after{left:0;right:0;top:50%;height:3px}.farm-scene-barn .door{position:absolute;left:54px;bottom:0;width:68px;height:68px;border:5px solid #75453b;border-bottom:0;border-radius:34px 34px 0 0;background:#f6e8cf}.farm-scene-barn .door:after{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:3px solid #75453b}
-.farm-scene-fence{position:absolute;left:-2%;right:-2%;top:54%;height:34px;z-index:3;border-top:8px solid #efe1bd;border-bottom:6px solid #e0c99e;background:repeating-linear-gradient(90deg,transparent 0 42px,#f6e8c8 43px 52px,transparent 53px 94px)}
-.farm-scene-pond{position:absolute;left:29%;bottom:5%;z-index:1;width:230px;height:84px;border:7px solid #d9cc91;border-radius:50%;background:radial-gradient(ellipse at 48% 35%,#d6f4f1,#70bdc5 72%);box-shadow:inset 0 7px 14px rgba(255,255,255,.44)}.farm-scene-pond i{position:absolute;width:18px;height:9px;border-radius:50%;background:#83a963}.farm-scene-pond i:nth-child(1){left:28%;top:32%}.farm-scene-pond i:nth-child(2){right:20%;top:55%;transform:scale(.7)}.farm-scene-pond i:nth-child(3){left:52%;top:68%;transform:scale(.5)}
-.farm-wildflowers{position:absolute;left:31%;top:52%;z-index:4;display:flex;gap:15px}.farm-wildflowers i{position:relative;width:7px;height:7px;border-radius:50%;background:#f6dc6a;box-shadow:6px 1px #fff0c6,-4px 4px #ef9eae}.farm-wildflowers i:nth-child(2){transform:translateY(19px)}.farm-wildflowers i:nth-child(3){transform:translateY(-8px)}.farm-wildflowers i:nth-child(4){transform:translateY(13px)}.farm-wildflowers i:nth-child(5){transform:translateY(-16px)}
-.farm-house{position:absolute;right:6%;top:26%;z-index:1;width:110px;height:95px;border-radius:6px;background:#f3e6ce;box-shadow:0 8px 18px rgba(54,70,43,.12)}.farm-house:before{content:"";position:absolute;left:-9px;right:-9px;top:-37px;height:45px;background:#71805c;clip-path:polygon(50% 0,100% 85%,94% 100%,6% 100%,0 85%)}.farm-house i{position:absolute;left:42px;bottom:0;width:28px;height:51px;border-radius:14px 14px 0 0;background:#8b624b}
-.farm-scene-caption{position:absolute;z-index:15;left:14px;right:14px;bottom:13px;display:flex;align-items:end;justify-content:space-between;gap:16px;border:1px solid rgba(255,255,255,.75);border-radius:16px;background:rgba(255,255,255,.84);padding:10px 13px;color:#536557;backdrop-filter:blur(8px)}.farm-scene-caption span{display:block;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.1em}.farm-scene-caption strong{display:block;margin-top:2px;font-size:11px;color:#2d352e}
-.farm-scene-animal{position:absolute;z-index:9;width:92px;height:115px;transform:translate(-50%,-50%);border:0;background:transparent;cursor:pointer;animation:farm-animal-wander 3.6s ease-in-out infinite;animation-delay:var(--delay)}.farm-scene-animal.is-selected .farm-animal-label{background:#2f4734;color:white}.farm-scene-animal:focus-visible{outline:2px solid #fff;outline-offset:4px;border-radius:16px}
-.farm-animal-label{position:absolute;z-index:8;left:50%;bottom:-2px;transform:translateX(-50%);min-width:62px;border:2px solid rgba(255,255,255,.8);border-radius:999px;background:rgba(255,255,255,.9);padding:3px 8px;font-size:9px;font-weight:900;color:#3e4f40;white-space:nowrap;box-shadow:0 3px 8px rgba(40,63,43,.1);transition:background .2s,color .2s}.farm-animal-label small{display:block;font-size:6px;font-weight:800;opacity:.62}
-.farm-creature{position:relative;display:inline-block;flex:0 0 auto;width:76px;height:84px;transform-origin:bottom center;animation:farm-creature-breathe 3s ease-in-out infinite}.farm-creature-shadow{position:absolute;left:14px;bottom:1px;width:49px;height:10px;border-radius:50%;background:rgba(45,71,44,.2);filter:blur(2px)}.farm-creature-body{position:absolute;z-index:2;left:15px;bottom:9px;width:48px;height:53px;border:2px solid #685a46;border-radius:48% 48% 44% 44%;background:#f5d46f;box-shadow:inset -6px -5px rgba(144,91,46,.09)}.farm-creature-head{position:absolute;z-index:4;left:20px;top:9px;width:39px;height:38px;border:2px solid #685a46;border-radius:49%;background:#f8dc78}.farm-eye{position:absolute;top:15px;width:4px;height:5px;border-radius:50%;background:#4d4337}.eye-left{left:10px}.eye-right{right:10px}.farm-muzzle{position:absolute;left:14px;top:21px;width:11px;height:7px;border:1.5px solid #8d633e;border-radius:50%;background:#edae47}.farm-blush{position:absolute;top:23px;width:7px;height:4px;border-radius:50%;background:rgba(233,126,117,.42)}.blush-left{left:3px}.blush-right{right:3px}.farm-creature-wing{position:absolute;z-index:5;top:43px;width:18px;height:28px;border:2px solid #685a46;border-radius:50%;background:#efd06e}.wing-left{left:8px;transform:rotate(20deg)}.wing-right{right:7px;transform:rotate(-20deg)}.farm-creature-leg{position:absolute;z-index:1;bottom:2px;width:11px;height:19px;border-radius:50%;background:#d9973e;border:2px solid #685a46}.leg-left{left:21px}.leg-right{right:20px}
-.creature-chicken .farm-creature-head:before{content:"";position:absolute;left:9px;top:-8px;width:8px;height:9px;border-radius:70% 70% 20% 20%;background:#d96855;box-shadow:7px 2px #d96855}.creature-duck .farm-creature-body,.creature-duck .farm-creature-head,.creature-duck .farm-creature-wing{background:#8bc9e9}.creature-duck .farm-muzzle{left:11px;width:17px;background:#e8ac43}.creature-sheep .farm-creature-body,.creature-sheep .farm-creature-head{background:#f2eee4;border-color:#695f50;box-shadow:inset 6px 0 #fff,-7px 4px 0 -4px #d9d1c0}.creature-sheep .farm-creature-wing{background:#e5dfd1}.creature-cow .farm-creature-body,.creature-cow .farm-creature-head{background:#f6f0e4}.creature-cow .farm-creature-body:after{content:"";position:absolute;left:7px;top:12px;width:15px;height:19px;border-radius:60%;background:#6d6255;box-shadow:20px 13px 0 -3px #6d6255}.creature-cow .farm-muzzle{left:9px;top:22px;width:18px;height:10px;background:#d8a69d}.creature-goat .farm-creature-body,.creature-goat .farm-creature-head,.creature-goat .farm-creature-wing{background:#c5b7a4}.creature-goat .farm-creature-head:before,.creature-goat .farm-creature-head:after{content:"";position:absolute;top:-10px;width:7px;height:13px;border:2px solid #685a46;border-bottom:0;border-radius:70% 70% 0 0;background:#b6a58f}.creature-goat .farm-creature-head:before{left:5px;transform:rotate(-18deg)}.creature-goat .farm-creature-head:after{right:5px;transform:rotate(18deg)}.creature-pig .farm-creature-body,.creature-pig .farm-creature-head,.creature-pig .farm-creature-wing{background:#efa7b3}.creature-pig .farm-muzzle{left:9px;top:20px;width:18px;height:11px;background:#e78396}
-.farm-creature.stage-egg .farm-creature-head,.farm-creature.stage-egg .farm-creature-wing,.farm-creature.stage-egg .farm-creature-leg{display:none}.farm-creature.stage-egg .farm-creature-body{left:17px;bottom:5px;width:44px;height:62px;border-radius:52% 52% 46% 46%;background:#fff8e7;box-shadow:inset -7px -8px #eadfc9}.farm-creature.stage-egg .farm-creature-body:after{content:"";position:absolute;left:9px;top:28px;width:8px;height:4px;border-bottom:2px solid #ad9d81;transform:rotate(20deg);box-shadow:14px -3px 0 -1px #ad9d81}.farm-creature.stage-baby{transform:scale(.78)}.farm-creature.stage-growing{transform:scale(.9)}
-.farm-creature.action-eat .wing-left{animation:farm-wing-left .5s ease-in-out 3}.farm-creature.action-eat .wing-right{animation:farm-wing-right .5s ease-in-out 3}.farm-creature.action-celebrate,.farm-creature.action-happy{animation:farm-creature-hop .48s ease-in-out 3}.farm-creature.action-sleep{animation:farm-creature-rest 1.8s ease-in-out}.farm-creature.action-sleep .farm-eye{height:2px;top:18px;border-radius:0;border-bottom:2px solid #4d4337;background:transparent}
-.farm-onboarding{position:absolute;z-index:13;right:7%;top:20%;width:min(310px,44%);border:1px solid rgba(255,255,255,.8);border-radius:20px;background:rgba(255,255,255,.87);padding:18px;box-shadow:0 14px 35px rgba(50,72,53,.12);backdrop-filter:blur(10px)}.farm-onboarding p,.farm-session-moment p{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.14em;color:#4d8d56}.farm-onboarding strong,.farm-session-moment strong{display:block;margin-top:5px;font-size:18px;line-height:1.2;color:#2d352e}.farm-onboarding span,.farm-session-moment small{display:block;margin-top:5px;font-size:11px;line-height:1.5;color:#748078}.farm-onboarding button{display:inline-flex;align-items:center;gap:5px;margin-top:12px;border:0;border-radius:11px;background:#2f4734;padding:9px 11px;color:white;font-size:10px;font-weight:900}.farm-onboarding button svg{width:12px;height:12px}
-.farm-session-moment{position:absolute;z-index:30;left:50%;top:18%;width:min(340px,80%);transform:translateX(-50%);border:1px solid rgba(255,255,255,.85);border-radius:20px;background:rgba(255,255,255,.9);padding:18px;text-align:center;box-shadow:0 18px 45px rgba(38,63,42,.16);backdrop-filter:blur(10px);animation:farm-moment-in .3s ease-out both}.falling-feed{position:absolute;left:50%;top:-60px;width:12px;height:12px;border-radius:50% 50% 45% 45%;background:#e3ad4b;box-shadow:-14px -8px #d69738,15px -19px #efc361;animation:farm-feed-drop 1s cubic-bezier(.2,.8,.2,1) .25s both}
-.farm-scene.is-cinematic .farm-scene-sun{animation:farm-cinematic-sun 2.2s ease-in-out}.farm-scene.is-cinematic .farm-scene-animal:first-of-type{z-index:25}.farm-scene.is-cinematic .farm-scene-animal:first-of-type .farm-creature{animation:farm-creature-hop .45s ease-in-out 4}
-@keyframes farm-creature-breathe{50%{margin-top:-3px;transform:scale(1.015)}}@keyframes farm-animal-wander{0%,100%{margin-left:-3px}50%{margin-left:6px;margin-top:-4px}}@keyframes farm-creature-hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px) rotate(3deg)}}@keyframes farm-creature-rest{50%{transform:translateY(5px) scale(.97)}}@keyframes farm-wing-left{50%{transform:rotate(-35deg) translateY(-10px)}}@keyframes farm-wing-right{50%{transform:rotate(35deg) translateY(-10px)}}@keyframes farm-cloud-drift{to{margin-left:30px}}@keyframes farm-sun-float{50%{transform:translateY(-5px)}}@keyframes farm-cinematic-sun{50%{transform:translate(-12px,5px);filter:brightness(1.08)}}@keyframes farm-moment-in{from{opacity:0;transform:translate(-50%,10px) scale(.98)}to{opacity:1;transform:translate(-50%,0) scale(1)}}@keyframes farm-feed-drop{0%{opacity:0;transform:translateY(-20px) rotate(0)}65%{opacity:1}100%{opacity:0;transform:translateY(145px) rotate(240deg)}}
-@media(max-width:700px){.farm-scene{min-height:500px}.farm-scene-barn{left:2%;top:31%;transform:scale(.72);transform-origin:left top}.farm-house{right:2%;transform:scale(.75);transform-origin:right top}.farm-scene-pond{left:12%;width:180px}.farm-scene-animal{transform:translate(-50%,-50%) scale(.82)}.farm-scene-caption{align-items:start;flex-direction:column;gap:5px}.farm-scene-caption .text-right{text-align:left}.farm-onboarding{right:4%;top:16%;width:57%}.farm-creature{transform:scale(.9)}}
-@media(prefers-reduced-motion:reduce){.farm-creature,.farm-scene-animal,.farm-scene-cloud,.farm-scene-sun{animation:none!important}}
+/* ==========================================================================
+   FARM SYSTEM & HABITATS (HAY DAY & STARDEW VALLEY INSPIRED)
+   ========================================================================== */
+
+/* --- Scene Container & Lighting --- */
+.farm-scene {
+  --sky-gradient: linear-gradient(180deg, #bae6fd 0%, #fed7aa 65%, #fef3c7 100%);
+  --land-far: #99ca75;
+  --land-back: #82b95b;
+  --land-front: #5ea03e;
+  position: relative;
+  min-height: 580px;
+  overflow: hidden;
+  border: 2px solid #d4cfc1;
+  border-radius: 28px;
+  background: var(--sky-gradient);
+  box-shadow: 0 16px 40px rgba(45, 66, 42, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  isolation: isolate;
+  transition: background 0.4s ease, border-color 0.3s ease;
+  user-select: none;
+}
+
+/* Subtle pixel / stipple texture overlay */
+.farm-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(45, 60, 35, 0.07) 0.65px, transparent 0.75px);
+  background-size: 6px 6px;
+  mix-blend-mode: multiply;
+  opacity: 0.35;
+}
+
+/* --- Farm Themes (6 Distinct Kandang Environments) --- */
+
+/* 1. Chicken Coop (Warm Sunny Countryside) */
+.farm-theme-coop {
+  --sky-gradient: linear-gradient(180deg, #7ac7f6 0%, #bde4fc 55%, #fef0cd 100%);
+  --land-far: #9ece72;
+  --land-back: #81b858;
+  --land-front: #5fa43b;
+}
+
+/* 2. Duck Pond (Fresh Waterside Wetland) */
+.farm-theme-duck-pond {
+  --sky-gradient: linear-gradient(180deg, #6ecde4 0%, #a6e7f7 50%, #cbf2fb 100%);
+  --land-far: #74bea5;
+  --land-back: #54a58b;
+  --land-front: #3d8f76;
+}
+
+/* 3. Highland Meadow (Crisp Alpine Mountain Vista) */
+.farm-theme-highland {
+  --sky-gradient: linear-gradient(180deg, #74a2e8 0%, #b1a9ec 45%, #dde4fc 100%);
+  --land-far: #8ba588;
+  --land-back: #6f8e6c;
+  --land-front: #567753;
+}
+
+/* 4. Cow Pasture (Classic Sunny Dairy Farmstead) */
+.farm-theme-pasture {
+  --sky-gradient: linear-gradient(180deg, #64bdf6 0%, #aadefc 50%, #eafbe7 100%);
+  --land-far: #84cb63;
+  --land-back: #67b746;
+  --land-front: #4da62f;
+}
+
+/* 5. Pig Orchard (Lush Apple Orchard & Earthy Soil) */
+.farm-theme-orchard {
+  --sky-gradient: linear-gradient(180deg, #f8b886 0%, #fcd299 45%, #e1f5d6 100%);
+  --land-far: #7dae61;
+  --land-back: #639547;
+  --land-front: #4f7e36;
+}
+
+/* 6. Horse Ranch (Golden Hour Sunset Prairie) */
+.farm-theme-ranch {
+  --sky-gradient: linear-gradient(180deg, #fca5a5 0%, #fdba74 42%, #fef08a 100%);
+  --land-far: #ad975c;
+  --land-back: #917c45;
+  --land-front: #776532;
+}
+
+/* --- Sky, Sun & Clouds --- */
+.farm-scene-sky {
+  position: absolute;
+  inset: 0 0 45%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.farm-scene-sun {
+  position: absolute;
+  right: 12%;
+  top: 10%;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff5a8, #f6ca4b 70%, #f0a82b 100%);
+  box-shadow: 0 0 0 16px rgba(255, 243, 160, 0.35), 0 0 40px rgba(246, 202, 75, 0.4);
+  animation: farm-sun-float 7s ease-in-out infinite;
+}
+
+.farm-theme-ranch .farm-scene-sun {
+  background: radial-gradient(circle at 35% 35%, #fff0b8, #fb923c 70%, #ea580c 100%);
+  box-shadow: 0 0 0 18px rgba(251, 146, 60, 0.35), 0 0 50px rgba(249, 115, 22, 0.45);
+  top: 14%;
+  right: 15%;
+}
+
+.farm-scene-cloud {
+  position: absolute;
+  width: 96px;
+  height: 28px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  animation: farm-cloud-drift 22s ease-in-out infinite alternate;
+}
+
+.farm-scene-cloud::before,
+.farm-scene-cloud::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  border-radius: 50%;
+  background: inherit;
+}
+
+.farm-scene-cloud::before {
+  left: 18px;
+  width: 42px;
+  height: 42px;
+}
+
+.farm-scene-cloud::after {
+  right: 14px;
+  width: 50px;
+  height: 50px;
+}
+
+.cloud-a { left: 8%; top: 12%; }
+.cloud-b { right: 26%; top: 6%; transform: scale(0.8); animation-delay: -9s; }
+.cloud-c { left: 44%; top: 18%; transform: scale(0.65); opacity: 0.75; animation-delay: -15s; }
+
+/* Distant Birds */
+.farm-sky-birds {
+  position: absolute;
+  left: 28%;
+  top: 15%;
+  display: flex;
+  gap: 16px;
+}
+
+.farm-sky-birds .bird {
+  position: relative;
+  width: 14px;
+  height: 8px;
+  border-top: 2px solid rgba(48, 62, 52, 0.45);
+  border-radius: 50% 50% 0 0;
+  transform: rotate(-15deg);
+  animation: farm-bird-glide 6s ease-in-out infinite alternate;
+}
+
+.farm-sky-birds .bird-2 {
+  transform: rotate(-10deg) scale(0.75);
+  animation-delay: -2s;
+}
+
+/* Ambient Particles */
+.farm-ambient-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.p-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  animation: farm-particle-drift 8s ease-in-out infinite;
+}
+
+.p-1 { left: 20%; top: 40%; animation-delay: 0s; }
+.p-2 { left: 65%; top: 55%; background: rgba(255, 240, 160, 0.65); animation-delay: -3s; }
+.p-3 { left: 85%; top: 35%; background: rgba(255, 255, 255, 0.7); animation-delay: -5s; }
+
+/* --- Ground Landscape Layers --- */
+.farm-land {
+  position: absolute;
+  left: -8%;
+  right: -8%;
+  pointer-events: none;
+}
+
+.land-far {
+  top: 24%;
+  height: 38%;
+  background: var(--land-far);
+  border-radius: 46% 48% 0 0;
+  z-index: 1;
+  opacity: 0.85;
+}
+
+.land-back {
+  top: 32%;
+  height: 48%;
+  background: var(--land-back);
+  border-radius: 50% 45% 0 0;
+  z-index: 2;
+  box-shadow: inset 0 10px 20px rgba(255, 255, 255, 0.12);
+}
+
+.land-front {
+  top: 45%;
+  bottom: -15%;
+  background: var(--land-front);
+  border-radius: 38% 42% 0 0;
+  z-index: 3;
+  box-shadow: inset 0 16px 28px rgba(255, 255, 255, 0.16), 0 -4px 18px rgba(20, 40, 15, 0.08);
+}
+
+/* ==========================================================================
+   1. CHICKEN COOP HABITAT (STARDEW & HAY DAY STYLE)
+   ========================================================================== */
+.coop-habitat {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Deluxe Chicken Coop Building */
+.farm-coop-building {
+  position: absolute;
+  left: 6%;
+  top: 22%;
+  width: 170px;
+  height: 145px;
+  z-index: 5;
+}
+
+.coop-roof {
+  position: absolute;
+  left: -14px;
+  top: 0;
+  width: 198px;
+  height: 52px;
+  background: #963529;
+  border-radius: 4px;
+  clip-path: polygon(50% 0%, 100% 82%, 93% 100%, 7% 100%, 0% 82%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.coop-roof::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 20px, rgba(0,0,0,0.12) 20px 22px);
+}
+
+.coop-weathervane {
+  position: absolute;
+  left: 50%;
+  top: -24px;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 24px;
+  background: #4a3423;
+}
+
+.coop-weathervane i {
+  position: absolute;
+  left: -10px;
+  top: -8px;
+  width: 22px;
+  height: 14px;
+  background: #e2b23a;
+  clip-path: polygon(0 40%, 40% 0, 100% 30%, 70% 60%, 85% 100%, 35% 85%, 20% 100%);
+}
+
+.coop-body {
+  position: absolute;
+  left: 6px;
+  top: 48px;
+  width: 158px;
+  height: 96px;
+  background: #d46348;
+  border: 4px solid #7c2619;
+  border-radius: 6px;
+  box-shadow: inset -10px 0 rgba(0, 0, 0, 0.1), 0 10px 20px rgba(35, 45, 30, 0.25);
+  background-image: repeating-linear-gradient(0deg, transparent 0 14px, #7c2619 14px 16px);
+}
+
+.coop-window {
+  position: absolute;
+  left: 20px;
+  top: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 4px solid #fdf8e8;
+  background: #fef08a;
+  box-shadow: inset 0 0 8px #f59e0b, 0 0 12px rgba(254, 240, 138, 0.6);
+}
+
+.coop-door-flap {
+  position: absolute;
+  right: 22px;
+  bottom: 0;
+  width: 38px;
+  height: 48px;
+  border: 4px solid #5a1a12;
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  background: #451b14;
+}
+
+.coop-ramp {
+  position: absolute;
+  right: 18px;
+  bottom: -28px;
+  width: 44px;
+  height: 34px;
+  background: #b5804c;
+  border: 2px solid #5a3818;
+  transform: skewX(-14deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 0 4px;
+}
+
+.ramp-rung {
+  height: 2px;
+  background: #4a2c13;
+  border-radius: 2px;
+}
+
+.coop-nestbox {
+  position: absolute;
+  left: -24px;
+  bottom: 12px;
+  width: 32px;
+  height: 38px;
+  background: #a94b34;
+  border: 3px solid #661f14;
+  border-radius: 4px 0 0 4px;
+}
+
+.nest-egg {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  width: 14px;
+  height: 18px;
+  border-radius: 50% 50% 46% 46%;
+  background: #fff8e8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Straw Bedding */
+.coop-straw-bed {
+  position: absolute;
+  left: 8%;
+  top: 50%;
+  width: 90px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ecd57d;
+  box-shadow: inset -4px -3px #c9a944, 0 4px 8px rgba(0,0,0,0.06);
+}
+
+/* Feed Trough */
+.coop-feed-trough {
+  position: absolute;
+  left: 27%;
+  top: 48%;
+  width: 60px;
+  height: 20px;
+  background: #8b5a2b;
+  border: 3px solid #563313;
+  border-radius: 5px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.grain-pile {
+  position: absolute;
+  inset: 2px;
+  border-radius: 3px;
+  background: repeating-radial-gradient(circle at 50% 50%, #facc15 0 2px, #eab308 2px 4px);
+}
+
+/* Fence & Sunflowers */
+.coop-fence {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52%;
+  height: 28px;
+  z-index: 3;
+  background: repeating-linear-gradient(90deg, transparent 0 34px, #e2cca0 34px 42px, transparent 42px 76px);
+  border-top: 6px solid #d4b882;
+  border-bottom: 5px solid #be9e65;
+}
+
+.coop-flowers {
+  position: absolute;
+  left: 45%;
+  top: 49%;
+  display: flex;
+  gap: 16px;
+}
+
+.coop-flowers .sunflower {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #78350f;
+  box-shadow: 0 0 0 6px #facc15;
+  animation: farm-sun-float 4s ease-in-out infinite;
+}
+
+.coop-flowers .daisy {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #eab308;
+  box-shadow: 0 0 0 4px #ffffff;
+}
+
+/* ==========================================================================
+   2. DUCK POND HABITAT (WATERFOWL PIER & LAKE)
+   ========================================================================== */
+.duck-habitat {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Stilted Duck House */
+.duck-house {
+  position: absolute;
+  left: 7%;
+  top: 24%;
+  width: 140px;
+  height: 120px;
+  z-index: 6;
+}
+
+.duck-house-roof {
+  position: absolute;
+  left: -12px;
+  top: 0;
+  width: 164px;
+  height: 48px;
+  background: #475569;
+  clip-path: polygon(50% 0, 100% 85%, 90% 100%, 10% 100%, 0 85%);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+}
+
+.duck-house-body {
+  position: absolute;
+  left: 10px;
+  top: 42px;
+  width: 120px;
+  height: 60px;
+  background: #94a3b8;
+  border: 4px solid #334155;
+  border-radius: 6px;
+  background-image: repeating-linear-gradient(0deg, transparent 0 12px, #334155 12px 14px);
+}
+
+.duck-house-door {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 40px;
+  background: #1e293b;
+  border: 3px solid #0f172a;
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+}
+
+.duck-house-stilts i {
+  position: absolute;
+  bottom: -22px;
+  width: 10px;
+  height: 26px;
+  background: #64748b;
+  border: 2px solid #334155;
+}
+
+.duck-house-stilts i:nth-child(1) { left: 24px; }
+.duck-house-stilts i:nth-child(2) { right: 24px; }
+
+.duck-ramp {
+  position: absolute;
+  left: 45px;
+  bottom: -32px;
+  width: 48px;
+  height: 38px;
+  background: #b45309;
+  border: 2px solid #78350f;
+  transform: skewX(-18deg);
+}
+
+/* Scenic Pond Water with Animated Ripples */
+.duck-pond-water {
+  position: absolute;
+  left: 20%;
+  right: 6%;
+  bottom: 6%;
+  height: 180px;
+  border-radius: 50% 50% 45% 45%;
+  background: radial-gradient(ellipse at 50% 40%, #7ee0ea, #38bdf8 45%, #0284c7 90%);
+  border: 8px solid #cbd5e1;
+  box-shadow: inset 0 8px 24px rgba(255, 255, 255, 0.4), 0 12px 28px rgba(14, 116, 144, 0.25);
+  overflow: hidden;
+  z-index: 4;
+}
+
+.water-ripples {
+  position: absolute;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  animation: water-ripple-expand 4.5s ease-out infinite;
+}
+
+.water-ripples.r1 { left: 25%; top: 35%; width: 70px; height: 35px; }
+.water-ripples.r2 { right: 28%; top: 55%; width: 90px; height: 42px; animation-delay: -2.2s; }
+
+.lily-pad {
+  position: absolute;
+  width: 32px;
+  height: 22px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid #15803d;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.lily-pad.l1 { left: 22%; top: 28%; }
+.lily-pad.l2 { left: 52%; top: 62%; transform: scale(0.8); }
+.lily-pad.l3 { right: 20%; top: 38%; transform: scale(1.1); }
+
+.lotus-flower {
+  position: absolute;
+  right: -2px;
+  top: -6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: inset 0 0 4px #ec4899, 0 0 6px rgba(236, 72, 153, 0.4);
+}
+
+.lotus-flower.pink {
+  background: #f472b6;
+  box-shadow: inset 0 0 4px #db2777;
+}
+
+/* Wooden Pier / Dock */
+.duck-dock {
+  position: absolute;
+  left: 17%;
+  bottom: 24%;
+  width: 110px;
+  height: 48px;
+  background: #b45309;
+  border: 4px solid #78350f;
+  border-radius: 4px;
+  z-index: 5;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.22);
+}
+
+.dock-planks {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 16px, #78350f 16px 19px);
+}
+
+.dock-post {
+  position: absolute;
+  top: -12px;
+  width: 12px;
+  height: 68px;
+  background: #78350f;
+  border-radius: 4px;
+}
+
+.post-left { left: 10px; }
+.post-right { right: 10px; }
+
+/* Reeds & Cattails */
+.duck-reeds {
+  position: absolute;
+  display: flex;
+  gap: 6px;
+  z-index: 5;
+}
+
+.left-reeds { left: 16%; bottom: 32%; }
+.right-reeds { right: 6%; bottom: 22%; }
+
+.duck-reeds i {
+  position: relative;
+  width: 5px;
+  height: 46px;
+  background: #4ade80;
+  border-radius: 3px;
+  transform-origin: bottom center;
+  animation: reed-sway 3.8s ease-in-out infinite alternate;
+}
+
+.duck-reeds i::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -2px;
+  width: 9px;
+  height: 18px;
+  background: #713f12;
+  border-radius: 5px;
+}
+
+.duck-reeds i:nth-child(2) { height: 56px; animation-delay: -1.2s; }
+.duck-reeds i:nth-child(3) { height: 42px; animation-delay: -2.5s; }
+
+.river-pebbles {
+  position: absolute;
+  left: 14%;
+  bottom: 8%;
+  display: flex;
+  gap: 8px;
+}
+
+.river-pebbles i {
+  width: 14px;
+  height: 10px;
+  background: #94a3b8;
+  border-radius: 50%;
+}
+
+/* ==========================================================================
+   3. HIGHLAND HABITAT (ALPINE MOUNTAINS & STONE BARN)
+   ========================================================================== */
+.highland-habitat {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Distant Alpine Peaks */
+.highland-mountain-ridge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 14%;
+  height: 120px;
+  z-index: 1;
+}
+
+.mountain-peak {
+  position: absolute;
+  bottom: 0;
+  border-style: solid;
+}
+
+.peak-1 {
+  left: 12%;
+  border-width: 0 110px 110px 110px;
+  border-color: transparent transparent #94a3b8 transparent;
+  opacity: 0.65;
+}
+
+.peak-2 {
+  left: 42%;
+  border-width: 0 135px 130px 135px;
+  border-color: transparent transparent #64748b transparent;
+  opacity: 0.8;
+}
+
+.peak-3 {
+  right: 6%;
+  border-width: 0 100px 95px 100px;
+  border-color: transparent transparent #94a3b8 transparent;
+  opacity: 0.6;
+}
+
+/* Alpine Pines */
+.highland-pines {
+  position: absolute;
+  left: 28%;
+  top: 26%;
+  display: flex;
+  gap: 24px;
+  z-index: 2;
+}
+
+.highland-pines .pine {
+  position: relative;
+  width: 0;
+  height: 0;
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-bottom: 45px solid #2d5a3b;
+}
+
+.highland-pines .pine::after {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: -15px;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 35px solid #366946;
+}
+
+/* Alpine Stone Barn */
+.highland-stone-barn {
+  position: absolute;
+  left: 6%;
+  top: 23%;
+  width: 175px;
+  height: 140px;
+  z-index: 5;
+}
+
+.barn-slate-roof {
+  position: absolute;
+  left: -14px;
+  top: 0;
+  width: 202px;
+  height: 52px;
+  background: #334155;
+  clip-path: polygon(50% 0, 100% 80%, 92% 100%, 8% 100%, 0 80%);
+}
+
+.stone-chimney {
+  position: absolute;
+  right: 32px;
+  top: -24px;
+  width: 22px;
+  height: 28px;
+  background: #64748b;
+  border: 3px solid #334155;
+}
+
+.chimney-smoke {
+  position: absolute;
+  left: 4px;
+  top: -12px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.65);
+  animation: chimney-smoke-rise 3s ease-out infinite;
+}
+
+.chimney-smoke.s2 {
+  animation-delay: -1.5s;
+}
+
+.barn-stone-body {
+  position: absolute;
+  left: 8px;
+  top: 46px;
+  width: 158px;
+  height: 92px;
+  background: #94a3b8;
+  border: 4px solid #475569;
+  border-radius: 4px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  background-image: radial-gradient(circle at 10px 10px, #64748b 3px, transparent 4px), radial-gradient(circle at 35px 25px, #475569 4px, transparent 5px), radial-gradient(circle at 65px 12px, #64748b 3px, transparent 4px);
+  background-size: 50px 30px;
+}
+
+.barn-stone-door {
+  position: absolute;
+  left: 20px;
+  bottom: 0;
+  width: 44px;
+  height: 54px;
+  background: #78350f;
+  border: 4px solid #451a03;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+}
+
+.barn-hay-loft-window {
+  position: absolute;
+  right: 24px;
+  top: 14px;
+  width: 32px;
+  height: 28px;
+  background: #fde047;
+  border: 3px solid #475569;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(253, 224, 71, 0.5);
+}
+
+/* Dry Stone Terraces */
+.highland-stone-wall {
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  top: 50%;
+  height: 22px;
+  z-index: 3;
+  background: #64748b;
+  border-top: 4px solid #94a3b8;
+  border-bottom: 4px solid #334155;
+  background-image: repeating-linear-gradient(90deg, transparent 0 24px, #334155 24px 28px);
+}
+
+/* Goat Climbing Crags */
+.highland-rock-ledge {
+  position: absolute;
+  right: 8%;
+  top: 38%;
+  display: flex;
+  gap: 12px;
+  z-index: 4;
+}
+
+.highland-rock-ledge .crag {
+  background: #64748b;
+  border: 3px solid #334155;
+  border-radius: 8px 8px 0 0;
+}
+
+.highland-rock-ledge .c1 { width: 55px; height: 38px; }
+.highland-rock-ledge .c2 { width: 44px; height: 52px; }
+.highland-rock-ledge .c3 { width: 36px; height: 26px; }
+
+/* Hay Rack */
+.highland-hay-rack {
+  position: absolute;
+  left: 32%;
+  top: 48%;
+  width: 64px;
+  height: 28px;
+  background: #92400e;
+  border: 3px solid #451a03;
+  border-radius: 4px;
+}
+
+.hay-tuft {
+  position: absolute;
+  inset: -6px 4px auto 4px;
+  height: 14px;
+  background: #fde047;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Purple Heather */
+.highland-heather {
+  position: absolute;
+  left: 48%;
+  top: 54%;
+  display: flex;
+  gap: 14px;
+}
+
+.highland-heather i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c084fc;
+  box-shadow: 4px -2px #a855f7, -3px 3px #e879f9;
+}
+
+/* ==========================================================================
+   4. COW PASTURE HABITAT (RED DAIRY BARN & WINDMILL)
+   ========================================================================== */
+.pasture-habitat {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Iconic Big Red Dairy Barn */
+.pasture-red-barn {
+  position: absolute;
+  left: 6%;
+  top: 20%;
+  width: 195px;
+  height: 155px;
+  z-index: 5;
+}
+
+.red-barn-roof {
+  position: absolute;
+  left: -14px;
+  top: 0;
+  width: 223px;
+  height: 60px;
+  background: #7f1d1d;
+  clip-path: polygon(50% 0, 80% 25%, 100% 75%, 93% 100%, 7% 100%, 0 75%, 20% 25%);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.barn-cupola {
+  position: absolute;
+  left: 50%;
+  top: -18px;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 18px;
+  background: #f8fafc;
+  border: 2px solid #7f1d1d;
+  border-radius: 3px 3px 0 0;
+}
+
+.barn-cupola::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 8px solid #991b1b;
+}
+
+.red-barn-body {
+  position: absolute;
+  left: 8px;
+  top: 55px;
+  width: 178px;
+  height: 98px;
+  background: #b91c1c;
+  border: 4px solid #7f1d1d;
+  border-radius: 4px;
+  box-shadow: inset -12px 0 rgba(0,0,0,0.12), 0 10px 24px rgba(0,0,0,0.25);
+  background-image: repeating-linear-gradient(0deg, transparent 0 14px, #7f1d1d 14px 16px);
+}
+
+.red-barn-loft {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 32px;
+  background: #450a0a;
+  border: 3px solid #f8fafc;
+  border-radius: 4px;
+}
+
+.loft-hay {
+  position: absolute;
+  left: 4px;
+  bottom: -6px;
+  width: 26px;
+  height: 14px;
+  background: #fde047;
+  border-radius: 3px;
+}
+
+.red-barn-doors {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  width: 82px;
+  height: 52px;
+}
+
+.barn-door {
+  flex: 1;
+  background: #991b1b;
+  border: 3px solid #f8fafc;
+  border-bottom: 0;
+  position: relative;
+}
+
+.barn-door .cross-buck {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top right, transparent 42%, #f8fafc 42% 58%, transparent 58%),
+              linear-gradient(to bottom right, transparent 42%, #f8fafc 42% 58%, transparent 58%);
+}
+
+/* Silo */
+.pasture-silo {
+  position: absolute;
+  left: 23%;
+  top: 18%;
+  width: 58px;
+  height: 165px;
+  z-index: 4;
+}
+
+.silo-dome {
+  width: 58px;
+  height: 34px;
+  background: #94a3b8;
+  border: 3px solid #475569;
+  border-radius: 50% 50% 0 0;
+}
+
+.silo-cylinder {
+  width: 58px;
+  height: 130px;
+  background: #cbd5e1;
+  border: 3px solid #475569;
+  border-top: 0;
+  box-shadow: inset -8px 0 rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
+.silo-cylinder i {
+  height: 2px;
+  background: #94a3b8;
+}
+
+/* Windmill */
+.pasture-windmill {
+  position: absolute;
+  right: 12%;
+  top: 18%;
+  width: 100px;
+  height: 175px;
+  z-index: 5;
+}
+
+.windmill-tower {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 52px;
+  height: 120px;
+  background: #e2e8f0;
+  border: 4px solid #64748b;
+  clip-path: polygon(25% 0, 75% 0, 100% 100%, 0 100%);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+.windmill-rotor {
+  position: absolute;
+  left: 50%;
+  top: 25px;
+  width: 0;
+  height: 0;
+  animation: windmill-spin 10s linear infinite;
+}
+
+.windmill-center {
+  position: absolute;
+  left: -8px;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #334155;
+  border: 3px solid #f8fafc;
+}
+
+.windmill-blade {
+  position: absolute;
+  left: -6px;
+  top: -65px;
+  width: 12px;
+  height: 65px;
+  background: #f8fafc;
+  border: 2px solid #64748b;
+  transform-origin: bottom center;
+}
+
+.windmill-blade.b1 { transform: rotate(0deg); }
+.windmill-blade.b2 { transform: rotate(90deg); }
+.windmill-blade.b3 { transform: rotate(180deg); }
+.windmill-blade.b4 { transform: rotate(270deg); }
+
+/* Milk Cans & Trough */
+.pasture-milk-stand {
+  position: absolute;
+  left: 31%;
+  top: 48%;
+  display: flex;
+  gap: 8px;
+}
+
+.milk-can {
+  width: 18px;
+  height: 28px;
+  background: #cbd5e1;
+  border: 3px solid #475569;
+  border-radius: 6px 6px 4px 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.pasture-water-trough {
+  position: absolute;
+  left: 42%;
+  top: 50%;
+  width: 74px;
+  height: 24px;
+  background: #78350f;
+  border: 3px solid #451a03;
+  border-radius: 4px;
+}
+
+.trough-water {
+  position: absolute;
+  inset: 2px;
+  background: #38bdf8;
+  border-radius: 2px;
+}
+
+.pasture-hay-stack {
+  position: absolute;
+  left: 28%;
+  top: 54%;
+  display: flex;
+  gap: 6px;
+}
+
+.hay-bale {
+  width: 32px;
+  height: 20px;
+  background: #fde047;
+  border: 2px solid #ca8a04;
+  border-radius: 3px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.12);
+}
+
+.pasture-fence {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 53%;
+  height: 26px;
+  border-top: 5px solid #ffffff;
+  border-bottom: 4px solid #e2e8f0;
+  background: repeating-linear-gradient(90deg, transparent 0 44px, #ffffff 44px 52px, transparent 52px 96px);
+  z-index: 3;
+}
+
+/* ==========================================================================
+   5. PIG ORCHARD HABITAT (APPLE TREES & MUD WALLOW)
+   ========================================================================== */
+.orchard-habitat {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Fruit-Bearing Apple Trees */
+.orchard-apple-tree {
+  position: absolute;
+  z-index: 5;
+}
+
+.tree-left { left: 8%; top: 16%; }
+.tree-right { right: 8%; top: 18%; }
+
+.tree-trunk {
+  position: absolute;
+  left: 50%;
+  bottom: -60px;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 70px;
+  background: #78350f;
+  border: 4px solid #451a03;
+  border-radius: 4px;
+}
+
+.tree-foliage {
+  position: relative;
+  width: 140px;
+  height: 125px;
+  background: #15803d;
+  border: 5px solid #166534;
+  border-radius: 50% 50% 45% 45%;
+  box-shadow: inset 0 -12px rgba(0,0,0,0.15), 0 12px 24px rgba(0,0,0,0.18);
+}
+
+.tree-foliage .apple {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #dc2626;
+  border: 2px solid #991b1b;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.tree-foliage .a1 { left: 24px; top: 32px; }
+.tree-foliage .a2 { left: 65px; top: 22px; }
+.tree-foliage .a3 { right: 28px; top: 48px; }
+.tree-foliage .a4 { left: 52px; top: 72px; }
+
+/* Fallen Apples */
+.fallen-apples {
+  position: absolute;
+  left: 12%;
+  top: 56%;
+  display: flex;
+  gap: 20px;
+}
+
+.fallen-apples .apple {
+  width: 12px;
+  height: 12px;
+  background: #dc2626;
+  border: 2px solid #991b1b;
+  border-radius: 50%;
+}
+
+/* Authentic Mud Wallow Pool */
+.orchard-mud-wallow {
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  bottom: 8%;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 45%, #713f12, #542d0a 70%, #3e1f05 100%);
+  border: 6px solid #854d0e;
+  box-shadow: inset 0 6px 18px rgba(0,0,0,0.4), 0 8px 18px rgba(0,0,0,0.15);
+  z-index: 4;
+  overflow: hidden;
+}
+
+.mud-sheen {
+  position: absolute;
+  left: 30%;
+  top: 25%;
+  width: 40%;
+  height: 25%;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+}
+
+.mud-splash {
+  position: absolute;
+  width: 16px;
+  height: 12px;
+  background: #854d0e;
+  border-radius: 50%;
+}
+
+.ms1 { left: 20%; top: 40%; }
+.ms2 { right: 25%; top: 55%; }
+
+/* Rustic Lean-to Shelter */
+.orchard-lean-to {
+  position: absolute;
+  left: 28%;
+  top: 28%;
+  width: 120px;
+  height: 75px;
+  z-index: 4;
+}
+
+.lean-to-roof {
+  position: absolute;
+  inset: 0 0 45% 0;
+  background: #b45309;
+  border: 3px solid #78350f;
+  transform: skewX(-15deg);
+}
+
+.lean-to-posts i {
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 48px;
+  background: #78350f;
+}
+
+.lean-to-posts i:nth-child(1) { left: 10px; }
+.lean-to-posts i:nth-child(2) { right: 10px; }
+
+.lean-to-straw {
+  position: absolute;
+  left: 14px;
+  bottom: 0;
+  width: 90px;
+  height: 18px;
+  background: #fde047;
+  border-radius: 4px;
+}
+
+/* Vegetable Trough */
+.orchard-trough {
+  position: absolute;
+  right: 28%;
+  top: 50%;
+  width: 65px;
+  height: 22px;
+  background: #854d0e;
+  border: 3px solid #542d0a;
+  border-radius: 4px;
+}
+
+.trough-apples {
+  position: absolute;
+  inset: 2px;
+  background: repeating-linear-gradient(90deg, #dc2626 0 8px, #16a34a 8px 16px);
+  border-radius: 2px;
+}
+
+.orchard-pen-fence {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 54%;
+  height: 26px;
+  border-top: 6px solid #a16207;
+  border-bottom: 5px solid #713f12;
+  background: repeating-linear-gradient(90deg, transparent 0 40px, #a16207 40px 48px, transparent 48px 88px);
+  z-index: 3;
+}
+
+/* ==========================================================================
+   6. HORSE RANCH HABITAT (CEDAR STABLE & PADDOCK JUMPS)
+   ========================================================================== */
+.ranch-habitat {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Deluxe Equestrian Stable */
+.ranch-stable {
+  position: absolute;
+  left: 6%;
+  top: 20%;
+  width: 195px;
+  height: 155px;
+  z-index: 5;
+}
+
+.stable-roof {
+  position: absolute;
+  left: -14px;
+  top: 0;
+  width: 223px;
+  height: 55px;
+  background: #78350f;
+  clip-path: polygon(50% 0, 100% 82%, 92% 100%, 8% 100%, 0 82%);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+}
+
+.horse-weathervane {
+  position: absolute;
+  left: 50%;
+  top: -20px;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 20px;
+  background: #451a03;
+}
+
+.horse-weathervane::after {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: -6px;
+  width: 20px;
+  height: 12px;
+  background: #facc15;
+  clip-path: polygon(0 50%, 40% 0, 100% 20%, 75% 70%, 90% 100%, 30% 90%);
+}
+
+.stable-body {
+  position: absolute;
+  left: 8px;
+  top: 50px;
+  width: 178px;
+  height: 102px;
+  background: #b45309;
+  border: 4px solid #78350f;
+  border-radius: 4px;
+  box-shadow: inset -12px 0 rgba(0,0,0,0.12), 0 10px 24px rgba(0,0,0,0.2);
+  background-image: repeating-linear-gradient(0deg, transparent 0 14px, #78350f 14px 16px);
+}
+
+.stable-arch {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 82px;
+  height: 70px;
+  background: #451a03;
+  border: 4px solid #78350f;
+  border-bottom: 0;
+  border-radius: 40px 40px 0 0;
+}
+
+.golden-horseshoe {
+  position: absolute;
+  left: 50%;
+  top: -20px;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 20px;
+  border: 3px solid #facc15;
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+}
+
+.stable-lantern {
+  position: absolute;
+  right: 14px;
+  top: 16px;
+  width: 14px;
+  height: 18px;
+  background: #fde047;
+  border: 2px solid #78350f;
+  border-radius: 3px;
+  box-shadow: 0 0 12px rgba(253, 224, 71, 0.7);
+}
+
+/* Pyramid Stack of Golden Hay Bales */
+.ranch-hay-pyramid {
+  position: absolute;
+  left: 28%;
+  top: 45%;
+  width: 76px;
+  height: 48px;
+  z-index: 5;
+}
+
+.hay-bale.p-base-1 { position: absolute; left: 0; bottom: 0; }
+.hay-bale.p-base-2 { position: absolute; right: 0; bottom: 0; }
+.hay-bale.p-top { position: absolute; left: 20px; top: 0; }
+
+/* Dirt Riding / Galloping Trail */
+.ranch-riding-trail {
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  bottom: 8%;
+  height: 48px;
+  background: #a16207;
+  border-radius: 50% 50% 0 0;
+  opacity: 0.75;
+  box-shadow: inset 0 4px 10px rgba(0,0,0,0.25);
+}
+
+/* Paddock Jump Hurdle */
+.ranch-jump-hurdle {
+  position: absolute;
+  right: 18%;
+  top: 48%;
+  width: 85px;
+  height: 38px;
+  z-index: 5;
+}
+
+.hurdle-pole {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: repeating-linear-gradient(90deg, #dc2626 0 14px, #ffffff 14px 28px);
+  border-radius: 3px;
+}
+
+.pole-1 { top: 8px; }
+.pole-2 { bottom: 6px; }
+
+.ranch-jump-hurdle::before,
+.ranch-jump-hurdle::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 38px;
+  background: #ffffff;
+  border: 2px solid #94a3b8;
+}
+
+.ranch-jump-hurdle::before { left: 0; }
+.ranch-jump-hurdle::after { right: 0; }
+
+/* Hitching Post & Water Barrel */
+.ranch-hitching-post {
+  position: absolute;
+  right: 36%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 5;
+}
+
+.hitching-bar {
+  width: 50px;
+  height: 8px;
+  background: #78350f;
+  border: 2px solid #451a03;
+  border-radius: 4px;
+}
+
+.water-barrel {
+  width: 22px;
+  height: 28px;
+  background: #854d0e;
+  border: 3px solid #451a03;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.18);
+}
+
+.ranch-fence {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 53%;
+  height: 26px;
+  border-top: 5px solid #ffffff;
+  border-bottom: 4px solid #e2e8f0;
+  background: repeating-linear-gradient(90deg, transparent 0 42px, #ffffff 42px 50px, transparent 50px 92px);
+  z-index: 3;
+}
+
+/* ==========================================================================
+   ANIMAL CHARACTERS & STYLES (INCLUDING COMET THE HORSE)
+   ========================================================================== */
+.farm-scene-animal {
+  position: absolute;
+  z-index: 12;
+  width: 92px;
+  height: 115px;
+  transform: translate(-50%, -50%);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  animation: farm-animal-wander 3.8s ease-in-out infinite;
+  animation-delay: var(--delay);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.farm-scene-animal:hover {
+  transform: translate(-50%, -56%) scale(1.08);
+  z-index: 25;
+}
+
+.farm-scene-animal.is-selected .farm-animal-label {
+  background: #27402c;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(39, 64, 44, 0.35);
+}
+
+.farm-animal-label {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  bottom: -4px;
+  transform: translateX(-50%);
+  min-width: 66px;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 900;
+  color: #27402c;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.farm-animal-label small {
+  display: block;
+  font-size: 7px;
+  font-weight: 800;
+  opacity: 0.7;
+}
+
+/* Base Creature */
+.farm-creature {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 76px;
+  height: 84px;
+  transform-origin: bottom center;
+  animation: farm-creature-breathe 3s ease-in-out infinite;
+}
+
+.farm-creature-shadow {
+  position: absolute;
+  left: 14px;
+  bottom: 1px;
+  width: 49px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(30, 48, 25, 0.24);
+  filter: blur(2px);
+}
+
+.farm-creature-body {
+  position: absolute;
+  z-index: 2;
+  left: 15px;
+  bottom: 9px;
+  width: 48px;
+  height: 53px;
+  border: 2px solid #5a4933;
+  border-radius: 48% 48% 44% 44%;
+  background: #f5d46f;
+  box-shadow: inset -6px -5px rgba(144, 91, 46, 0.12);
+}
+
+.farm-creature-head {
+  position: absolute;
+  z-index: 4;
+  left: 20px;
+  top: 9px;
+  width: 39px;
+  height: 38px;
+  border: 2px solid #5a4933;
+  border-radius: 49%;
+  background: #f8dc78;
+}
+
+.farm-eye {
+  position: absolute;
+  top: 15px;
+  width: 4px;
+  height: 5px;
+  border-radius: 50%;
+  background: #382c1f;
+}
+
+.eye-left { left: 10px; }
+.eye-right { right: 10px; }
+
+.farm-muzzle {
+  position: absolute;
+  left: 14px;
+  top: 21px;
+  width: 11px;
+  height: 7px;
+  border: 1.5px solid #8d633e;
+  border-radius: 50%;
+  background: #edae47;
+}
+
+.farm-blush {
+  position: absolute;
+  top: 23px;
+  width: 7px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(239, 110, 110, 0.45);
+}
+
+.blush-left { left: 3px; }
+.blush-right { right: 3px; }
+
+.farm-creature-wing {
+  position: absolute;
+  z-index: 5;
+  top: 43px;
+  width: 18px;
+  height: 28px;
+  border: 2px solid #5a4933;
+  border-radius: 50%;
+  background: #efd06e;
+}
+
+.wing-left { left: 8px; transform: rotate(20deg); }
+.wing-right { right: 7px; transform: rotate(-20deg); }
+
+.farm-creature-leg {
+  position: absolute;
+  z-index: 1;
+  bottom: 2px;
+  width: 11px;
+  height: 19px;
+  border-radius: 50%;
+  background: #d9973e;
+  border: 2px solid #5a4933;
+}
+
+.leg-left { left: 21px; }
+.leg-right { right: 20px; }
+
+/* Chicken Specific */
+.creature-chicken .farm-creature-head::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: -8px;
+  width: 8px;
+  height: 9px;
+  border-radius: 70% 70% 20% 20%;
+  background: #dc2626;
+  box-shadow: 7px 2px #dc2626;
+}
+
+/* Duck Specific */
+.creature-duck .farm-creature-body,
+.creature-duck .farm-creature-head,
+.creature-duck .farm-creature-wing {
+  background: #7dd3fc;
+}
+.creature-duck .farm-muzzle {
+  left: 10px;
+  width: 19px;
+  background: #f59e0b;
+}
+
+/* Sheep Specific */
+.creature-sheep .farm-creature-body,
+.creature-sheep .farm-creature-head {
+  background: #f8fafc;
+  border-color: #64748b;
+  box-shadow: inset 6px 0 #ffffff, -6px 4px 0 -3px #cbd5e1;
+}
+.creature-sheep .farm-creature-wing { background: #e2e8f0; }
+
+/* Cow Specific */
+.creature-cow .farm-creature-body,
+.creature-cow .farm-creature-head {
+  background: #f8fafc;
+}
+.creature-cow .farm-creature-body::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 12px;
+  width: 16px;
+  height: 20px;
+  border-radius: 60%;
+  background: #334155;
+  box-shadow: 20px 13px 0 -3px #334155;
+}
+.creature-cow .farm-muzzle {
+  left: 9px;
+  top: 22px;
+  width: 19px;
+  height: 10px;
+  background: #fca5a5;
+}
+
+/* Goat Specific */
+.creature-goat .farm-creature-body,
+.creature-goat .farm-creature-head,
+.creature-goat .farm-creature-wing {
+  background: #cbd5e1;
+}
+.creature-goat .farm-creature-head::before,
+.creature-goat .farm-creature-head::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  width: 7px;
+  height: 14px;
+  border: 2px solid #5a4933;
+  border-bottom: 0;
+  border-radius: 70% 70% 0 0;
+  background: #94a3b8;
+}
+.creature-goat .farm-creature-head::before { left: 5px; transform: rotate(-18deg); }
+.creature-goat .farm-creature-head::after { right: 5px; transform: rotate(18deg); }
+
+/* Pig Specific */
+.creature-pig .farm-creature-body,
+.creature-pig .farm-creature-head,
+.creature-pig .farm-creature-wing {
+  background: #f9a8d4;
+}
+.creature-pig .farm-muzzle {
+  left: 9px;
+  top: 20px;
+  width: 20px;
+  height: 11px;
+  background: #f472b6;
+}
+
+/* Horse (Comet) Specific */
+.creature-horse .farm-creature-body,
+.creature-horse .farm-creature-head {
+  background: #9a4918;
+  border-color: #4a2107;
+}
+.creature-horse .farm-creature-wing {
+  background: #7c3a10;
+  border-color: #4a2107;
+}
+.creature-horse .farm-creature-leg {
+  background: #4a2107;
+}
+.creature-horse .farm-muzzle {
+  left: 9px;
+  top: 21px;
+  width: 20px;
+  height: 11px;
+  background: #c2692e;
+  border-color: #4a2107;
+}
+.creature-horse .farm-creature-head::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: -10px;
+  width: 8px;
+  height: 12px;
+  background: #9a4918;
+  border: 2px solid #4a2107;
+  border-bottom: 0;
+  border-radius: 80% 80% 0 0;
+  box-shadow: 17px 0 0 0 #9a4918;
+}
+.creature-horse .farm-creature-head::after {
+  content: "";
+  position: absolute;
+  left: 17px;
+  top: -6px;
+  width: 5px;
+  height: 16px;
+  background: #3b1d06;
+  border-radius: 4px;
+}
+
+/* Growth Stages */
+.farm-creature.stage-egg .farm-creature-head,
+.farm-creature.stage-egg .farm-creature-wing,
+.farm-creature.stage-egg .farm-creature-leg {
+  display: none;
+}
+.farm-creature.stage-egg .farm-creature-body {
+  left: 17px;
+  bottom: 5px;
+  width: 44px;
+  height: 62px;
+  border-radius: 52% 52% 46% 46%;
+  background: #fff8e7;
+  box-shadow: inset -7px -8px #eadfc9;
+}
+.farm-creature.stage-egg .farm-creature-body::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 28px;
+  width: 8px;
+  height: 4px;
+  border-bottom: 2px solid #ad9d81;
+  transform: rotate(20deg);
+  box-shadow: 14px -3px 0 -1px #ad9d81;
+}
+
+.farm-creature.stage-baby { transform: scale(0.78); }
+.farm-creature.stage-growing { transform: scale(0.9); }
+
+/* Creature Action Animations */
+.farm-creature.action-eat .wing-left { animation: farm-wing-left 0.5s ease-in-out 3; }
+.farm-creature.action-eat .wing-right { animation: farm-wing-right 0.5s ease-in-out 3; }
+.farm-creature.action-celebrate,
+.farm-creature.action-happy { animation: farm-creature-hop 0.48s ease-in-out 3; }
+.farm-creature.action-sleep { animation: farm-creature-rest 1.8s ease-in-out; }
+.farm-creature.action-sleep .farm-eye {
+  height: 2px;
+  top: 18px;
+  border-radius: 0;
+  border-bottom: 2px solid #382c1f;
+  background: transparent;
+}
+
+/* ==========================================================================
+   UI OVERLAYS & CAPTIONS
+   ========================================================================== */
+.farm-scene-caption {
+  position: absolute;
+  z-index: 15;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 10px 16px;
+  color: #415546;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.farm-scene-caption span {
+  display: block;
+  font-size: 8.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.farm-scene-caption strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #1f2e23;
+}
+
+/* Onboarding & Session Moments */
+.farm-onboarding {
+  position: absolute;
+  z-index: 18;
+  right: 6%;
+  top: 18%;
+  width: min(320px, 46%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 20px;
+  box-shadow: 0 16px 40px rgba(35, 55, 38, 0.16);
+  backdrop-filter: blur(12px);
+}
+
+.farm-onboarding p,
+.farm-session-moment p {
+  font-size: 9.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #278144;
+}
+
+.farm-onboarding strong,
+.farm-session-moment strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 19px;
+  line-height: 1.25;
+  color: #1e2b20;
+}
+
+.farm-onboarding span,
+.farm-session-moment small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #5c6c61;
+}
+
+.farm-onboarding button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  border: 0;
+  border-radius: 12px;
+  background: #244229;
+  padding: 10px 14px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(36, 66, 41, 0.25);
+}
+
+.farm-session-moment {
+  position: absolute;
+  z-index: 30;
+  left: 50%;
+  top: 18%;
+  width: min(350px, 85%);
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(30, 50, 32, 0.2);
+  backdrop-filter: blur(12px);
+  animation: farm-moment-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.falling-feed {
+  position: absolute;
+  left: 50%;
+  top: -60px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e3ad4b;
+  box-shadow: -15px -8px #d69738, 16px -18px #efc361;
+  animation: farm-feed-drop 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s both;
+}
+
+/* ==========================================================================
+   ANIMATIONS & KEYFRAMES
+   ========================================================================== */
+@keyframes farm-creature-breathe {
+  50% { margin-top: -3px; transform: scale(1.02); }
+}
+
+@keyframes farm-animal-wander {
+  0%, 100% { margin-left: -4px; }
+  50% { margin-left: 6px; margin-top: -4px; }
+}
+
+@keyframes farm-creature-hop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px) rotate(3deg); }
+}
+
+@keyframes farm-creature-rest {
+  50% { transform: translateY(5px) scale(0.97); }
+}
+
+@keyframes farm-wing-left {
+  50% { transform: rotate(-35deg) translateY(-10px); }
+}
+
+@keyframes farm-wing-right {
+  50% { transform: rotate(35deg) translateY(-10px); }
+}
+
+@keyframes farm-cloud-drift {
+  to { transform: translateX(35px); }
+}
+
+@keyframes farm-sun-float {
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes farm-bird-glide {
+  50% { transform: translateY(-8px) rotate(-5deg); }
+}
+
+@keyframes farm-particle-drift {
+  0%, 100% { transform: translate(0, 0); opacity: 0.4; }
+  50% { transform: translate(15px, -18px); opacity: 0.9; }
+}
+
+@keyframes windmill-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes chimney-smoke-rise {
+  0% { transform: scale(0.6) translateY(0); opacity: 0.8; }
+  100% { transform: scale(2.2) translateY(-26px); opacity: 0; }
+}
+
+@keyframes water-ripple-expand {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes reed-sway {
+  0% { transform: rotate(-3deg); }
+  100% { transform: rotate(4deg); }
+}
+
+@keyframes farm-moment-in {
+  from { opacity: 0; transform: translate(-50%, 12px) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes farm-feed-drop {
+  0% { opacity: 0; transform: translateY(-20px) rotate(0); }
+  65% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(150px) rotate(240deg); }
+}
+
+/* ==========================================================================
+   RESPONSIVENESS
+   ========================================================================== */
+@media (max-width: 768px) {
+  .farm-scene { min-height: 520px; border-radius: 20px; }
+  .farm-coop-building,
+  .duck-house,
+  .highland-stone-barn,
+  .pasture-red-barn,
+  .ranch-stable { transform: scale(0.78); transform-origin: left top; }
+  .pasture-windmill { transform: scale(0.75); transform-origin: right top; right: 4%; }
+  .orchard-apple-tree.tree-left { transform: scale(0.75); transform-origin: left top; }
+  .orchard-apple-tree.tree-right { transform: scale(0.75); transform-origin: right top; }
+  .duck-pond-water { left: 14%; right: 4%; height: 150px; }
+  .farm-scene-animal { transform: translate(-50%, -50%) scale(0.85); }
+  .farm-scene-caption { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .farm-onboarding { right: 4%; top: 14%; width: 65%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .farm-creature,
+  .farm-scene-animal,
+  .farm-scene-cloud,
+  .farm-scene-sun,
+  .windmill-rotor,
+  .water-ripples,
+  .chimney-smoke {
+    animation: none !important;
+  }
+}

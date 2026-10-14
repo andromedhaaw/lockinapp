@@ -54,7 +54,7 @@ const tabs = [
   { id: TABS.FOCUS, label: 'Focus', icon: Timer },
   { id: TABS.TIIMO, label: 'Tiimo', icon: Clock },
   { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
-  { id: TABS.TODO, label: 'To Do', icon: CheckSquare },
+  { id: TABS.TODO, label: 'Routine (To Do)', icon: CheckSquare },
   { id: TABS.DEADLINE, label: 'Deadline', icon: CalendarDays },
   { id: TABS.GOALS, label: 'Goals', icon: Lock },
   { id: TABS.PROJECTS, label: 'Projects', icon: Flag },
@@ -232,7 +232,7 @@ const TimeTracker = ({ initialTab }) => {
     { id: TABS.FOCUS, label: 'Focus', icon: Timer },
     { id: TABS.TIIMO, label: 'Tiimo', icon: Clock },
     { id: TABS.TASKS, label: 'Tasks', icon: CheckSquare },
-    { id: TABS.TODO, label: 'To Do', icon: CheckSquare },
+    { id: TABS.TODO, label: 'Routine (To Do)', icon: CheckSquare },
     { id: TABS.DEADLINE, label: 'Deadline', icon: CalendarDays },
     { id: TABS.PROFILE, label: 'Profile', icon: User },
   ];
@@ -374,7 +374,7 @@ const TimeTracker = ({ initialTab }) => {
   };
 
   return (
-    <div className="li-shell dark:bg-slate-950 transition-colors duration-200">
+    <div className="min-h-screen overflow-x-hidden bg-[#f5f5f5] dark:bg-slate-950 transition-colors duration-300">
       {/* Tab Navigation */}
       <TabNavigation
         tabs={visibleTabs}
@@ -453,9 +453,9 @@ const TimeTracker = ({ initialTab }) => {
 
               {/* Session Goal Input (Accountability) */}
               {!isTracking && (
-                 <div className="mt-8 bg-white/50 p-2 rounded-xl border border-green-50 mb-6">
+                 <div className="mt-8 rounded-2xl border border-[#e9e7e1] bg-white p-3 mb-6 shadow-[0_2px_8px_rgba(34,51,39,.04)] dark:border-slate-800 dark:bg-slate-900">
                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                     <label className="text-[10px] font-bold text-green-700 uppercase whitespace-nowrap">Session Commitment:</label>
+                     <label className="text-[10px] font-bold text-[#748078] uppercase whitespace-nowrap">Session Commitment:</label>
                      <div className="flex gap-1.5 w-full">
                        {[30, 60, 90, 120].map(mins => (
                          <button
@@ -464,7 +464,7 @@ const TimeTracker = ({ initialTab }) => {
                            className={`flex-1 py-1 text-xs font-bold rounded-lg transition-all ${
                              sessionGoal === mins 
                                ? 'bg-green-600 text-white shadow-sm' 
-                               : 'bg-white text-gray-400 hover:bg-green-50'
+                               : 'bg-[#f8f9f6] text-[#8a948d] hover:bg-[#eef8f0]'
                            }`}
                          >
                            {mins}m
@@ -485,8 +485,6 @@ const TimeTracker = ({ initialTab }) => {
                   onFinish={handleFinishWithEncouragement}
                 />
               </div>
-
-              <TrackerInsightSummary />
 
               {/* Action Buttons: Work History & Insights in Tracker Page */}
               <div className="mt-16 flex flex-wrap items-center justify-center gap-3">
@@ -637,6 +635,7 @@ const TimeTracker = ({ initialTab }) => {
               <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800">
                 <FocusTagSummary />
               </div>
+              <TrackerInsightSummary />
           </div>
 
           {/* Focus Timer Content */}

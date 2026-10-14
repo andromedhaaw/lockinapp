@@ -38,7 +38,7 @@ const ForYou = ({ onStartFocus }) => {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5 bg-[#fbfcfb] p-4 sm:p-8">
+    <div className="mx-auto max-w-2xl space-y-5 bg-[#f5f5f5] p-4 sm:p-8">
       <div className="space-y-1"><p className="text-xs font-bold uppercase tracking-[0.14em] text-[#249653]">For you</p><h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Make today count.</h1><p className="text-sm text-slate-500 dark:text-slate-400">{todayTasks > 0 ? `You have ${todayTasks} task${todayTasks === 1 ? '' : 's'} left today.` : 'Choose one meaningful thing to begin.'}</p></div>
       {!activeFocus && <GentleReturnCard status={streakCare} onRestart={() => start(2)} />}
       {!activeFocus && todaySessions.length === 0 && !streakCare.returning && !streakCare.freezeApplied && (

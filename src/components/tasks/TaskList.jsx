@@ -1,26 +1,56 @@
 import { useState, useEffect } from 'react';
-import { Plus, CheckSquare, Timer, Sparkles, X, Lightbulb, CalendarDays, Clock3, Leaf } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { Plus, CheckSquare, Timer, X, Lightbulb, Leaf, ChevronDown, Dices } from 'lucide-react';
 import TaskItem from './TaskItem';
 import TaskSpinnerModal from './TaskSpinnerModal';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+
+const DEMO_TASK_NAMES = [
+  'Review the launch brief',
+  'Reply to customer follow-ups',
+  'Prepare tomorrow\'s focus plan',
+  'Clean up the project board',
+  'Write the first draft',
+];
+
+const normalizeTasks = (items) => {
+  const list = Array.isArray(items) ? items : [];
+  const usedIds = new Set();
+  const allHaveSameName = list.length > 1 && list.every((task) => task.name && task.name === list[0].name);
+  return list.map((task, index) => {
+    let id = task.id || task._id;
+    if (!id || usedIds.has(String(id))) id = `local-task-${index}-${Date.now()}`;
+    usedIds.add(String(id));
+    return {
+      ...task,
+      id,
+      name: allHaveSameName ? DEMO_TASK_NAMES[index % DEMO_TASK_NAMES.length] : (task.name || 'Untitled task'),
+      completed: allHaveSameName ? (index === list.length - 1 ? true : !!task.completed) : !!task.completed,
+      microtasks: Array.isArray(task.microtasks) ? task.microtasks : [],
+    };
+  });
+};
 
 const TaskList = ({ onFocus }) => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState(() => {
     // Initial load from localStorage for instant result
     const stored = localStorage.getItem('lockin_tasks_offline');
-    return stored ? JSON.parse(stored) : [];
+    return stored ? normalizeTasks(JSON.parse(stored)) : [];
   });
   const [newTaskName, setNewTaskName] = useState('');
   const [newTime, setNewTime] = useState('');
-  const [newDeadlineDate, setNewDeadlineDate] = useState('');
-  const [newDeadlineTime, setNewDeadlineTime] = useState('');
+  const [newUrgency, setNewUrgency] = useState('Medium');
+  const [newDeadline, setNewDeadline] = useState('');
+  const [newMicrotask, setNewMicrotask] = useState('');
+  const [newMicrotasks, setNewMicrotasks] = useState([]);
   const [showSpinnerModal, setShowSpinnerModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [zenMode, setZenMode] = useState(false);
+  const [sortBy, setSortBy] = useState('deadline');
+  const [editingTask, setEditingTask] = useState(false);
+  const [editDraft, setEditDraft] = useState(null);
 
   // Sync to localStorage whenever tasks change
   useEffect(() => {
@@ -29,7 +59,7 @@ const TaskList = ({ onFocus }) => {
 
   useEffect(() => {
     const syncCompletedFocus = () => {
-      try { setTasks(JSON.parse(localStorage.getItem('lockin_tasks_offline') || '[]')); } catch {}
+      try { setTasks(normalizeTasks(JSON.parse(localStorage.getItem('lockin_tasks_offline') || '[]'))); } catch {}
     };
     window.addEventListener('local-data-updated', syncCompletedFocus);
     return () => window.removeEventListener('local-data-updated', syncCompletedFocus);
@@ -42,7 +72,7 @@ const TaskList = ({ onFocus }) => {
       try {
         const res = await api.get('/tasks');
         if (res.data && Array.isArray(res.data)) {
-          setTasks(res.data);
+          setTasks(normalizeTasks(res.data));
         }
       } catch (error) {
         console.warn("Backend unavailable, using local storage", error);
@@ -56,15 +86,14 @@ const TaskList = ({ onFocus }) => {
     
     if (!newTaskName.trim()) return;
 
-    const deadline = newDeadlineDate
-      ? `${newDeadlineDate}T${newDeadlineTime || '23:59'}`
-      : null;
     const taskId = Date.now().toString();
     const newTask = {
       id: taskId, // Temporary ID for frontend
       name: newTaskName.trim(),
       estimatedTime: newTime.trim(),
-      deadline,
+      urgency: newUrgency,
+      deadline: newDeadline ? new Date(newDeadline).toISOString() : null,
+      microtasks: newMicrotasks,
       completed: false,
       createdAt: new Date().toISOString()
     };
@@ -73,27 +102,10 @@ const TaskList = ({ onFocus }) => {
     setTasks(prev => [newTask, ...prev]);
     setNewTaskName('');
     setNewTime('');
-    setNewDeadlineDate('');
-    setNewDeadlineTime('');
-
-    if (deadline) {
-      try {
-        const storedDeadlines = JSON.parse(localStorage.getItem('lockin_deadlines') || '[]');
-        const deadlineItem = {
-          id: `task-${taskId}`,
-          sourceTaskId: taskId,
-          title: newTask.name,
-          deadline,
-          priority: 'medium',
-          notes: newTask.estimatedTime ? `Estimated time: ${newTask.estimatedTime}` : '',
-          createdAt: newTask.createdAt,
-        };
-        localStorage.setItem('lockin_deadlines', JSON.stringify([...storedDeadlines, deadlineItem]));
-        window.dispatchEvent(new CustomEvent('lockin:deadlines-updated'));
-      } catch (error) {
-        console.warn('Failed to save task deadline locally', error);
-      }
-    }
+    setNewUrgency('Medium');
+    setNewDeadline('');
+    setNewMicrotask('');
+    setNewMicrotasks([]);
 
     // Try to sync with BE in background
     try {
@@ -114,13 +126,6 @@ const TaskList = ({ onFocus }) => {
     // Optimistic Update
     setTasks(prev => prev.map(t => {
        if ((t._id === id) || (t.id === id)) {
-         if (isCompleting) {
-           confetti({
-             particleCount: 100,
-             spread: 70,
-             origin: { y: 0.6 }
-           });
-         }
          return { 
            ...t, 
            completed: isCompleting,
@@ -156,15 +161,59 @@ const TaskList = ({ onFocus }) => {
     }
   };
 
+  const addDraftMicrotask = () => {
+    const title = newMicrotask.trim();
+    if (!title) return;
+    setNewMicrotasks(prev => [...prev, { title, completed: false }]);
+    setNewMicrotask('');
+  };
+
+  const beginEdit = async (task, updatedTask) => {
+    if (updatedTask) {
+      setTasks(prev => prev.map(item => (item.id === updatedTask.id || item._id === updatedTask._id) ? updatedTask : item));
+      try { await api.patch(`/tasks/${updatedTask._id || updatedTask.id}`, updatedTask); } catch (error) { console.warn('Failed to sync task edits', error); }
+      return;
+    }
+    setSelectedTask(task);
+    setEditingTask(true);
+    setShowBreakdown(false);
+    setEditDraft({
+      ...task,
+      deadline: task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '',
+      microtasks: (task.microtasks || []).map(item => ({ ...item })),
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editDraft?.name.trim()) return;
+    const updated = { ...editDraft, name: editDraft.name.trim(), deadline: editDraft.deadline ? new Date(editDraft.deadline).toISOString() : null };
+    setTasks(prev => prev.map(task => (task.id === updated.id || task._id === updated._id) ? updated : task));
+    setSelectedTask(updated);
+    setEditingTask(false);
+    try { await api.patch(`/tasks/${updated._id || updated.id}`, updated); } catch (error) { console.warn('Failed to sync task edits', error); }
+  };
+
   const activeTasks = tasks.filter(t => !t.completed);
   const completedTasks = tasks.filter(t => t.completed);
+  const totalTasks = tasks.length;
+  const completedProgress = totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0;
+  const sortedActiveTasks = [...activeTasks].sort((a, b) => {
+    if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
+    if (sortBy === 'urgency') {
+      const rank = { High: 0, Medium: 1, Low: 2 };
+      return (rank[a.urgency] ?? 1) - (rank[b.urgency] ?? 1);
+    }
+    const aTime = a.deadline ? new Date(a.deadline).getTime() : Number.POSITIVE_INFINITY;
+    const bTime = b.deadline ? new Date(b.deadline).getTime() : Number.POSITIVE_INFINITY;
+    return aTime - bTime;
+  });
   const setEnergy = (energy) => { setTasks(prev => prev.map(t => (t.id === selectedTask?.id || t._id === selectedTask?._id) ? { ...t, energy } : t)); setSelectedTask(prev => prev ? { ...prev, energy } : prev); };
   const smallestStep = selectedTask ? `Open a blank document and start ${selectedTask.name.toLowerCase()}.` : '';
   const breakdown = selectedTask ? [`Open what you need for “${selectedTask.name}”`, 'Write three rough ideas', 'Choose the strongest idea', `Finish the first small part of ${selectedTask.name.toLowerCase()}`] : [];
 
   return (
-    <div className="space-y-6">
-      <div className="relative text-center space-y-2">
+    <div className="mx-auto w-full max-w-3xl space-y-6">
+      <div className="relative w-full border-b border-[#e9e7e1] pb-5 text-left">
         <button
           type="button"
           onClick={() => setZenMode((current) => !current)}
@@ -175,17 +224,16 @@ const TaskList = ({ onFocus }) => {
           <Leaf className="h-4 w-4" />
           Zen
         </button>
-        <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center text-green-600 dark:text-green-400">
-          <CheckSquare className="w-6 h-6" />
-        </div>
-        <h2 className="text-2xl font-bold text-green-800 dark:text-green-400">Tasks</h2>
-        <p className="text-green-600 dark:text-green-400 text-sm">Manage your daily goals</p>
-        <div className="text-[10px] text-gray-400 mt-1">
-          User: {user ? user.email : 'Not logged in'} | Tasks: {tasks.length}
-        </div>
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#249653]">Execution</p>
+        <h2 className="mt-1 text-3xl font-extrabold tracking-[-0.035em] text-[#17211b] dark:text-white">Tasks</h2>
+        <p className="mt-1 text-sm text-[#748078]">Choose what matters, then make the first step visible.</p>
       </div>
 
-      <form onSubmit={addTask} className="bg-white dark:bg-slate-900/50 p-3 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 space-y-2.5 mb-8 relative z-10">
+      <form
+        onSubmit={addTask}
+        className="z-10 w-full space-y-2.5 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/50"
+        style={{ position: 'relative', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '48rem', margin: 0, boxSizing: 'border-box' }}
+      >
         <div className="relative">
           <input
             type="text"
@@ -198,8 +246,8 @@ const TaskList = ({ onFocus }) => {
              <CheckSquare className="w-4 h-4" />
           </div>
         </div>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_0.8fr_auto]">
-          <div className="relative min-w-0">
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
+          <div className="relative min-w-0 flex-1">
             <input
               type="text"
               value={newTime}
@@ -211,61 +259,46 @@ const TaskList = ({ onFocus }) => {
                <Timer className="w-4 h-4" />
             </div>
           </div>
-          <div className="relative min-w-0">
-            <input
-              type="date"
-              value={newDeadlineDate}
-              min={new Date().toLocaleDateString('en-CA')}
-              onChange={(e) => setNewDeadlineDate(e.target.value)}
-              aria-label="Deadline date"
-              className="w-full pl-4 pr-10 py-2.5 rounded-xl bg-gray-50/50 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-700/50 focus:border-green-500/50 focus:bg-white dark:focus:bg-slate-800 outline-none transition-all text-sm text-gray-600 dark:text-white font-medium"
-            />
-            <CalendarDays className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300 dark:text-gray-600" />
-          </div>
-          <div className={`relative min-w-0 transition-opacity ${newDeadlineDate ? 'opacity-100' : 'opacity-50'}`}>
-            <input
-              type="time"
-              value={newDeadlineTime}
-              onChange={(e) => setNewDeadlineTime(e.target.value)}
-              disabled={!newDeadlineDate}
-              aria-label="Deadline time"
-              className="w-full pl-4 pr-10 py-2.5 rounded-xl bg-gray-50/50 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-700/50 focus:border-green-500/50 focus:bg-white dark:focus:bg-slate-800 outline-none transition-all text-sm text-gray-600 dark:text-white font-medium disabled:cursor-not-allowed"
-            />
-            <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300 dark:text-gray-600" />
-          </div>
+          <select value={newUrgency} onChange={(e) => setNewUrgency(e.target.value)} aria-label="Urgency" className="rounded-xl border border-gray-100 bg-gray-50/50 px-3 py-2.5 text-sm font-normal text-slate-400 outline-none focus:border-green-500/50 dark:border-slate-700/50 dark:bg-slate-800/40 dark:text-slate-400">
+            <option value="High">High urgency</option>
+            <option value="Medium">Medium urgency</option>
+            <option value="Low">Low urgency</option>
+          </select>
+          <input type="datetime-local" value={newDeadline} onChange={(e) => setNewDeadline(e.target.value)} aria-label="Deadline" className="min-w-0 rounded-xl border border-gray-100 bg-gray-50/50 px-3 py-2.5 text-sm font-normal text-slate-400 outline-none focus:border-green-500/50 dark:border-slate-700/50 dark:bg-slate-800/40 dark:text-slate-400" />
           <button
             type="submit"
-            className="justify-center px-5 py-2.5 bg-green-600 dark:bg-green-500 text-white rounded-xl hover:bg-green-700 dark:hover:bg-green-600 active:scale-95 transition-all flex items-center gap-1.5 text-sm font-bold shadow-md shadow-green-500/10"
+            className="shrink-0 justify-center px-5 py-2.5 bg-green-600 dark:bg-green-500 text-white rounded-xl hover:bg-green-700 dark:hover:bg-green-600 active:scale-95 transition-all flex items-center gap-1.5 text-sm font-bold shadow-md shadow-green-500/10"
           >
             <Plus className="w-4 h-4" />
             Add
           </button>
         </div>
+        <div className="flex min-w-0 gap-2 border-t border-gray-100 pt-2 dark:border-slate-800">
+          <input value={newMicrotask} onChange={(e) => setNewMicrotask(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addDraftMicrotask(); } }} placeholder="Add a microtask (optional)" className="min-w-0 flex-1 rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-2.5 text-sm font-normal text-slate-400 outline-none focus:border-green-500/50 dark:border-slate-700/50 dark:bg-slate-800/40 dark:text-slate-400" />
+          <button type="button" onClick={addDraftMicrotask} className="rounded-xl border border-green-100 bg-green-50 px-3 text-xs font-bold text-green-700 hover:bg-green-100 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-300">Add step</button>
+        </div>
+        {newMicrotasks.length > 0 && <ul className="space-y-1 px-2 text-xs text-slate-500 dark:text-slate-400">{newMicrotasks.map((step, index) => <li key={`${step.title}-${index}`} className="flex items-center gap-2 before:text-green-400 before:content-['•']">{step.title}</li>)}</ul>}
       </form>
 
       {/* ADHD Anti-Overwhelm: Spinner Wheel Trigger */}
       {activeTasks.length > 0 && (
-        <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mt-6 flex items-center justify-between rounded-xl border border-[#e9e7e1] bg-[#fbfbf9] p-3.5 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-pink-500 text-white flex items-center justify-center shadow-sm">
-              <Sparkles className="w-4 h-4" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#dbe8dc] bg-[#f0fbf3] text-[#249653] dark:border-slate-700 dark:bg-slate-800">
+              <Dices className="h-4 w-4" />
             </div>
             <div>
-              <div className="text-xs font-bold text-gray-800 dark:text-gray-200">
-                Bingung mulai tugas yang mana?
-              </div>
-              <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                Pilih task dengan cara fun lewat Spinner Wheel! 🎡
-              </div>
+              <div className="text-xs font-bold text-[#17211b] dark:text-gray-200">Need help choosing?</div>
+              <div className="text-[11px] text-[#748078] dark:text-gray-400">Let the wheel pick one task.</div>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setShowSpinnerModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-bold shadow-md shadow-pink-500/20 active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-[#dfe3de] bg-white px-3 py-2 text-xs font-bold text-[#17211b] transition-colors hover:border-[#aeb7b0] hover:bg-[#f6f7f4] active:bg-[#eef0ec] dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Spinner Wheel ({activeTasks.length})</span>
+            <Dices className="w-3.5 h-3.5" />
+            <span>Pick for me · {activeTasks.length}</span>
           </button>
         </div>
       )}
@@ -274,10 +307,11 @@ const TaskList = ({ onFocus }) => {
         {activeTasks.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between pl-1">
-              <h3 className="text-xs font-semibold text-green-800 dark:text-green-400 uppercase tracking-wider">To Do</h3>
+              <div className="flex w-full items-center justify-between gap-3"><h3 className="text-xs font-semibold uppercase tracking-wider text-green-800 dark:text-green-400">To Do</h3><label className="flex items-center gap-1 text-[10px] font-semibold text-slate-400"><span>Sort by</span><span className="relative block"><select value={sortBy} onChange={(event) => setSortBy(event.target.value)} style={{ width: 76 }} className="appearance-none rounded-lg border border-slate-200 bg-white px-1.5 py-1.5 pr-5 text-[10px] font-semibold text-slate-500 outline-none transition focus:border-green-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"><option value="deadline">Deadline</option><option value="urgency">Urgency</option><option value="name">Name</option></select><ChevronDown className="pointer-events-none absolute right-1 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400" /></span></label></div>
             </div>
+            <div className="mb-2 rounded-xl border border-slate-100 bg-white px-3.5 py-3.5 dark:border-slate-800 dark:bg-white"><div className="mb-2 flex items-center justify-between text-[10px] font-semibold text-slate-400"><span>Today’s progress</span><span className="text-green-600">{completedProgress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#4dcd7d] transition-all duration-300" style={{ width: `${completedProgress}%` }} /></div></div>
             <div className="space-y-2">
-              {activeTasks.map(task => (
+              {sortedActiveTasks.map(task => (
                 <TaskItem 
                   key={task._id || task.id} 
                   task={task} 
@@ -285,7 +319,8 @@ const TaskList = ({ onFocus }) => {
                   onDelete={deleteTask}
                   onFocus={onFocus}
                   onOpen={setSelectedTask}
-                  showDeadline={!zenMode}
+                  onEdit={beginEdit}
+                  zen={zenMode}
                 />
               ))}
             </div>
@@ -303,7 +338,8 @@ const TaskList = ({ onFocus }) => {
                   onToggle={toggleTask} 
                   onDelete={deleteTask}
                   onOpen={setSelectedTask}
-                  showDeadline={!zenMode}
+                  onEdit={beginEdit}
+                  zen={zenMode}
                 />
               ))}
             </div>
@@ -324,6 +360,7 @@ const TaskList = ({ onFocus }) => {
       {selectedTask && (
         <div className="fixed inset-0 z-[80] flex justify-end bg-slate-950/20 backdrop-blur-[2px]" onClick={() => setSelectedTask(null)}>
           <aside className="h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-2xl dark:bg-slate-900" onClick={(event) => event.stopPropagation()}>
+            {editingTask && editDraft && <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60"><div className="mb-3 text-sm font-black text-slate-800 dark:text-white">Edit task</div><div className="grid gap-3"><input value={editDraft.name} onChange={(e) => setEditDraft(prev => ({ ...prev, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white" /><div className="grid grid-cols-2 gap-2"><select value={editDraft.urgency || 'Medium'} onChange={(e) => setEditDraft(prev => ({ ...prev, urgency: e.target.value }))} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white"><option>High</option><option>Medium</option><option>Low</option></select><input type="datetime-local" value={editDraft.deadline || ''} onChange={(e) => setEditDraft(prev => ({ ...prev, deadline: e.target.value }))} className="min-w-0 rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white" /></div>{(editDraft.microtasks || []).map((step, index) => <div key={`${step.title}-${index}`} className="flex items-center gap-2"><input type="checkbox" checked={!!(step.completed || step.done)} onChange={() => setEditDraft(prev => ({ ...prev, microtasks: prev.microtasks.map((item, itemIndex) => itemIndex === index ? { ...item, completed: !(item.completed || item.done) } : item) }))} className="accent-green-500" /><input value={step.title} onChange={(e) => setEditDraft(prev => ({ ...prev, microtasks: prev.microtasks.map((item, itemIndex) => itemIndex === index ? { ...item, title: e.target.value } : item) }))} className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white" /></div>)}<button type="button" onClick={() => setEditDraft(prev => ({ ...prev, microtasks: [...(prev.microtasks || []), { title: 'New microtask', completed: false }] }))} className="text-left text-xs font-bold text-[#249653]">+ Add microtask</button><div className="flex justify-end gap-2"><button type="button" onClick={() => setEditingTask(false)} className="rounded-xl px-3 py-2 text-xs font-bold text-slate-500">Cancel</button><button type="button" onClick={saveEdit} className="rounded-xl bg-[#4dcd7d] px-3 py-2 text-xs font-black text-slate-950">Save changes</button></div></div></div>}
             <div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#249653]">Task detail</p><h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">{selectedTask.name}</h2><p className="mt-1 text-xs font-bold text-slate-400">Deep Work · {selectedTask.estimatedTime || '30 minutes'}</p></div><button onClick={() => setSelectedTask(null)} className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button></div>
             <div className="mt-8"><p className="text-sm font-black text-slate-800 dark:text-white">What’s the smallest step?</p><div className="mt-2 rounded-2xl bg-[#f0fbf3] p-4 text-sm font-semibold text-[#249653] dark:bg-[#4dcd7d]/10">{smallestStep}</div></div>
             <div className="mt-6"><p className="text-sm font-black text-slate-800 dark:text-white">Energy</p><div className="mt-2 flex gap-2">{['Low', 'Medium', 'High'].map((energy) => <button key={energy} onClick={() => setEnergy(energy)} className={`rounded-xl px-4 py-2 text-xs font-black transition ${selectedTask.energy === energy ? 'bg-[#4dcd7d] text-slate-950' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300'}`}>{energy}</button>)}</div></div>

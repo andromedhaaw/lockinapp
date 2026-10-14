@@ -26,7 +26,7 @@ import {
 import WeekCalendar from './WeekCalendar';
 import DayTimebox from './DayTimebox';
 import CalendarTaskRail from './CalendarTaskRail';
-import TodayIntelligence from './TodayIntelligence';
+import useTodayPlannerData from './useTodayPlannerData';
 
 // Format minutes to H:MM string (e.g. 190 -> "3:10", 30 -> "0:30")
 const formatMinutes = (totalMinutes) => {
@@ -275,33 +275,7 @@ const TAG_CONFIG = {
 };
 
 export const TodayPlanner = ({ onStartFocus }) => {
-  // Persistence state
-  const [brainDump, setBrainDump] = useState(() => {
-    try {
-      const saved = localStorage.getItem('lockin_today_braindump');
-      return saved ? JSON.parse(saved) : INITIAL_BRAIN_DUMP;
-    } catch {
-      return INITIAL_BRAIN_DUMP;
-    }
-  });
-
-  const [days, setDays] = useState(() => {
-    try {
-      const saved = localStorage.getItem('lockin_today_days');
-      return saved ? JSON.parse(saved) : INITIAL_DAYS;
-    } catch {
-      return INITIAL_DAYS;
-    }
-  });
-
-  const [timeboxEvents, setTimeboxEvents] = useState(() => {
-    try {
-      const saved = localStorage.getItem('lockin_today_timebox');
-      return saved ? JSON.parse(saved) : INITIAL_TIMEBOX_EVENTS;
-    } catch {
-      return INITIAL_TIMEBOX_EVENTS;
-    }
-  });
+  const { brainDump, setBrainDump, days, setDays, timeboxEvents, setTimeboxEvents, celebratedTaskTitle } = useTodayPlannerData({ initialBrainDump: INITIAL_BRAIN_DUMP, initialDays: INITIAL_DAYS, initialTimebox: INITIAL_TIMEBOX_EVENTS });
 
   // UI state
   const [showBrainDump, setShowBrainDump] = useState(true);
@@ -314,7 +288,6 @@ export const TodayPlanner = ({ onStartFocus }) => {
   const [activeCardId, setActiveCardId] = useState('bd-1');
   const [draggedTaskId, setDraggedTaskId] = useState(null);
   const [draggedDayTask, setDraggedDayTask] = useState(null);
-  const [celebratedTaskTitle, setCelebratedTaskTitle] = useState(null);
 
   // Modal / Inline Add Task State
   const [addingTarget, setAddingTarget] = useState(null); // 'brain-dump' or day id or 'timebox'
@@ -330,26 +303,6 @@ export const TodayPlanner = ({ onStartFocus }) => {
   const [editSubtaskTitle, setEditSubtaskTitle] = useState('');
   const [addingSubtaskFor, setAddingSubtaskFor] = useState(null);
   const [subtaskDraft, setSubtaskDraft] = useState('');
-
-  useEffect(() => {
-    const syncExternalChanges = () => {
-      try {
-        const savedBrainDump = localStorage.getItem('lockin_today_braindump');
-        const savedDays = localStorage.getItem('lockin_today_days');
-        if (savedBrainDump) setBrainDump(JSON.parse(savedBrainDump));
-        if (savedDays) setDays(JSON.parse(savedDays));
-      } catch {}
-    };
-    const celebrate = (event) => {
-      const title = event.detail?.title;
-      if (!title) return;
-      setCelebratedTaskTitle(title);
-      window.setTimeout(() => setCelebratedTaskTitle(null), 900);
-    };
-    window.addEventListener('local-data-updated', syncExternalChanges);
-    window.addEventListener('focus-task-completed', celebrate);
-    return () => { window.removeEventListener('local-data-updated', syncExternalChanges); window.removeEventListener('focus-task-completed', celebrate); };
-  }, []);
 
   useEffect(() => {
     if (!editingTask) return;
@@ -391,39 +344,6 @@ export const TodayPlanner = ({ onStartFocus }) => {
     });
     setDraggedDayTask(null);
   };
-
-  // Persist whenever state changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('lockin_today_braindump', JSON.stringify(brainDump));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [brainDump]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('lockin_today_days', JSON.stringify(days));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [days]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('lockin_today_timebox', JSON.stringify(timeboxEvents));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [timeboxEvents]);
-
-  // Calculate Column Totals
-  const brainDumpTotal = useMemo(() => {
-    const total = brainDump
-      .filter((t) => !t.completed)
-      .reduce((sum, t) => sum + (t.minutes || 0), 0);
-    return formatMinutes(total);
-  }, [brainDump]);
 
   const getDayTotal = (dayTasks) => {
     const total = dayTasks
@@ -537,8 +457,7 @@ export const TodayPlanner = ({ onStartFocus }) => {
 
   return (
     <div
-      className="w-full dark:bg-slate-950 min-h-screen text-slate-800 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200"
-      style={{ background: '#faf9f6' }}
+      className="w-full min-h-screen overflow-x-hidden bg-[#f5f5f5] text-slate-800 dark:bg-slate-950 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200"
     >
       {/* ============================================================== */}
       {/* TOP HEADER: Pixel-perfect replica of Ellie top bar            */}
@@ -722,19 +641,17 @@ export const TodayPlanner = ({ onStartFocus }) => {
         </div>
       </header>
 
-      <TodayIntelligence tasks={brainDump} onStartFocus={onStartFocus} />
-
       {/* ============================================================== */}
       {/* MAIN 3-COLUMN CONTENT CANVAS                                   */}
       {/* ============================================================== */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex flex-1 items-start">
         {/* ========================================================== */}
         {/* COLUMN 1: BRAIN DUMP (Left Column)                         */}
         {/* ========================================================== */}
         {showBrainDump && (
-          <aside className="w-72 lg:w-80 shrink-0 border-r border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 p-4 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto">
+          <aside className="w-72 min-w-0 shrink-0 self-stretch border-r border-slate-200/90 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 lg:w-80">
             {/* Header: 🧠 Brain Dump ↕ */}
-            <div className="flex items-center justify-between mb-3 px-1">
+            <div className="mb-3 flex shrink-0 items-center justify-between px-1">
               <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-100 font-semibold text-base">
                 <span>🧠</span>
                 <span>Brain Dump</span>
@@ -750,7 +667,7 @@ export const TodayPlanner = ({ onStartFocus }) => {
             </div>
 
             {/* "+ Add a task" Trigger / Input Card */}
-            <div className="mb-3">
+            <div className="mb-3 shrink-0">
               {addingTarget === 'brain-dump' ? (
                 <form
                   onSubmit={handleCreateTask}
@@ -823,15 +740,20 @@ export const TodayPlanner = ({ onStartFocus }) => {
                       Add a task
                     </span>
                   </div>
-                  <span className="font-mono text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400">
-                    {brainDumpTotal}
-                  </span>
                 </button>
               )}
             </div>
 
             {/* Task Cards List */}
-            <div className="space-y-2 flex-1 overflow-y-auto pr-0.5">
+              <div
+                className="min-w-0 pr-0.5"
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  paddingTop: 0,
+                  marginTop: 0,
+                }}
+              >
               {brainDump.filter(matchesFilter).map((task) => {
                 const tagInfo = TAG_CONFIG[task.tag] || {
                   dotColor: 'bg-indigo-500',
@@ -855,13 +777,14 @@ export const TodayPlanner = ({ onStartFocus }) => {
                     }}
                     onDragEnd={() => setDraggedTaskId(null)}
                     onClick={() => setActiveCardId(task.id)}
-                    className={`bg-white dark:bg-slate-800 rounded-xl p-3 border transition-all relative group cursor-grab active:cursor-grabbing ${celebratedTaskTitle === task.title ? 'animate-success' : ''} ${draggedTaskId === task.id ? 'opacity-50' : ''} ${
+                    className={`w-full min-w-0 max-w-full bg-white dark:bg-slate-800 rounded-xl p-3 border transition-all relative group cursor-grab active:cursor-grabbing shadow-xs ${celebratedTaskTitle === task.title ? 'animate-success' : ''} ${draggedTaskId === task.id ? 'opacity-50' : ''} ${
                       task.completed
-                        ? 'opacity-50 border-slate-200 dark:border-slate-700'
+                        ? 'opacity-50 border-slate-200/80 dark:border-slate-700'
                         : isSelected
-                        ? 'border-blue-400 dark:border-blue-500 ring-2 ring-blue-100 dark:ring-blue-900/30 shadow-xs'
-                        : 'border-slate-200/80 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-xs'
+                        ? 'border-indigo-400 dark:border-indigo-500 ring-2 ring-indigo-50 dark:ring-indigo-950/40 shadow-xs'
+                        : 'border-slate-200/90 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-xs'
                     }`}
+                    style={{ width: '100%', maxWidth: '100%', minWidth: 0, margin: '0 0 12px 0', left: 0, transform: 'none', boxSizing: 'border-box' }}
                   >
                     <div className="flex items-start justify-between gap-2">
                       {/* Checkbox & Task Title */}
@@ -952,7 +875,7 @@ export const TodayPlanner = ({ onStartFocus }) => {
                   event.preventDefault();
                   moveDayTask(day.id);
                 }}
-                className="w-72 sm:w-80 shrink-0 flex flex-col h-full bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm overflow-hidden"
+                className="w-72 min-w-0 sm:w-80 shrink-0 flex flex-col h-full bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm overflow-hidden"
               >
                 {/* Column Header */}
                 <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">

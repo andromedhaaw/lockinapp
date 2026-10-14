@@ -71,12 +71,28 @@ export const VisualTimeTimer = ({
   };
 
   return (
-    <div className="flex flex-col items-center select-none w-full max-w-md mx-auto">
+    <div
+      className="visual-time-timer select-none"
+      style={{
+        display: 'flex',
+        width: '100%',
+        maxWidth: '448px',
+        marginInline: 'auto',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        textAlign: 'center',
+      }}
+    >
       {/* Visual Time Timer Dial */}
-      <div className="relative w-72 h-72 sm:w-80 sm:h-80 flex items-center justify-center p-2">
+      <div
+        className="visual-time-timer__dial relative flex h-72 w-72 items-center justify-center p-2 sm:h-80 sm:w-80"
+        style={{ marginInline: 'auto', flex: '0 0 auto', background: 'transparent' }}
+      >
         <svg
           viewBox="0 0 320 320"
-          className="w-full h-full cursor-pointer transition-all drop-shadow-sm"
+          className="block h-full w-full cursor-pointer transition-all drop-shadow-sm"
+          style={{ display: 'block', background: 'transparent' }}
           onClick={handleDialClick}
         >
           {/* Background circle of the clock face */}
@@ -162,7 +178,7 @@ export const VisualTimeTimer = ({
                 dominantBaseline="central"
                 className={`font-mono text-[13px] font-bold select-none transition-colors ${
                   isCurrentSelected
-                    ? 'fill-[#f43f5e] font-black'
+                  ? 'fill-[#f43f5e] font-black'
                     : 'fill-slate-700 dark:fill-slate-300 hover:fill-slate-900 dark:hover:fill-white'
                 }`}
               >
@@ -213,7 +229,7 @@ export const VisualTimeTimer = ({
       </div>
 
       {/* Digital Readout & Status */}
-      <div className="text-center -mt-1 space-y-1">
+      <div className="visual-time-timer__readout -mt-1 w-full space-y-1 text-center" style={{ marginInline: 'auto' }}>
         <div className="text-3xl sm:text-4xl font-mono font-black tracking-tight text-slate-800 dark:text-slate-100">
           {formatTime(minutes, seconds)}
         </div>
@@ -222,19 +238,19 @@ export const VisualTimeTimer = ({
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-center gap-4">
+      <div className="mt-4 flex w-full items-center justify-center gap-4" style={{ marginInline: 'auto' }}>
         <button onClick={() => setShowSettings((visible) => !visible)} className={`flex h-12 w-12 items-center justify-center rounded-2xl border shadow-sm ${showSettings ? 'border-green-300 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-500'}`} title="Pengaturan durasi"><Settings2 className="h-5 w-5" /></button>
-        <button onClick={onToggle} className={`flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-md transition-all ${isActive && !isPaused ? 'bg-amber-500 hover:bg-amber-600' : 'bg-rose-500 hover:bg-rose-600'}`} title={isActive && !isPaused ? 'Pause' : 'Start'}>
+        <button onClick={onToggle} className={`flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-md transition-all ${isActive && !isPaused ? 'bg-[#f87171] hover:bg-[#ef6060]' : 'bg-[#f43f5e] hover:bg-[#e11d48]'}`} title={isActive && !isPaused ? 'Pause' : 'Start'}>
           {isActive && !isPaused ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
         </button>
         {isActive && <button onClick={onFinish} className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500 text-white shadow-md hover:bg-red-600" title="Selesai"><Square className="h-5 w-5 fill-current" /></button>}
         <button onClick={onReset} className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm hover:text-red-500" title="Reset"><RotateCcw className="h-5 w-5" /></button>
       </div>
 
-      {showSettings && <div className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"><div className="mb-2 flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300"><span>Atur Durasi Kustom</span><span className="text-green-600">{customMinutes} Menit</span></div><input type="range" min="1" max="120" value={customMinutes} onChange={onCustomMinutesChange} className="h-2 w-full cursor-pointer accent-green-600" /><div className="mt-1 flex justify-between text-[10px] text-slate-400"><span>1m</span><span>25m</span><span>60m</span><span>120m</span></div></div>}
+      {showSettings && <div className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm dark:border-slate-700 dark:bg-slate-900"><div className="mb-2 flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300"><span>Atur Durasi Kustom</span><span className="text-[#f43f5e]">{customMinutes} Menit</span></div><input type="range" min="1" max="120" value={customMinutes} onChange={onCustomMinutesChange} className="h-2 w-full cursor-pointer accent-[#f43f5e]" /><div className="mt-1 flex justify-between text-[10px] text-slate-400"><span>1m</span><span>25m</span><span>60m</span><span>120m</span></div></div>}
 
       {/* Quick Preset Buttons (Time Timer / Llama Life style) */}
-      <div className="mt-5 w-full flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+      <div className="mt-5 flex w-full flex-wrap items-center justify-center gap-1.5 sm:gap-2" style={{ marginInline: 'auto' }}>
         {[5, 10, 15, 25, 30, 45, 60].map((mins) => {
           const isSelected = customMinutes === mins;
           return (
